@@ -1,0 +1,57 @@
+{
+  "name": "ds-study-lab",
+  "productName": "DS Study Lab",
+  "version": "1.0.0",
+  "description": "Interactive study app for data structures in C/C++ (Lectures 07–14): linked lists, stacks, queues, trees, graphs, traversals.",
+  "author": "DS Study Lab",
+  "license": "MIT",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "serve": "node server.js --open",
+    "test": "node --test",
+    "dist:win": "electron-builder --win portable nsis --publish never",
+    "dist:linux": "electron-builder --linux AppImage --publish never"
+  },
+  "build": {
+    "appId": "edu.dsstudylab.app",
+    "productName": "DS Study Lab",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**",
+      "electron/**",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "electron/icon.png",
+      "artifactName": "DS-Study-Lab-${version}-${arch}-${target}.${ext}"
+    },
+    "portable": {
+      "artifactName": "DS-Study-Lab-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "DS-Study-Lab-${version}-setup.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "electron/icon.png",
+      "category": "Education"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  }
+}
