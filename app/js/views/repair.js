@@ -7,10 +7,10 @@ export function repairView(ctx, which) {
   const { store } = ctx;
   let id = REPAIRS.find((r) => r.id === which) ? which : REPAIRS[0].id;
   const root = h('div');
-  const list = h('div', { class: 'row', role: 'toolbar', 'aria-label': 'Repair scenarios' });
+  const list = h('div', { class: 'seg', role: 'toolbar', 'aria-label': 'Repair scenarios' });
   const host = h('div', { style: { marginTop: '12px' } });
   root.append(
-    h('div', { class: 'page-head' }, h('h1', {}, 'Repair mode'), h('span', { class: 'muted small' }, 'Observe a broken structure, find the first bad action, undo, fix.')),
+    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Repair mode'), h('div', { class: 'subtitle' }, 'Observe a broken structure, find the first bad action, undo, fix.'))),
     list,
     host,
   );

@@ -13,15 +13,17 @@ const SPEEDS = [0.5, 1, 2, 4];
  * Returns { el, player, setTrace(trace), destroy() }.
  */
 export function createWorkspace(trace, opts = {}) {
-  const el = h('section', { class: 'ws', 'aria-label': 'Simulation workspace', tabindex: '-1' });
+  const el = h('section', { class: 'ws-wrap', 'aria-label': 'Simulation workspace', tabindex: '-1' });
+  const grid = h('div', { class: 'ws' });
   const diag = h('div', { class: 'ws-diagram diagram-box' });
   const controls = h('div', { class: 'ws-controls panel controls' });
   const codeP = h('div', { class: 'panel code-panel' });
   const varsP = h('div', { class: 'panel' });
-  const explainP = h('div', { class: 'panel', 'aria-live': 'polite' });
+  const explainP = h('div', { class: 'panel ws-explain', 'aria-live': 'polite' });
   const histP = h('div', { class: 'panel' });
   const cntP = h('div', { class: 'panel' });
-  el.append(diag, controls, h('div', { class: 'ws-side' }, explainP, codeP, varsP), h('div', { class: 'ws-bottom' }, histP, cntP));
+  grid.append(diag, controls, h('div', { class: 'ws-side' }, explainP, codeP, varsP), h('div', { class: 'ws-bottom' }, histP, cntP));
+  el.append(grid);
 
   let predictOn = opts.predictKinds ? opts.predictOn !== false : false;
   const answered = new Set();
@@ -32,7 +34,7 @@ export function createWorkspace(trace, opts = {}) {
   player.gate = (step, idx) => predictOn && !answered.has(idx) && wantsPrediction(player.trace, idx, opts.predictKinds) && (pending = { idx, q: makeQuestion(player.trace, idx), picked: null }) && true;
 
   // ---- controls
-  const bReset = h('button', { class: 'btn', onclick: () => { pending = null; player.reset(); }, title: 'Reset (Home)' }, '⟲ Reset');
+  const bReset = h('button', { class: 'btn', onclick: () => { pending = null; player.reset(); }, title: 'Reset (Home)' }, '↺ Reset');
   const bBack = h('button', { class: 'btn', onclick: () => { pending = null; player.back(); }, title: 'Step back (←)' }, '◀ Back');
   const bPlay = h('button', { class: 'btn', onclick: () => player.toggle(), title: 'Play / pause (Space)' }, '▶ Play');
   const bFwd = h('button', { class: 'btn primary', onclick: () => tryForward(), title: 'Step forward (→)' }, 'Step ▶');
@@ -41,7 +43,7 @@ export function createWorkspace(trace, opts = {}) {
   const predBtn = opts.predictKinds
     ? h('button', { class: 'btn small', 'aria-pressed': String(predictOn), onclick: () => { predictOn = !predictOn; predBtn.setAttribute('aria-pressed', String(predictOn)); if (!predictOn) pending = null; draw(); } }, 'Ask me to predict')
     : null;
-  controls.append(bReset, bBack, bPlay, bFwd, h('label', { class: 'inline small' }, 'Speed', speedSel), stepNum, h('span', { class: 'spacer' }), predBtn);
+  controls.append(bReset, h('span', { class: 'divider' }), bBack, bPlay, bFwd, h('span', { class: 'divider' }), h('label', { class: 'inline small' }, 'Speed', speedSel), stepNum, h('span', { class: 'spacer' }), predBtn);
 
   function tryForward() {
     if (pending) return; // must answer first
