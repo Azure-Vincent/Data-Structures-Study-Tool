@@ -58,17 +58,17 @@ export function complexityView(ctx) {
   let N = 16;
   const root = h('div');
   const sel = h('select', { 'aria-label': 'experiment', onchange: () => { exp = EXPERIMENTS.find((e) => e.id === sel.value); draw(); } }, EXPERIMENTS.map((e) => h('option', { value: e.id, selected: e === exp }, e.label)));
-  const nIn = h('input', { type: 'range', min: 4, max: 24, step: 2, value: N, 'aria-label': 'largest n', oninput: () => { N = Number(nIn.value); draw(); } });
+  const nIn = h('input', { type: 'range', min: 4, max: 24, step: 2, value: N, 'aria-label': 'largest n', oninput: () => { N = Number(nIn.value); nIn.nextSibling.textContent = String(N); draw(); } });
   const out = h('div');
   root.append(
-    h('div', { class: 'page-head' }, h('h1', {}, 'Complexity lab')),
+    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Complexity lab'), h('div', { class: 'subtitle' }, 'Run the real simulations for growing n and watch the work grow.'))),
     h(
       'div',
       { class: 'panel prose', style: { maxWidth: 'none', fontSize: '15px' } },
       h('p', {}, 'Every number here comes from actually running the simulated algorithm and counting its work — the same counters you see in the workspace. Watch how the count grows as n grows.'),
       h('p', {}, h('b', {}, 'O'), ' is an upper bound (“grows no faster than”), ', h('b', {}, 'Ω'), ' a lower bound (“grows at least as fast as”), and ', h('b', {}, 'Θ'), ' a tight bound (both). Inserting at the end of a start-only list is Θ(n): it is O(n) and also Ω(n), because it must walk past every node. Saying it is O(n²) would be true but not tight.'),
     ),
-    h('div', { class: 'row', style: { margin: '12px 0' } }, h('label', { class: 'inline' }, 'Experiment', sel), h('label', { class: 'inline' }, 'n up to', nIn)),
+    h('div', { class: 'panel row', style: { margin: '14px 0' } }, h('label', { class: 'inline' }, h('b', {}, 'Experiment'), sel), h('label', { class: 'inline' }, h('b', {}, 'n up to'), nIn, h('span', { class: 'muted small', style: { minWidth: '2ch' } }, String(N)))),
     out,
   );
 
@@ -86,10 +86,10 @@ export function complexityView(ctx) {
     ns.forEach((n, i) => {
       const x = 44 + i * bw;
       const hh = (ys[i] / max) * (Hh - 20);
-      svg.append(s('rect', { class: 'chart-bar', x, y: Hh - hh, width: ys2 ? bw * 0.42 : bw * 0.8, height: hh }));
+      svg.append(s('rect', { class: 'chart-bar', rx: 2, x, y: Hh - hh, width: ys2 ? bw * 0.42 : bw * 0.8, height: hh }));
       if (ys2) {
         const h2 = (ys2[i] / max) * (Hh - 20);
-        svg.append(s('rect', { class: 'chart-bar b', x: x + bw * 0.44, y: Hh - h2, width: bw * 0.42, height: h2 }));
+        svg.append(s('rect', { class: 'chart-bar b', rx: 2, x: x + bw * 0.44, y: Hh - h2, width: bw * 0.42, height: h2 }));
       }
       if (ns.length <= 14 || i % 2 === 0) svg.append(s('text', { class: 'chart-txt', x: x + bw * 0.4, y: Hh + 14, 'text-anchor': 'middle' }, String(n)));
     });

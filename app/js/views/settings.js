@@ -7,7 +7,7 @@ export function settingsView(ctx) {
     store.setSetting(k, v);
     ctx.applySettings();
   };
-  const sel = (k, opts, label) => h('label', { class: 'row' }, h('span', { style: { minWidth: '210px' } }, label), h('select', { onchange: (e) => set(k, isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value)) }, opts.map(([v, l]) => h('option', { value: v, selected: String(st[k]) === String(v) }, l))));
+  const sel = (k, opts, label) => h('label', { class: 'setting-row' }, h('span', { class: 'lbl' }, label), h('select', { onchange: (e) => set(k, isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value)) }, opts.map(([v, l]) => h('option', { value: v, selected: String(st[k]) === String(v) }, l))));
   const file = h('input', {
     type: 'file',
     class: 'sr-only',
@@ -27,7 +27,7 @@ export function settingsView(ctx) {
   return h(
     'div',
     {},
-    h('div', { class: 'page-head' }, h('h1', {}, 'Settings & data')),
+    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Settings & data'), h('div', { class: 'subtitle' }, 'Display preferences and your locally stored progress.'))),
     h(
       'section',
       { class: 'panel' },
@@ -35,8 +35,8 @@ export function settingsView(ctx) {
       sel('theme', [['system', 'Follow the system'], ['light', 'Light'], ['dark', 'Dark']], 'Theme'),
       sel('motion', [['system', 'Follow the system'], ['reduce', 'Reduce motion'], ['full', 'Full animation']], 'Animation'),
       sel('speed', [[0.5, '0.5×'], [1, '1×'], [2, '2×'], [4, '4×']], 'Default playback speed'),
-      h('label', { class: 'row' }, h('span', { style: { minWidth: '210px' } }, 'Ask for predictions in lessons'), h('input', { type: 'checkbox', checked: !!st.predictMode, onchange: (e) => set('predictMode', e.target.checked) })),
-      h('label', { class: 'row' }, h('span', { style: { minWidth: '210px' } }, 'Practice timer (optional)'), h('input', { type: 'checkbox', checked: !!st.timer, onchange: (e) => set('timer', e.target.checked) }), h('input', { type: 'number', min: 3, max: 30, value: st.timerMinutes, style: { width: '70px' }, 'aria-label': 'timer minutes', onchange: (e) => set('timerMinutes', Math.max(3, Math.min(30, Number(e.target.value) || 8))) }), 'minutes'),
+      h('label', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Ask for predictions in lessons', h('small', {}, 'Simulations pause before key steps so you can guess first.')), h('input', { type: 'checkbox', checked: !!st.predictMode, onchange: (e) => set('predictMode', e.target.checked) })),
+      h('div', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Practice timer', h('small', {}, 'Optional; it never stops you.')), h('span', { class: 'row' }, h('input', { type: 'checkbox', 'aria-label': 'practice timer', checked: !!st.timer, onchange: (e) => set('timer', e.target.checked) }), h('input', { type: 'number', min: 3, max: 30, value: st.timerMinutes, style: { width: '70px' }, 'aria-label': 'timer minutes', onchange: (e) => set('timerMinutes', Math.max(3, Math.min(30, Number(e.target.value) || 8))) }), 'minutes')),
     ),
     h(
       'section',
@@ -44,7 +44,7 @@ export function settingsView(ctx) {
       h('h2', {}, 'Your progress data'),
       h('p', { class: 'small muted' }, 'Progress is stored only on this computer (browser storage; in the desktop app, its own profile folder). No account, no server, no internet needed.'),
       h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => download(`ds-study-lab-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJSON()) }, 'Export progress (.json)'), h('button', { class: 'btn', onclick: () => file.click() }, 'Import progress…'), file),
-      h('hr', { style: { border: 0, borderTop: '1px solid var(--rule)', margin: '16px 0' } }),
+      h('hr'),
       h('h3', {}, 'Reset all progress'),
       h('p', { class: 'small' }, 'Deletes every attempt, mistake, lesson checkmark and the current practice session. Display settings are kept. This cannot be undone — export first if unsure.'),
       h('button', { class: 'btn danger', onclick: () => { if (window.confirm('Delete ALL progress on this computer? This cannot be undone.')) { store.reset(); toast('All progress was reset.'); ctx.go('#/'); } } }, 'Reset all progress'),

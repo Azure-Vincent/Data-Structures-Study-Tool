@@ -13,6 +13,7 @@ import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
 import { generateExercise } from './exercises/registry.js';
 import { renderExercise } from './ui/exercise.js';
+import { icon } from './ui/icons.js';
 
 function safeStorage() {
   try {
@@ -28,7 +29,9 @@ function safeStorage() {
 
 const store = new ProgressStore(safeStorage());
 const main = h('main', { id: 'main', tabindex: '-1' });
-const side = h('nav', { class: 'side', 'aria-label': 'Main' });
+const side = h('nav', { class: 'side', id: 'side-nav', 'aria-label': 'Main' });
+const scrim = h('div', { class: 'scrim', onclick: () => setMenu(false) });
+const menuBtn = h('button', { class: 'btn ghost icon-btn', 'aria-label': 'Open menu', 'aria-controls': 'side-nav', 'aria-expanded': 'false', onclick: () => setMenu(!side.classList.contains('open')) }, icon('menu'));
 let cleanup = null;
 
 function applySettings() {
@@ -60,30 +63,39 @@ function lessonPct(L) {
   return Math.round((rec.done.length / lesson.sections.length) * 100);
 }
 
-function navLink(href, label, extra) {
+function navLink(href, label, extra, ico) {
   const cur = location.hash === href || (href !== '#/' && location.hash.startsWith(href + '/')) || (href === '#/' && (location.hash === '' || location.hash === '#'));
-  return h('a', { href, 'aria-current': cur ? 'page' : null, onclick: () => side.classList.remove('open') }, label, extra);
+  return h('a', { href, 'aria-current': cur ? 'page' : null, onclick: () => setMenu(false) }, ico ? icon(ico) : null, label, extra);
+}
+
+function brand() {
+  return h('a', { class: 'brand', href: '#/' }, icon('brand', 'brand-mark'), h('span', {}, h('b', {}, 'DS Study Lab'), h('span', { class: 'brand-sub' }, 'Lectures 07–14 · C/C++')));
+}
+
+function setMenu(open) {
+  side.classList.toggle('open', open);
+  scrim.classList.toggle('open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+  if (open) side.querySelector('a[aria-current="page"], a')?.focus();
 }
 
 function drawNav() {
   clear(side).append(
-    h(
-      'a',
-      { class: 'brand', href: '#/' },
-      h('svg', { class: 'brand-mark', viewBox: '0 0 34 34', 'aria-hidden': 'true', html: '<rect x="2" y="9" width="13" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="19" y="9" width="13" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 16.5 H17" stroke="var(--pointer)" stroke-width="2.4"/><path d="M15 13.5 L19 16.5 L15 19.5" fill="var(--pointer)"/>' }),
-      h('span', {}, h('b', {}, 'DS Study Lab'), h('span', {}, 'Lectures 07–14 · C/C++')),
-    ),
-    h('div', { class: 'nav' }, navLink('#/', 'Dashboard'), navLink('#/practice', 'Practice'), navLink('#/progress', 'Progress')),
+    brand(),
+    h('div', { class: 'nav' }, navLink('#/', 'Dashboard', null, 'home'), navLink('#/practice', 'Practice', null, 'practice'), navLink('#/progress', 'Progress', null, 'progress')),
     h('div', { class: 'nav-group' }, 'Lectures'),
     h(
       'div',
       { class: 'nav' },
-      LECTURES.map((L) => navLink(`#/lesson/${L.n}`, [h('span', { class: 'lec-n' }, String(L.n).padStart(2, '0')), h('span', { class: 'lec-t' }, L.short)], h('span', { class: 'pct' }, lessonPct(L) ? `${lessonPct(L)}%` : ''))),
+      LECTURES.map((L) => {
+        const p = lessonPct(L);
+        return navLink(`#/lesson/${L.n}`, [h('span', { class: 'lec-n', style: `--p:${p}`, title: `${p}% of the lesson done` }, String(L.n).padStart(2, '0')), h('span', { class: 'lec-t' }, L.short)], h('span', { class: 'pct' }, p ? (p === 100 ? '✓' : `${p}%`) : ''));
+      }),
     ),
     h('div', { class: 'nav-group' }, 'Tools'),
-    h('div', { class: 'nav' }, navLink('#/explore', 'Explore workspace'), navLink('#/repair', 'Repair mode'), navLink('#/complexity', 'Complexity lab')),
+    h('div', { class: 'nav' }, navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair'), navLink('#/complexity', 'Complexity lab', null, 'complexity')),
     h('div', { class: 'nav-group' }, 'App'),
-    h('div', { class: 'nav' }, navLink('#/settings', 'Settings & data')),
+    h('div', { class: 'nav' }, navLink('#/settings', 'Settings & data', null, 'settings')),
   );
 }
 
@@ -99,8 +111,9 @@ function route() {
   const hash = location.hash || '#/';
   const parts = hash.replace(/^#\/?/, '').split('/');
   clear(main);
-  const menu = h('button', { class: 'btn menu-btn', 'aria-label': 'Open menu', onclick: () => side.classList.toggle('open') }, '☰ Menu');
-  main.append(h('div', { class: 'row', style: { marginBottom: '6px' } }, menu));
+  setMenu(false);
+  const page = h('div', { class: 'page' });
+  main.append(page);
   let view;
   try {
     switch (parts[0]) {
@@ -142,7 +155,7 @@ function route() {
     console.error(e);
     view = h('div', { class: 'feedback bad' }, h('b', {}, 'Something went wrong while opening this page. '), String(e.message || e));
   }
-  main.append(view);
+  page.append(view);
   drawNav();
   window.scrollTo(0, 0);
   const h1 = main.querySelector('h1');
@@ -152,7 +165,13 @@ function route() {
   }
 }
 
-document.body.append(h('a', { href: '#main', class: 'sr-only' }, 'Skip to content'), h('div', { class: 'shell' }, side, main));
+document.body.append(h('a', { href: '#main', class: 'sr-only' }, 'Skip to content'), h('div', { class: 'shell' }, side, scrim, h('div', { style: { minWidth: 0 } }, h('header', { class: 'topbar' }, menuBtn, brand()), main)));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && side.classList.contains('open')) {
+    setMenu(false);
+    menuBtn.focus();
+  }
+});
 applySettings();
 window.addEventListener('hashchange', route);
 store.onChange(() => drawNav());

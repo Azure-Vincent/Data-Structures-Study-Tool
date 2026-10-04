@@ -3,6 +3,7 @@ import { generateExercise, TYPE_LABELS } from '../exercises/registry.js';
 import { buildSession, followUpItem } from '../progress/scheduler.js';
 import { renderExercise } from '../ui/exercise.js';
 import { LECTURES, CONCEPT_BY_ID, MISTAKE_LABELS } from '../content/concepts.js';
+import { icon } from '../ui/icons.js';
 
 const MODE_NAMES = { mixed: 'Mixed practice', review: 'Review of missed concepts', lecture: 'Lecture practice', concept: 'Focused practice' };
 
@@ -41,18 +42,18 @@ function chooser(ctx) {
   return h(
     'div',
     {},
-    h('div', { class: 'page-head' }, h('h1', {}, 'Practice')),
+    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Practice'), h('div', { class: 'subtitle' }, 'Short sessions, one task at a time. Fresh values every time.'))),
     s && !s.finished && s.items.some((x) => x.status === 'pending')
-      ? h('div', { class: 'next-card', style: { marginBottom: '14px' } }, h('p', {}, `You have an unfinished ${MODE_NAMES[s.mode].toLowerCase()} session (${s.items.filter((x) => x.status !== 'pending').length} of ${s.items.length} tasks done).`), h('button', { class: 'btn primary', onclick: () => ctx.go('#/practice/resume') }, 'Resume'), h('button', { class: 'btn ghost', onclick: () => { store.clearSession(); ctx.go('#/practice'); } }, 'Discard it'))
+      ? h('div', { class: 'next-card', style: { marginBottom: '18px' } }, h('div', { class: 'next-text' }, h('div', { class: 'eyebrow' }, 'Unfinished session'), h('p', {}, `You have an unfinished ${MODE_NAMES[s.mode].toLowerCase()} session (${s.items.filter((x) => x.status !== 'pending').length} of ${s.items.length} tasks done).`)), h('button', { class: 'btn primary', onclick: () => ctx.go('#/practice/resume') }, 'Resume'), h('button', { class: 'btn ghost', onclick: () => { store.clearSession(); ctx.go('#/practice'); } }, 'Discard it'))
       : null,
     h(
       'div',
-      { class: 'grid-2' },
-      h('section', { class: 'panel' }, h('h2', {}, 'Mixed practice'), h('p', {}, 'Eight short tasks (about 5–10 minutes) mixing everything you have started, with weak and due topics first. One task at a time.'), h('button', { class: 'btn primary', onclick: () => ctx.go('#/practice/new/mixed') }, 'Start mixed practice')),
-      h('section', { class: 'panel' }, h('h2', {}, 'Review missed concepts'), h('p', {}, 'Six tasks on the topics you recently got wrong or that are due for review.'), h('button', { class: 'btn', onclick: () => ctx.go('#/practice/new/review') }, 'Start review')),
-      h('section', { class: 'panel' }, h('h2', {}, 'One lecture'), h('p', {}, 'Eight tasks from a single lecture module.'), h('div', { class: 'row' }, lecSel, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${lecSel.value}`) }, 'Start'))),
-      h('section', { class: 'panel' }, h('h2', {}, 'Timing'), h('label', { class: 'inline' }, timer, `Show a ${store.data.settings.timerMinutes}-minute timer during sessions (optional; it never stops you)`)),
+      { class: 'mode-cards' },
+      h('section', { class: 'panel mode-card featured' }, icon('shuffle'), h('h2', {}, 'Mixed practice'), h('p', {}, 'Eight short tasks (about 5–10 minutes) mixing everything you have started, with weak and due topics first.'), h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => ctx.go('#/practice/new/mixed') }, 'Start mixed practice'))),
+      h('section', { class: 'panel mode-card' }, icon('target'), h('h2', {}, 'Review missed concepts'), h('p', {}, 'Six tasks on the topics you recently got wrong or that are due for review.'), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go('#/practice/new/review') }, 'Start review'))),
+      h('section', { class: 'panel mode-card' }, icon('book'), h('h2', {}, 'One lecture'), h('p', {}, 'Eight tasks from a single lecture module.'), h('div', { class: 'row' }, lecSel, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${lecSel.value}`) }, 'Start'))),
     ),
+    h('section', { class: 'panel', style: { marginTop: '16px' } }, h('div', { class: 'setting-row' }, h('span', { class: 'lbl' }, `Show a ${store.data.settings.timerMinutes}-minute timer during sessions`, h('small', {}, 'Optional; it never stops you.')), h('label', { class: 'inline' }, timer, 'Timer on'))),
   );
 }
 
@@ -61,7 +62,7 @@ function runner(ctx) {
   const s = store.data.session;
   const root = h('div');
   const head = h('div', { class: 'page-head' });
-  const progress = h('div', { class: 'bar', style: { margin: '6px 0 14px' }, role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': s.items.length });
+  const progress = h('div', { class: 'session-dots', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': s.items.length });
   const body = h('div');
   root.append(head, progress, body);
   let timerEl = null;
@@ -91,13 +92,15 @@ function runner(ctx) {
     const i = current();
     clear(head);
     const done = s.items.filter((x) => x.status !== 'pending').length;
-    clear(progress).append(h('span', { style: { width: `${(done / s.items.length) * 100}%` } }));
+    clear(progress).append(s.items.map((x, k) => h('span', { class: x.status !== 'pending' ? x.status : k === current() ? 'cur' : '', title: `Task ${k + 1}: ${x.status}` })));
+    progress.setAttribute('aria-valuemax', s.items.length);
     progress.setAttribute('aria-valuenow', done);
     if (i < 0) return summary();
     s.index = i;
     const it = s.items[i];
     const title = s.mode === 'concept' ? `${MODE_NAMES.concept}: ${CONCEPT_BY_ID[s.concept]?.name}` : s.mode === 'lecture' ? `${MODE_NAMES.lecture}: Lecture ${String(s.lecture).padStart(2, '0')}` : MODE_NAMES[s.mode];
-    head.append(h('h1', {}, title), h('div', { class: 'row' }, h('span', { class: 'muted' }, `Task ${i + 1} of ${s.items.length}${it.followUp ? ' · similar exercise to apply a correction' : ''}`), timerEl, h('button', { class: 'btn small ghost', onclick: () => { store.setSession(s); ctx.go('#/'); } }, 'Pause and leave')));
+    head.append(h('h1', {}, title), h('div', { class: 'row' }, h('span', { class: 'muted small' }, `Task ${i + 1} of ${s.items.length}${it.followUp ? ' · similar exercise to apply a correction' : ''}`), timerEl, h('button', { class: 'btn small ghost', onclick: () => { store.setSession(s); ctx.go('#/'); } }, 'Pause and leave')));
+    progress.setAttribute('aria-valuetext', `Task ${i + 1} of ${s.items.length}`);
     const ex = generateExercise(it.templateId, it.seed, { guidance: it.guidance, params: it.params || {} });
     const el = renderExercise(ex, {
       onResult: (r) => {
@@ -144,7 +147,8 @@ function runner(ctx) {
     clear(body).append(
       h(
         'section',
-        { class: 'panel' },
+        { class: 'section-card' },
+        h('div', { class: 'row', style: { gap: '16px', marginBottom: '12px' } }, h('span', { class: 'score' }, `${ok}/${counted.length}`), h('span', { class: 'muted' }, 'correct on the first check')),
         h('p', { class: 'prose' }, `You answered ${ok} of ${counted.length} tasks correctly on the first check${ind ? `, ${ind} of them without hints` : ''}${s.timed ? ` in ${fmt(s.elapsedMs)}` : ''}.`),
         wrong.length ? h('div', {}, h('h3', {}, 'Worth another look'), h('ul', {}, weak.map((c) => h('li', {}, h('a', { href: `#/practice/new/concept/${c}` }, CONCEPT_BY_ID[c]?.name || c), ' — ', wrong.filter((x) => x.concept === c).map((x) => MISTAKE_LABELS[x.tag] || TYPE_LABELS[x.type] || '').filter(Boolean).join(', '))))) : h('p', {}, 'No mistakes this time.'),
         h('div', { class: 'row', style: { marginTop: '10px' } }, h('button', { class: 'btn primary', onclick: () => { store.clearSession(); ctx.go('#/practice/new/mixed'); } }, 'Another mixed session'), wrong.length ? h('button', { class: 'btn', onclick: () => { store.clearSession(); ctx.go('#/practice/new/review'); } }, 'Review these now') : null, h('button', { class: 'btn ghost', onclick: () => { store.clearSession(); ctx.go('#/'); } }, 'Back to the dashboard')),

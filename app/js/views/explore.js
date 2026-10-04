@@ -74,11 +74,11 @@ export function exploreView(ctx, which) {
   const { store } = ctx;
   let struct = STRUCTS.find((x) => x.id === which) ? which : 'sll';
   const root = h('div');
-  const tabs = h('div', { class: 'row', role: 'toolbar', 'aria-label': 'Choose a structure' });
+  const tabs = h('div', { class: 'seg', role: 'toolbar', 'aria-label': 'Choose a structure' });
   const area = h('div', { style: { marginTop: '12px' } });
   let destroy = [];
   ctx.setCleanup(() => destroy.forEach((f) => f()));
-  root.append(h('div', { class: 'page-head' }, h('h1', {}, 'Explore workspace'), h('span', { class: 'muted small' }, 'Free exploration — nothing here is graded.')), tabs, area);
+  root.append(h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Explore workspace'), h('div', { class: 'subtitle' }, 'Build a structure, run operations step by step, edit pointers by hand.')), h('span', { class: 'muted small' }, 'Free exploration — nothing here is graded.')), tabs, area);
 
   const drawTabs = () => {
     clear(tabs).append(STRUCTS.map((s) => h('button', { class: 'btn small', 'aria-pressed': String(s.id === struct), onclick: () => { struct = s.id; history.replaceState(null, '', `#/explore/${s.id}`); drawTabs(); drawArea(); } }, s.label)));

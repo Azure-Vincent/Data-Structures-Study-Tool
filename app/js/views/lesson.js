@@ -21,13 +21,16 @@ export function lessonView(ctx, n, at) {
   let idx = at != null && !Number.isNaN(at) ? Math.max(0, Math.min(at, lesson.sections.length - 1)) : rec.at || 0;
   const root = h('div');
   const outline = h('ol', { class: 'history', style: { maxHeight: 'none' }, 'aria-label': 'Lesson outline' });
+  const progBar = h('span');
+  const progTxt = h('span');
   const body = h('div', { style: { minWidth: 0 } });
   let cleanupWs = [];
   ctx.setCleanup(() => cleanupWs.forEach((f) => f()));
 
   root.append(
-    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, `Lecture ${String(n).padStart(2, '0')} — ${lesson.title}`), h('div', { class: 'small muted' }, `Source: ${L.file} (${L.pages} pages)`)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, 'Practise this lecture'))),
-    h('div', { class: 'lesson-grid' }, h('details', { class: 'panel outline', open: window.innerWidth >= 1250 }, h('summary', {}, h('b', {}, `Lesson outline (${lesson.sections.length} steps)`)), outline), body),
+    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Lecture ${String(n).padStart(2, '0')}`), h('h1', {}, lesson.title), h('div', { class: 'subtitle' }, `Source: ${L.file} (${L.pages} pages)`)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, 'Practise this lecture'))),
+    h('div', { class: 'lesson-progress' }, h('div', { class: 'bar' }, progBar), progTxt),
+    h('div', { class: 'lesson-grid' }, h('details', { class: 'panel outline', open: window.innerWidth >= 1240 }, h('summary', {}, `Lesson outline · ${lesson.sections.length} steps`), outline), body),
   );
 
   function done(i) {
@@ -44,18 +47,22 @@ export function lessonView(ctx, n, at) {
 
   function drawOutline() {
     const r = store.lesson(lesson.id);
+    const pct = Math.round((r.done.length / lesson.sections.length) * 100);
+    progBar.style.width = pct + '%';
+    progTxt.textContent = `${r.done.length} of ${lesson.sections.length} steps done`;
     clear(outline).append(
       lesson.sections.map((s, i) =>
         h(
           'li',
-          { class: i === idx ? 'cur' : '', onclick: () => go(i), style: { display: 'flex', gap: '6px' } },
-          h('span', { 'aria-hidden': 'true', style: { width: '18px', color: r.done.includes(i) ? 'var(--ok)' : 'var(--ink-3)' } }, r.done.includes(i) ? '✓' : '·'),
+          { class: [i === idx ? 'cur' : '', r.done.includes(i) ? 'done' : ''], onclick: () => go(i), 'aria-current': i === idx ? 'step' : null },
+          h('span', { class: 'step-dot', 'aria-hidden': 'true' }, r.done.includes(i) ? '✓' : String(i + 1)),
           h('span', { class: 'k' }, TYPE_NAMES[s.type]),
           h('span', {}, s.title),
           h('span', { class: 'sr-only' }, r.done.includes(i) ? '(done)' : ''),
         ),
       ),
     );
+    outline.querySelector('li.cur')?.scrollIntoView({ block: 'nearest' });
   }
 
   function go(i) {
@@ -72,15 +79,15 @@ export function lessonView(ctx, n, at) {
     const s = lesson.sections[idx];
     const card = h('section', { class: 'section-card' });
     card.append(
-      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `${idx + 1} / ${lesson.sections.length}`), h('h2', { tabindex: '-1' }, s.title), refPill(s.ref), s.variant === 'supplementary' ? h('span', { class: 'pill supp' }, 'Supplementary') : null),
+      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `Step ${idx + 1} of ${lesson.sections.length}`), h('span', { class: 'pill type' }, TYPE_NAMES[s.type] || s.type), refPill(s.ref), s.variant === 'supplementary' ? h('span', { class: 'pill supp' }, 'Supplementary') : null, h('h2', { tabindex: '-1' }, s.title)),
     );
     const nav = h(
       'div',
-      { class: 'row', style: { marginTop: '18px' } },
-      h('button', { class: 'btn', disabled: idx === 0, onclick: () => go(idx - 1) }, '◀ Previous'),
+      { class: 'section-nav' },
+      h('button', { class: 'btn', disabled: idx === 0, onclick: () => go(idx - 1) }, '← Previous'),
       h('span', { class: 'spacer' }),
     );
-    const nextBtn = h('button', { class: 'btn primary', onclick: () => { done(idx); if (idx < lesson.sections.length - 1) go(idx + 1); else finish(); } }, idx < lesson.sections.length - 1 ? 'Continue ▶' : 'Finish lesson');
+    const nextBtn = h('button', { class: 'btn primary', onclick: () => { done(idx); if (idx < lesson.sections.length - 1) go(idx + 1); else finish(); } }, idx < lesson.sections.length - 1 ? 'Continue →' : 'Finish lesson');
     switch (s.type) {
       case 'read':
         card.append(md(s.body));
@@ -109,7 +116,7 @@ export function lessonView(ctx, n, at) {
           },
         });
         cleanupWs.push(() => ws.destroy());
-        card.append(h('p', { class: 'small muted' }, s.predict ? 'The simulation will pause before key steps and ask you to predict them. Keys: → step, ← back, Space play/pause.' : 'Keys: → step, ← back, Space play/pause.'), ws.el);
+        card.append(h('p', { class: 'small muted' }, s.predict ? 'The simulation will pause before key steps and ask you to predict them. ' : '', 'Keys: ', h('kbd', {}, '→'), ' step, ', h('kbd', {}, '←'), ' back, ', h('kbd', {}, 'Space'), ' play/pause.'), ws.el);
         break;
       }
       case 'codesim': {
@@ -188,10 +195,12 @@ export function lessonView(ctx, n, at) {
 
   function finish() {
     store.markLessonStep(lesson.id, lesson.sections.length - 1, lesson.sections.length);
+    drawOutline();
     clear(body).append(
       h(
         'section',
-        { class: 'panel' },
+        { class: 'section-card finish-card' },
+        h('div', { class: 'badge', 'aria-hidden': 'true' }, '✓'),
         h('h2', {}, `Lecture ${String(n).padStart(2, '0')} lesson complete`),
         h('p', { class: 'prose' }, 'These topics will now come back in mixed practice, with fresh values and less guidance. Mastery needs several independent correct answers across different exercise types.'),
         h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, `Practise Lecture ${String(n).padStart(2, '0')}`), n < 14 ? h('button', { class: 'btn', onclick: () => ctx.go(`#/lesson/${n + 1}/0`) }, `Next: Lecture ${String(n + 1).padStart(2, '0')}`) : null, h('button', { class: 'btn ghost', onclick: () => go(0) }, 'Restart this lesson')),
