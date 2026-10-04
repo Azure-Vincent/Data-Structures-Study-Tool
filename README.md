@@ -156,7 +156,6 @@ electron/preload.cjs    the small update API the page can call
 server.js               zero-dependency local web server (browser mode)
 tests/                  node:test suites; tests/ui/ optional Playwright browser checks
 .github/workflows/      builds the Windows .exe on GitHub
-.github/rulesets/       branch and release-tag protection to import into GitHub (see its README)
 docs/LECTURE_MAP.md     page-by-page mapping and corrections
 ```
 
