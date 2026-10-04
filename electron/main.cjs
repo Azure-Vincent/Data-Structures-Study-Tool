@@ -3,6 +3,7 @@
 const { app, BrowserWindow, protocol, net, shell, Menu } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const updates = require('./updater.cjs');
 
 const APP_DIR = path.join(__dirname, '..', 'app');
 
@@ -20,7 +21,7 @@ function createWindow() {
     backgroundColor: '#f6f7f9',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, preload: path.join(__dirname, 'preload.cjs') },
   });
   win.loadURL('app://local/index.html');
   // links to the outside world open in the normal browser
@@ -50,11 +51,12 @@ app.whenReady().then(() => {
     Menu.buildFromTemplate([
       { label: 'File', submenu: [{ role: 'quit' }] },
       { label: 'View', submenu: [{ role: 'reload' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }, { role: 'toggleDevTools' }] },
+      { label: 'Help', submenu: [{ label: 'Check for updates…', click: () => updates.checkNow() }, { label: `DS Study Lab ${app.getVersion()}`, enabled: false }] },
     ]),
   );
-  createWindow();
+  updates.initUpdates(createWindow());
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) updates.setWindow(createWindow());
   });
 });
 

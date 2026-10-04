@@ -38,6 +38,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # The app compares its own version with the latest release, so a tagged
+      # build must carry the tag's version (v1.2.0 -> 1.2.0).
+      - name: Use the tag as the app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - name: Build portable .exe and installer
         run: npx electron-builder --win portable nsis --x64 --publish never
         env:
@@ -45,7 +51,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: DS-Study-Lab-windows
-          path: dist/*.exe
+          # latest.yml + .blockmap let installed copies find and download updates
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
           if-no-files-found: error
 
   release:
@@ -59,5 +69,8 @@ jobs:
           path: dist
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
           generate_release_notes: true

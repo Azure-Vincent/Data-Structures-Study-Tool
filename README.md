@@ -21,6 +21,15 @@ You watch every pointer change step by step, predict what happens next, rewire p
 
 The .exe is not code-signed, so Windows SmartScreen may say “Windows protected your PC”. Click **More info → Run anyway**.
 
+### Updates
+
+The desktop app checks GitHub for a newer Release when it starts and every few hours while it is open (turn this off under **Settings & data → Updates**; nothing about you or your progress is sent). Your progress is kept across updates.
+
+- **Installed copy** (`setup.exe`): the new version downloads in the background; the app offers **Restart and update**, or installs it the next time you quit.
+- **Portable copy** (`portable.exe`): it cannot replace itself, so it shows **Update available** with a button that opens the Release page to download the new file.
+
+To ship an update, push a higher version tag (for example `git tag v1.0.3 && git push origin v1.0.3`). The workflow builds the app *as* that version and attaches the two .exe files plus `latest.yml` and `.blockmap` files to the Release — the installed copies need those two to update themselves. Tags must keep increasing (`v1.0.3` → `v1.0.4` → `v1.1.0` …).
+
 Pushing from the command line, the first time:
 ```bash
 git init
@@ -142,6 +151,8 @@ app/                    the web app (no build step, plain ES modules)
   js/content/           lessons (with page references) and concept list
   js/ui/ + js/views/    presentation only
 electron/main.cjs       desktop wrapper (serves app/ from a private app:// origin)
+electron/updater.cjs    update checks (installer: electron-updater; portable: GitHub Releases API)
+electron/preload.cjs    the small update API the page can call
 server.js               zero-dependency local web server (browser mode)
 tests/                  node:test suites; tests/ui/ optional Playwright browser checks
 .github/workflows/      builds the Windows .exe on GitHub

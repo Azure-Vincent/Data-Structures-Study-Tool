@@ -2292,3 +2292,37 @@ a.dot:hover {
 .setting-row select {
   min-width: 190px;
 }
+
+/* ---------------------------------------------------------------- update alert (desktop app) */
+.update-banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40;
+  width: min(360px, calc(100vw - 32px));
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--pointer);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-l);
+  padding: 14px 16px;
+  animation: slide-up 200ms ease-out;
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.update-banner[hidden] {
+  display: none;
+}
+.update-banner .update-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.update-banner p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}

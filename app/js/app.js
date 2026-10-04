@@ -14,6 +14,7 @@ import { settingsView } from './views/settings.js';
 import { generateExercise } from './exercises/registry.js';
 import { renderExercise } from './ui/exercise.js';
 import { icon } from './ui/icons.js';
+import { mountUpdateBanner } from './ui/updates.js';
 
 function safeStorage() {
   try {
@@ -176,3 +177,4 @@ applySettings();
 window.addEventListener('hashchange', route);
 store.onChange(() => drawNav());
 route();
+mountUpdateBanner();
