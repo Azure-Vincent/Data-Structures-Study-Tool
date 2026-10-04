@@ -1,4 +1,5 @@
 import { h, toast, download } from '../ui/dom.js';
+import { updatesPanel } from '../ui/updates.js';
 
 export function settingsView(ctx) {
   const { store } = ctx;
@@ -24,6 +25,8 @@ export function settingsView(ctx) {
       if (r.ok) ctx.go('#/');
     },
   });
+  const upd = updatesPanel();
+  if (upd) ctx.setCleanup(upd.cleanup);
   return h(
     'div',
     {},
@@ -49,6 +52,7 @@ export function settingsView(ctx) {
       h('p', { class: 'small' }, 'Deletes every attempt, mistake, lesson checkmark and the current practice session. Display settings are kept. This cannot be undone — export first if unsure.'),
       h('button', { class: 'btn danger', onclick: () => { if (window.confirm('Delete ALL progress on this computer? This cannot be undone.')) { store.reset(); toast('All progress was reset.'); ctx.go('#/'); } } }, 'Reset all progress'),
     ),
+    upd,
     h(
       'section',
       { class: 'panel' },
