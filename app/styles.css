@@ -548,6 +548,22 @@ h3 {
   box-shadow: none;
   background: var(--panel);
 }
+.adjlist .adj-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+@media (max-width: 600px) {
+  .adjlist .adj-row {
+    flex-wrap: wrap;
+  }
+  /* long chip labels (repair scenarios, structures) wrap instead of widening the page */
+  .seg .btn {
+    white-space: normal;
+    text-align: left;
+  }
+}
 .seg .btn[aria-pressed='true'] {
   background: var(--pointer);
   border-color: var(--pointer);
@@ -598,6 +614,17 @@ label.inline {
   display: inline-flex;
   gap: 6px;
   align-items: center;
+  max-width: 100%;
+  min-width: 0;
+}
+/* A select is as wide as its longest option; on narrow screens let it shrink
+   (the browser shows the full text in its picker) instead of widening the page. */
+select {
+  max-width: 100%;
+}
+label.inline > select {
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 /* ---------------------------------------------------------------- panels */
@@ -955,6 +982,37 @@ pre.code {
 }
 .order-item.dragging {
   opacity: 0.4;
+}
+.order-item .grip {
+  display: none; /* only on devices with a touch screen (see below) */
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 36px;
+  margin: -4px 0;
+  color: var(--ink-3);
+  font-size: 18px;
+  cursor: grab;
+  touch-action: none; /* a finger on the handle drags the line instead of scrolling */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.order-item.touch-dragging {
+  opacity: 1;
+  border-color: var(--pointer);
+  box-shadow: var(--shadow-l);
+  background: var(--pointer-softer);
+}
+@media (any-pointer: coarse) {
+  .order-item .grip {
+    display: grid;
+  }
+}
+@media (pointer: coarse) {
+  .order-item .grip {
+    width: 40px;
+    height: 44px;
+  }
 }
 .fill-code {
   background: var(--panel-2);

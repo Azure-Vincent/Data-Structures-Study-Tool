@@ -45,15 +45,32 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
     status.textContent = m;
   }
 
-  function onField(addr, field) {
+  // Keyboard users continue in the target list, so focus moves there. Mouse
+  // users get the same focus without the page scrolling. On touch screens focus
+  // stays put: moving it would scroll the diagram out of reach of the next tap.
+  function focusTarget(via) {
+    const sel = panel.querySelector('select[data-role=target]');
+    if (!sel || via === 'touch' || via === 'pen') return;
+    if (via === 'keyboard') sel.focus();
+    else sel.focus({ preventScroll: true });
+  }
+  function onField(addr, field, how = {}) {
+    // A fingertip covers most of a small node, and the browser snaps taps to the
+    // nearest field. So on touch, once a pointer is chosen, a tap anywhere on a
+    // different node picks that node as the target.
+    const touchLike = how.via === 'touch' || how.via === 'pen';
+    if (touchLike && armed && !(armed.type === 'field' && armed.addr === addr)) {
+      onNode(addr);
+      return;
+    }
     armed = armed && armed.type === 'field' && armed.addr === addr && armed.field === field ? null : { type: 'field', addr, field };
     draw();
-    if (armed) panel.querySelector('select[data-role=target]')?.focus();
+    if (armed) focusTarget(how.via || 'keyboard');
   }
-  function onVar(name) {
+  function onVar(name, how = {}) {
     armed = armed && armed.type === 'var' && armed.name === name ? null : { type: 'var', name };
     draw();
-    if (armed) panel.querySelector('select[data-role=target]')?.focus();
+    if (armed) focusTarget(how.via || 'keyboard');
   }
   function onNode(addr) {
     if (!armed) {
@@ -111,7 +128,7 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
     const tgtSel = h('select', { 'aria-label': 'new target', 'data-role': 'target' }, h('option', { value: 'null' }, 'NULL'), Object.values(w.nodes).map((n) => h('option', { value: n.addr }, `${n.addr}  (node ${n.data}${n.freed ? ', FREED' : ''})`)));
     panel.append(
       h('div', { class: 'row' }, h('b', { class: 'small' }, armed ? `Changing ${armed.type === 'var' ? armed.name : `${armed.addr}->${armed.field}`}:` : 'Set a pointer:'), srcSel, h('span', {}, '='), tgtSel, h('button', { class: 'btn primary small', disabled: !armed, onclick: () => armed && connect(armed, tgtSel.value === 'null' ? null : Number(tgtSel.value)) }, 'Apply'), armed ? h('button', { class: 'btn small', 'data-null-drop': '1', onclick: () => connect(armed, null) }, 'Set to NULL') : null, armed ? h('button', { class: 'btn ghost small', onclick: () => { armed = null; draw(); } }, 'Cancel') : null),
-      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, 'Mouse: click a pointer field (next/left/right) or a variable box, then click the node it should point to — or drag from the field onto the node. Keyboard: Tab to a field and press Enter, then pick the target here and press Apply.'),
+      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, 'Mouse: click a pointer field (next/left/right) or a variable box, then click the node it should point to — or drag from the field onto the node. Keyboard: Tab to a field and press Enter, then pick the target here and press Apply.' + (window.matchMedia?.('(any-pointer: coarse)').matches ? ' Touch: tap the pointer, then tap anywhere on the target node.' : '')),
       msg ? h('div', { class: 'feedback info small' }, msg) : null,
     );
     // history

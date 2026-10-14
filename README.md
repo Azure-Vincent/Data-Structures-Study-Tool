@@ -6,6 +6,23 @@ You watch every pointer change step by step, predict what happens next, rewire p
 
 ---
 
+## Use it in a browser or on your phone
+
+The app is also published as a website:
+
+**https://azure-vincent.github.io/Data-Structures-Study-Tool/**
+
+It works in any modern browser on a phone, tablet or computer, with no install. On a phone you can choose **Add to Home Screen** to open it like an app.
+- Progress is saved in that browser on that device. To move it to another device, use **Settings & data → Export / Import**.
+- The website needs an internet connection to load. The desktop app and the local launch scripts below work fully offline.
+- On touch screens:
+  - to rewire a pointer, tap the pointer field, then tap anywhere on the target node;
+  - to reorder statements, drag them by their ⠿ handle.
+
+The workflow **Publish website** (`.github/workflows/pages.yml`) runs the tests and republishes the site on every push to `main`. It publishes exactly the `app/` folder. **One-time setup by the repository owner:** Settings → Pages → Build and deployment → Source: **GitHub Actions**. Until that is switched on, the workflow's deploy step fails.
+
+---
+
 ## Get the Windows .exe from GitHub (no setup needed)
 
 1. Create a new repository on GitHub and upload this whole folder (or `git push` it — see below).
@@ -194,6 +211,11 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `interact.py` covers predictions, rewiring (click, drag and keyboard), practice resume after reload, explore, repair, BFS and a tree traversal.
 - `kinds.py` answers all 65 templates through the real interface.
 - `lessons.py` opens all 158 lesson sections.
+- `devices.py` runs the touch checks with real touch events on three phone sizes (412, 390 and 320 px wide):
+  - every page fits the screen;
+  - the menu, rewiring by tap, reordering by dragging, the complexity lab and the Pseudocode Lab all work.
+
+  It then checks that desktop keyboard and mouse behaviour is unchanged. Set `BASE=` to test the published site.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
 
 ### What was verified for this release
@@ -214,4 +236,5 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - Two things depend on reading the handwriting, which was ambiguous:
   - the directed graph on Lec 13 p.6;
   - the remark on Lec 14 p.3 that the distance “between e and a is 2”, which the app treats as an edge label rather than a distance.
+- The website is not an offline app: there is no service worker, so a phone needs a connection to open it.
 - Diagrams with many nodes scroll sideways instead of shrinking. Symbols such as → depend on the fonts installed (no web fonts, so the app stays fully offline).

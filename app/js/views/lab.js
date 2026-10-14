@@ -457,7 +457,7 @@ export function labView(ctx, a, b) {
         'div',
         { class: 'row', style: { marginTop: '6px' } },
         is.step > 0 ? h('button', { class: 'btn small', onclick: () => gotoStep(is.step) }, 'Go to this step') : null,
-        is.step > 0 && is.category !== 'syntax' ? h('button', { class: 'btn small', onclick: () => { gotoStep(is.step - 1); editor.focus(); } }, 'Undo this step') : null,
+        is.step > 0 && is.category !== 'syntax' ? h('button', { class: 'btn small', onclick: () => { gotoStep(is.step - 1); if (!window.matchMedia?.('(pointer: coarse)').matches) editor.focus(); } }, 'Undo this step') : null,
         canCompare ? h('button', { class: 'btn small ghost', 'aria-expanded': String(open), onclick: () => { openIssue = open ? null : key; drawProblems(); } }, open ? 'Hide before / after' : 'Show before / after') : null,
       ),
     );

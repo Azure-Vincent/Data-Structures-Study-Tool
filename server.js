@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), 'app');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 const port = Number(process.argv[2] || process.env.PORT || 5173);
 
 const server = http.createServer(async (req, res) => {
