@@ -121,6 +121,13 @@ The checker names the first problematic action. Click any action to undo back to
 
 You can also edit pointers by hand with a live diagnosis.
 
+**Pseudocode Lab.** You write pseudocode and run it line by line on a simulated heap. A real parser and interpreter execute it; nothing is evaluated as JavaScript. You watch nodes being created, pointers changing, traversals and deletions as separate steps. Nodes keep stable addresses (@100, @200, …), so a value change looks different from a pointer change. Controls: Run/Pause, Step, Back, Run to end, Reset, Stop, speed and an instruction limit.
+- Feedback separates syntax errors, runtime errors (NULL, deleted nodes, undefined variables, endless loops) and logic warnings (unreachable nodes, cycles, broken links). Each problem has a before/after view of the step that caused it.
+- 21 guided exercises cover singly, doubly and circular lists, stacks, queues, trees and graphs. Each is checked on several test cases, including empty and single-node structures, with three hints before the solution.
+- In free mode you build any starting structure.
+
+The language is documented in `docs/PSEUDOCODE.md` and in the app's syntax reference.
+
 **Complexity lab.** Plots real operation counts for n = 1…24, for example:
 - head-only vs tail pointer
 - stack at the head vs at the tail
@@ -150,6 +157,7 @@ app/                    the web app (no build step, plain ES modules)
   js/progress/          storage, mastery, spaced review, session builder
   js/content/           lessons (with page references) and concept list
   js/ui/ + js/views/    presentation only
+  js/lab/               Pseudocode Lab: parser (lang.js), interpreter (machine.js), analysis, exercises
 electron/main.cjs       desktop wrapper (serves app/ from a private app:// origin)
 electron/updater.cjs    update checks (installer: electron-updater; portable: GitHub Releases API)
 electron/preload.cjs    the small update API the page can call
@@ -160,7 +168,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 ```
 
 ## Testing
-`npm test` runs 105 automated tests, covering:
+`npm test` runs 127 automated tests, covering:
 - every pointer operation on empty, one-node and longer lists
 - invalid positions and repeated operations
 - doubly linked consistency in both directions
@@ -172,12 +180,21 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - BFS edges vs weights, and list vs matrix costs
 - **every exercise template across 40 random seeds**: the model answer is accepted, a wrong answer is rejected, generation is deterministic, and there are 3 hints each
 - every lesson simulation and exercise
+- the Pseudocode Lab:
+  - the parser and its syntax errors
+  - the interpreter
+  - every runtime error type and the instruction limit
+  - lost-reference detection and tolerance of temporary states
+  - the final structure checks
+  - step back/forward/stop/reset over real snapshots
+  - every lab exercise: its solution passes, its starter fails, and each common mistake gets the right diagnosis
 - progress persistence across reload, mastery rules, import/export/reset, corrupted storage, and session rebuilding
 
 `tests/ui/*.py` are optional browser checks, run with Playwright against `node server.js 5173`:
 - `interact.py` covers predictions, rewiring (click, drag and keyboard), practice resume after reload, explore, repair, BFS and a tree traversal.
 - `kinds.py` answers all 65 templates through the real interface.
 - `lessons.py` opens all 158 lesson sections.
+- `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
 
 ### What was verified for this release
 - All 105 Node tests pass.

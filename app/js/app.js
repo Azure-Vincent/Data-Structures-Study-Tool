@@ -11,6 +11,7 @@ import { repairView } from './views/repair.js';
 import { complexityView } from './views/complexity.js';
 import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
+import { labView } from './views/lab.js';
 import { generateExercise } from './exercises/registry.js';
 import { renderExercise } from './ui/exercise.js';
 import { icon } from './ui/icons.js';
@@ -94,7 +95,7 @@ function drawNav() {
       }),
     ),
     h('div', { class: 'nav-group' }, 'Tools'),
-    h('div', { class: 'nav' }, navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair'), navLink('#/complexity', 'Complexity lab', null, 'complexity')),
+    h('div', { class: 'nav' }, navLink('#/lab', 'Pseudocode Lab', null, 'code'), navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair'), navLink('#/complexity', 'Complexity lab', null, 'complexity')),
     h('div', { class: 'nav-group' }, 'App'),
     h('div', { class: 'nav' }, navLink('#/settings', 'Settings & data', null, 'settings')),
   );
@@ -132,6 +133,9 @@ function route() {
         break;
       case 'repair':
         view = repairView(ctx, parts[1] || null);
+        break;
+      case 'lab':
+        view = labView(ctx, parts[1] || null, parts[2] || null);
         break;
       case 'complexity':
         view = complexityView(ctx);

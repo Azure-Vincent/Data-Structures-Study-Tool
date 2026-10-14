@@ -24,6 +24,7 @@ export const TYPE_LABELS = {
   complexity: 'Count the work',
   classify: 'Classify',
   build: 'Build',
+  lab: 'Pseudocode Lab',
 };
 
 /**

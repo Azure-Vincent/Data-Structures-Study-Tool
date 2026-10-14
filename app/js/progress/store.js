@@ -28,6 +28,7 @@ export function blankProgress(now = Date.now()) {
     mistakes: [],
     lessons: {},
     session: null,
+    lab: { drafts: {}, solved: {}, last: null },
     settings: { motion: 'system', speed: 1, timer: false, timerMinutes: 8, theme: 'system', predictMode: true },
   };
 }
@@ -209,6 +210,38 @@ export class ProgressStore {
     l.at = Math.max(l.at, Math.min(idx + 1, total - 1));
     if (l.done.length >= total) l.completed = true;
     this.save();
+  }
+
+  // ---- pseudocode lab
+  labData() {
+    const l = (this.data.lab ||= {});
+    l.drafts ||= {};
+    l.solved ||= {};
+    return l;
+  }
+  labDraft(key) {
+    return this.labData().drafts[key];
+  }
+  setLabDraft(key, code) {
+    this.labData().drafts[key] = String(code).slice(0, 20000);
+    this.saveQuiet();
+  }
+  setLabLast(route) {
+    this.labData().last = route;
+    this.saveQuiet();
+  }
+  markLabSolved(id) {
+    this.labData().solved[id] = this.now();
+    this.save();
+  }
+  /** Persist without notifying listeners (for frequent writes like drafts). */
+  saveQuiet() {
+    this.data.updatedAt = this.now();
+    try {
+      this.storage.setItem(this.key, JSON.stringify(this.data));
+    } catch (e) {
+      console.warn('Could not save progress', e);
+    }
   }
 
   // ---- sessions

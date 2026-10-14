@@ -61,6 +61,9 @@ export const CONCEPT_BY_ID = Object.fromEntries(CONCEPTS.map((c) => [c.id, c]));
 
 export const MISTAKE_LABELS = {
   'lost-access': 'Overwrote the only pointer to the rest of the list',
+  'wrong-result': 'Result did not match the goal',
+  'undefined-var': 'Used a variable before giving it a value',
+  runtime: 'Runtime error in pseudocode',
   'free-before-unlink': 'Freed a node that was still linked',
   dangling: 'Left a pointer to freed memory (dangling)',
   'back-link': 'Forgot or mis-set a backward (left) link',
