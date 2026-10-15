@@ -11,6 +11,20 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: t
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
+function menuTemplate() {
+  const isMac = process.platform === 'darwin';
+  return [
+    // macOS puts the first menu under the app's name (About, Hide, Quit …)
+    ...(isMac ? [{ role: 'appMenu' }] : [{ label: 'File', submenu: [{ role: 'quit' }] }]),
+    // On macOS, Cmd+C / Cmd+V / Cmd+Z / Cmd+A in text fields only work through
+    // these Edit menu roles; on Windows and Linux they add the same shortcuts.
+    { role: 'editMenu' },
+    { label: 'View', submenu: [{ role: 'reload' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }, { role: 'toggleDevTools' }] },
+    ...(isMac ? [{ role: 'windowMenu' }] : []),
+    { label: 'Help', submenu: [{ label: 'Check for updates…', click: () => updates.checkNow() }, { label: `DS Study Lab ${app.getVersion()}`, enabled: false }] },
+  ];
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1360,
@@ -44,16 +58,11 @@ app.whenReady().then(() => {
     let rel = decodeURIComponent(pathname);
     if (rel === '/' || rel === '') rel = '/index.html';
     const file = path.normalize(path.join(APP_DIR, rel));
-    if (!file.startsWith(APP_DIR)) return new Response('Forbidden', { status: 403 });
+    // stay inside app/ (a bare prefix test would also accept a sibling folder)
+    if (file !== APP_DIR && !file.startsWith(APP_DIR + path.sep)) return new Response('Forbidden', { status: 403 });
     return net.fetch(pathToFileURL(file).toString());
   });
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate([
-      { label: 'File', submenu: [{ role: 'quit' }] },
-      { label: 'View', submenu: [{ role: 'reload' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }, { role: 'toggleDevTools' }] },
-      { label: 'Help', submenu: [{ label: 'Check for updates…', click: () => updates.checkNow() }, { label: `DS Study Lab ${app.getVersion()}`, enabled: false }] },
-    ]),
-  );
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate()));
   updates.initUpdates(createWindow());
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) updates.setWindow(createWindow());

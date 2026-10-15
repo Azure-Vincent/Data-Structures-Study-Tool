@@ -63,6 +63,7 @@ export function dashboardView(ctx) {
       { class: 'quick' },
       quick('shuffle', 'Mixed practice', 'Eight short tasks, weakest topics first', () => ctx.go('#/practice/new/mixed')),
       quick('target', 'Review missed concepts', due.length ? `${due.length} topic${due.length > 1 ? 's' : ''} due now` : 'Revisit what you got wrong', () => ctx.go('#/practice/new/review')),
+      quick('code', 'Pseudocode Lab', 'Write pseudocode and watch it run', () => ctx.go('#/lab')),
       quick('explore', 'Free exploration', 'Build structures and run operations', () => ctx.go('#/explore')),
     ),
     h('div', { class: 'stats' }, stat('Topics mastered', mastered, CONCEPTS.length, (mastered / CONCEPTS.length) * 100), stat('Lesson steps done', stepsDone, stepsTotal, stepsTotal ? (stepsDone / stepsTotal) * 100 : 0), stat('Lessons finished', lessonsDone, LECTURES.length), stat('Answers checked', attempts)),

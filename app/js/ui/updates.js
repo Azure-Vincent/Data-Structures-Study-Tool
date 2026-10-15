@@ -4,6 +4,14 @@ import { h, clear } from './dom.js';
 
 const bridge = typeof window !== 'undefined' ? window.dslabDesktop : null;
 const DISMISS_KEY = 'dslab-update-dismissed';
+const MODE_TEXT = {
+  installed: 'Installed copy — updates download in the background.',
+  appimage: 'AppImage — updates download in the background.',
+  portable: 'Portable copy — you will be told when a new version is out, with a link to download it.',
+  mac: 'macOS copy — you will be told when a new version is out, with a link to download it.',
+  package: 'Installed from the .deb package — you will be told when a new version is out, with a link to download it.',
+  dev: 'Development run — you will only be told about new releases.',
+};
 
 export const desktopUpdates = !!bridge;
 
@@ -89,7 +97,7 @@ export function updatesPanel() {
     auto.checked = i.auto;
     auto.addEventListener('change', () => bridge.setAutoUpdate(auto.checked));
     panel.append(
-      h('div', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Installed version', h('small', {}, i.mode === 'installed' ? 'Installed copy — updates download in the background.' : i.mode === 'portable' ? 'Portable copy — you will be told when a new version is out, with a link to download it.' : 'Development run — you will only be told about new releases.')), h('b', {}, i.version)),
+      h('div', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Installed version', h('small', {}, MODE_TEXT[i.mode] || MODE_TEXT.dev)), h('b', {}, i.version)),
       h('label', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Check for updates automatically', h('small', {}, 'Asks GitHub for the latest release. Nothing about you or your progress is sent.')), auto),
       line,
       acts,

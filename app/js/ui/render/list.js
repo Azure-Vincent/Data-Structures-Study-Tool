@@ -36,7 +36,8 @@ export function renderList(world, opts = {}) {
     .filter((a) => !placed.has(a))
     .sort((a, b) => a - b);
   others.forEach((a, i) => placed.set(a, { x: 130 + i * (G.w + G.gap), y: ROW1, row: 1 }));
-  const lost = new Set(lostNodes(w));
+  // callers that know more roots than w.vars (e.g. locals of outer calls) pass their own set
+  const lost = new Set(opts.lost || lostNodes(w));
 
   const maxX = Math.max(400, ...[...placed.values()].map((p) => p.x + G.w)) + 70;
   const hasRow1 = others.length > 0;

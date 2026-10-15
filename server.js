@@ -3,7 +3,7 @@
 // Usage: node server.js [port]   — then open http://localhost:<port>
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { extname, join, normalize, dirname } from 'node:path';
+import { extname, join, normalize, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 
@@ -16,15 +16,18 @@ const server = http.createServer(async (req, res) => {
     let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (path.endsWith('/')) path += 'index.html';
     const file = normalize(join(ROOT, path));
-    if (!file.startsWith(ROOT)) {
+    // must stay inside app/ (a bare prefix test would also accept a sibling like app2/)
+    if (file !== ROOT && !file.startsWith(ROOT + sep)) {
       res.writeHead(403).end('Forbidden');
       return;
     }
-    await stat(file);
+    if (!(await stat(file)).isFile()) throw new Error('not a file');
+    const body = await readFile(file); // read first: headers can only be sent once
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
-    res.end(await readFile(file));
+    res.end(body);
   } catch {
-    res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
+    if (!res.headersSent) res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
   }
 });
 
