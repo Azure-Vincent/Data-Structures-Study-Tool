@@ -108,22 +108,14 @@ export function renderExercise(ex, cb = {}) {
       const draw = () => {
         clear(ol);
         items.forEach((it, i) => {
-          const grip = h('span', { class: 'grip', 'aria-hidden': 'true', title: 'Drag to move' }, '⠿');
           const li = h(
             'li',
             { class: 'order-item', draggable: 'true', 'data-id': it.id },
-            grip,
             h('span', { class: 'num' }, String(i + 1)),
             h('pre', {}, it.text),
             h('button', { class: 'btn small', 'aria-label': `move “${it.text.split('\n')[0]}” up`, disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
             h('button', { class: 'btn small', 'aria-label': `move “${it.text.split('\n')[0]}” down`, disabled: i === items.length - 1, onclick: () => move(i, 1) }, '↓'),
           );
-          // Touch / pen: phones have no HTML drag-and-drop, so the grip drives a pointer drag.
-          grip.addEventListener('pointerdown', (e) => {
-            if (e.pointerType === 'mouse') return; // the mouse uses native drag-and-drop
-            e.preventDefault();
-            touchDrag(e, li);
-          });
           li.addEventListener('dragstart', () => {
             dragId = it.id;
             li.classList.add('dragging');
@@ -142,43 +134,6 @@ export function renderExercise(ex, cb = {}) {
           ol.append(li);
         });
       };
-      const touchDrag = (e, li) => {
-        // Listen on window: moving the line in the DOM releases pointer capture.
-        const id = e.pointerId;
-        const startY = e.clientY;
-        li.classList.add('dragging', 'touch-dragging');
-        let scroller = 0;
-        const onMove = (ev) => {
-          if (ev.pointerId !== id) return;
-          ev.preventDefault();
-          const y = ev.clientY;
-          const before = [...ol.children].find((o) => o !== li && y < o.getBoundingClientRect().top + o.getBoundingClientRect().height / 2);
-          if (before) {
-            if (li.nextElementSibling !== before) ol.insertBefore(li, before);
-          } else if (ol.lastElementChild !== li) ol.append(li);
-          // keep the list moving when the finger is dragged to a screen edge
-          // (not merely because the drag started near one)
-          const dy = y - startY;
-          scroller = y < 70 && dy < -12 ? -10 : y > window.innerHeight - 70 && dy > 12 ? 10 : 0;
-        };
-        const tick = setInterval(() => scroller && window.scrollBy(0, scroller), 30);
-        const finish = (commit) => {
-          clearInterval(tick);
-          window.removeEventListener('pointermove', onMove);
-          window.removeEventListener('pointerup', onUp);
-          window.removeEventListener('pointercancel', onCancel);
-          if (commit) {
-            const order = [...ol.children].map((x) => x.dataset.id);
-            items = order.map((id) => items.find((x) => x.id === id));
-          }
-          draw();
-        };
-        const onUp = (ev) => ev.pointerId === id && finish(true);
-        const onCancel = (ev) => ev.pointerId === id && finish(false);
-        window.addEventListener('pointermove', onMove, { passive: false });
-        window.addEventListener('pointerup', onUp);
-        window.addEventListener('pointercancel', onCancel);
-      };
       const move = (i, d) => {
         const j = i + d;
         [items[i], items[j]] = [items[j], items[i]];
@@ -186,7 +141,7 @@ export function renderExercise(ex, cb = {}) {
         ol.querySelectorAll('.order-item')[j]?.querySelectorAll('button')[d < 0 ? 0 : 1]?.focus();
       };
       draw();
-      input.append(h('p', { class: 'small muted' }, window.matchMedia?.('(any-pointer: coarse)').matches ? 'Drag a statement by its ⠿ handle, or use the ↑ ↓ buttons. Any order that works is accepted.' : 'Drag the statements, or use the ↑ ↓ buttons. Any order that works is accepted.'), ol);
+      input.append(h('p', { class: 'small muted' }, 'Drag the statements, or use the ↑ ↓ buttons. Any order that works is accepted.'), ol);
       getResponse = () => items.map((x) => x.id);
       break;
     }

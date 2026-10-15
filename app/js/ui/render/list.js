@@ -148,13 +148,13 @@ export function renderList(world, opts = {}) {
         });
         hit.addEventListener('click', (e) => {
           e.stopPropagation();
-          opts.interactive.onField(a, f, { via: inputKind(e, hit) });
+          opts.interactive.onField(a, f);
         });
         hit.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             e.stopPropagation();
-            opts.interactive.onField(a, f, { via: 'keyboard' });
+            opts.interactive.onField(a, f);
           }
         });
         enableDrag(hit, svg, (target) => opts.interactive.onConnect({ type: 'field', addr: a, field: f }, target), id);
@@ -245,11 +245,11 @@ export function renderList(world, opts = {}) {
     if (opts.interactive && opts.interactive.onVar) {
       const armed = opts.interactive.armed && opts.interactive.armed.type === 'var' && opts.interactive.armed.name === v;
       const hit = s('rect', { class: `field-hit${armed ? ' armed' : ''}`, x: bx, y: by, width: W, height: 38, rx: 4, tabindex: 0, role: 'button', 'aria-label': `edit pointer variable ${v}, currently ${val === null ? 'NULL' : val}` });
-      hit.addEventListener('click', (e) => opts.interactive.onVar(v, { via: inputKind(e, hit) }));
+      hit.addEventListener('click', () => opts.interactive.onVar(v));
       hit.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          opts.interactive.onVar(v, { via: 'keyboard' });
+          opts.interactive.onVar(v);
         }
       });
       enableDrag(hit, svg, (target) => opts.interactive.onConnect({ type: 'var', name: v }, target), id);
@@ -272,16 +272,10 @@ export function renderList(world, opts = {}) {
   return svg;
 }
 
-/** 'mouse' | 'touch' | 'pen' for a click, remembered from the pointerdown that started it. */
-function inputKind(e, hit) {
-  return e.pointerType || hit.dataset.pointerType || 'mouse';
-}
-
 function enableDrag(hit, svg, onDrop, id) {
   let line = null;
   let start = null;
   hit.addEventListener('pointerdown', (e) => {
-    hit.dataset.pointerType = e.pointerType || 'mouse';
     if (e.button !== 0) return;
     const pt = toSvg(svg, e);
     start = { ...pt, moved: false, id: e.pointerId };

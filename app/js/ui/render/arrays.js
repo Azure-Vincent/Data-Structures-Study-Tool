@@ -86,7 +86,7 @@ export function renderMatrixRO(v) {
 export function renderAdjList(v) {
   const wrap = h('div', { class: 'adjlist', style: { fontFamily: 'var(--mono)' } });
   for (const [k, ns] of Object.entries(v.list)) {
-    wrap.append(h('div', { class: 'adj-row' }, h('span', { class: 'chip', style: { minWidth: '34px', textAlign: 'center' } }, k), '→', ns.length ? ns.map((x, i) => [h('span', { class: 'chip' }, x), i < ns.length - 1 ? '→' : '']) : h('span', { class: 'muted' }, 'NULL'), ns.length ? h('span', { class: 'muted' }, '→ NULL') : null));
+    wrap.append(h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', margin: '4px 0' } }, h('span', { class: 'chip', style: { minWidth: '34px', textAlign: 'center' } }, k), '→', ns.length ? ns.map((x, i) => [h('span', { class: 'chip' }, x), i < ns.length - 1 ? '→' : '']) : h('span', { class: 'muted' }, 'NULL'), ns.length ? h('span', { class: 'muted' }, '→ NULL') : null));
   }
   return wrap;
 }
