@@ -1,8 +1,10 @@
 // Update checks for the desktop app.
-//  - Installed copy (setup.exe): electron-updater downloads the new installer
-//    in the background; the user restarts to apply it (or it applies on quit).
-//  - Portable .exe / unpackaged dev runs: cannot replace themselves, so we only
-//    ask GitHub for the latest release and tell the user where to download it.
+//  - Windows installer (setup.exe) and Linux AppImage: electron-updater
+//    downloads the new version in the background; the user restarts to apply
+//    it (or it applies on quit).
+//  - Windows portable .exe, macOS (unsigned, so it can't replace itself),
+//    Linux .deb and unpackaged dev runs: we only ask GitHub for the latest
+//    release and tell the user where to download it.
 // Nothing is sent except a normal request to GitHub; offline = silently skipped.
 const { app, ipcMain, net, shell } = require('electron');
 const fs = require('node:fs');
@@ -14,7 +16,14 @@ const REPO = 'Data-Structures-Study-Tool';
 const RELEASES_URL = `https://github.com/${OWNER}/${REPO}/releases/latest`;
 const CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
 
-const mode = !app.isPackaged ? 'dev' : process.env.PORTABLE_EXECUTABLE_DIR ? 'portable' : 'installed';
+function detectMode() {
+  if (!app.isPackaged) return 'dev';
+  if (process.platform === 'win32') return process.env.PORTABLE_EXECUTABLE_DIR ? 'portable' : 'installed';
+  if (process.platform === 'linux') return process.env.APPIMAGE ? 'appimage' : 'package';
+  return 'mac';
+}
+const mode = detectMode();
+const selfUpdating = mode === 'installed' || mode === 'appimage';
 let status = { state: 'idle' };
 let win = null;
 let autoUpdater = null;
@@ -65,7 +74,7 @@ async function check(manual) {
   if (['checking', 'downloading', 'ready'].includes(status.state)) return status;
   send({ state: 'checking' });
   try {
-    if (mode === 'installed') await autoUpdater.checkForUpdates();
+    if (selfUpdating) await autoUpdater.checkForUpdates();
     else await checkGitHub();
   } catch (e) {
     // Offline or GitHub unreachable: only worth mentioning when the user asked.
@@ -84,7 +93,7 @@ function schedule() {
 
 function initUpdates(window) {
   win = window;
-  if (mode === 'installed') setupAutoUpdater();
+  if (selfUpdating) setupAutoUpdater();
   ipcMain.handle('updates:info', () => ({ version: app.getVersion(), mode, auto: readPrefs().auto, status, releasesUrl: RELEASES_URL }));
   ipcMain.handle('updates:check', () => check(true));
   ipcMain.handle('updates:setAuto', (_e, on) => {
@@ -93,7 +102,7 @@ function initUpdates(window) {
     return !!on;
   });
   ipcMain.handle('updates:install', () => {
-    if (mode === 'installed' && status.state === 'ready') setImmediate(() => autoUpdater.quitAndInstall());
+    if (selfUpdating && status.state === 'ready') setImmediate(() => autoUpdater.quitAndInstall());
   });
   ipcMain.handle('updates:open', () => shell.openExternal(status.url || RELEASES_URL));
   schedule();

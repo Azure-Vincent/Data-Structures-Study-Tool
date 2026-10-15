@@ -1,0 +1,5 @@
+# Shell launchers must keep LF endings (a CRLF shebang breaks them on Linux/macOS);
+# Windows .bat files are stored with CRLF and must not be converted.
+*.sh      text eol=lf
+*.command text eol=lf
+*.bat     -text

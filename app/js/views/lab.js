@@ -12,6 +12,8 @@ import { STRUCTURES, STRUCTURE_ORDER, GRAPH_EXAMPLES, parseValues, describeSetup
 import { REFERENCE, UNSUPPORTED, LIMITS_TEXT } from '../lab/reference.js';
 import { highlightLine, reindent } from '../lab/lang.js';
 
+// the editor accepts Ctrl+Enter and Cmd+Enter; show the one this keyboard has
+const RUN_KEY = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl';
 const SPEEDS = [
   ['slow', 'Slow', 1300],
   ['normal', 'Normal', 650],
@@ -266,7 +268,7 @@ export function labView(ctx, a, b) {
     ),
     editor.el,
     status,
-    h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, h('kbd', {}, 'Tab'), ' indents · ', h('kbd', {}, 'Shift'), '+', h('kbd', {}, 'Tab'), ' outdents · ', h('kbd', {}, 'Ctrl'), '+', h('kbd', {}, 'Enter'), ' runs · ', h('kbd', {}, 'Esc'), ' then ', h('kbd', {}, 'Tab'), ' leaves the editor. Drafts are saved automatically.'),
+    h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, h('kbd', {}, 'Tab'), ' indents · ', h('kbd', {}, 'Shift'), '+', h('kbd', {}, 'Tab'), ' outdents · ', h('kbd', {}, RUN_KEY), '+', h('kbd', {}, 'Enter'), ' runs · ', h('kbd', {}, 'Esc'), ' then ', h('kbd', {}, 'Tab'), ' leaves the editor. Drafts are saved automatically.'),
   );
 
   // ---------------------------------------------------------------- run column

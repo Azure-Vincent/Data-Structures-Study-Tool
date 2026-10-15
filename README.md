@@ -6,62 +6,72 @@ You watch every pointer change step by step, predict what happens next, rewire p
 
 ---
 
-## Get the Windows .exe from GitHub (no setup needed)
+## Install the desktop app
 
-1. Create a new repository on GitHub and upload this whole folder (or `git push` it — see below).
-2. Open the **Actions** tab. The workflow **Build Windows app** runs automatically on every push. It takes about 5 minutes.
-3. Open the finished run and download the **DS-Study-Lab-windows** artifact (a zip). Inside it are:
-   - `DS-Study-Lab-1.0.0-portable.exe` — double-click to run, nothing to install;
-   - `DS-Study-Lab-1.0.0-setup.exe` — a normal installer with a Start-menu entry.
-4. To get a permanent download link, create a version tag. GitHub then makes a **Release** with both .exe files attached:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
+The app runs on **Windows 10/11**, **macOS 12 or newer** (Apple Silicon and Intel) and **64-bit Linux**. Get the files from the repository's **Releases** page (or from the latest run of the **Build desktop apps** workflow in the **Actions** tab, under *Artifacts*).
 
-The .exe is not code-signed, so Windows SmartScreen may say “Windows protected your PC”. Click **More info → Run anyway**.
+| System | File | Install |
+|---|---|---|
+| Windows | `DS-Study-Lab-<version>-setup.exe` | Run it. It installs for your user only (no administrator rights), adds a Start-menu entry, and updates itself. Uninstall from **Settings → Apps**. |
+| Windows | `DS-Study-Lab-<version>-portable.exe` | Nothing to install: double-click it. Works from a USB stick. |
+| macOS | `DS-Study-Lab-<version>-mac-universal.dmg` | Open it and drag **DS Study Lab** onto **Applications**. One file for Apple Silicon and Intel Macs. |
+| Debian, Ubuntu, Mint… | `DS-Study-Lab-<version>-linux-amd64.deb` | `sudo apt install ./DS-Study-Lab-<version>-linux-amd64.deb`, then start it from the app menu or with `ds-study-lab`. Remove it with `sudo apt remove ds-study-lab`. |
+| Any Linux | `DS-Study-Lab-<version>-linux-x86_64.AppImage` | `chmod +x` the file and run it. It updates itself. |
+
+The app is free and not signed with a paid certificate, so each system warns once:
+- **Windows** SmartScreen says “Windows protected your PC”: click **More info → Run anyway**.
+- **macOS** says Apple cannot check the app for malicious software. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway** (on macOS 14 and older you can instead Control-click the app → **Open**). Or run this in Terminal:
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/DS Study Lab.app"
+  ```
+- **Linux AppImage** needs FUSE 2: `sudo apt install libfuse2t64` (Ubuntu 24.04 and newer) or `sudo apt install libfuse2` (older). If it stops with a sandbox error (Ubuntu 24.04 restricts this for apps without an AppArmor profile), run it with `--no-sandbox`, or use the .deb, which installs the profile.
+
+Your progress is stored per user (`%APPDATA%\DS Study Lab` on Windows, `~/Library/Application Support/DS Study Lab` on macOS, `~/.config/DS Study Lab` on Linux), so it survives updates and reinstalling.
 
 ### Updates
 
-The desktop app checks GitHub for a newer Release when it starts and every few hours while it is open (turn this off under **Settings & data → Updates**; nothing about you or your progress is sent). Your progress is kept across updates.
+The desktop app checks GitHub for a newer Release when it starts and every few hours while it is open (turn this off under **Settings & data → Updates**; nothing about you or your progress is sent).
 
-- **Installed copy** (`setup.exe`): the new version downloads in the background; the app offers **Restart and update**, or installs it the next time you quit.
-- **Portable copy** (`portable.exe`): it cannot replace itself, so it shows **Update available** with a button that opens the Release page to download the new file.
+- **Windows installer** and **Linux AppImage**: the new version downloads in the background; the app offers **Restart and update**, or installs it the next time you quit.
+- **Windows portable, macOS and Linux .deb**: the app shows **Update available** with a button that opens the Release page to download the new file.
 
-To ship an update, push a higher version tag (for example `git tag v1.0.3 && git push origin v1.0.3`). The workflow builds the app *as* that version and attaches the two .exe files plus `latest.yml` and `.blockmap` files to the Release — the installed copies need those two to update themselves. Tags must keep increasing (`v1.0.3` → `v1.0.4` → `v1.1.0` …).
+### Publishing a release
 
-Pushing from the command line, the first time:
+Every push and pull request runs the **Build desktop apps** workflow. On Windows, macOS and Linux it runs the tests, builds the installers, installs them the way a user would, launches the installed app and drives its core features, then uninstalls it.
+
+To publish a version, push a tag:
 ```bash
-git init
-git add .
-git commit -m "DS Study Lab"
-git branch -M main
-git remote add origin https://github.com/<you>/<repo>.git
-git push -u origin main
+git tag v1.0.3
+git push origin v1.0.3
 ```
+The workflow builds the app *as* that version and attaches every file to a new Release, including `latest.yml`, `latest-linux.yml` and the `.blockmap` files that the installed copies need to update themselves. Tags must keep increasing (`v1.0.3` → `v1.0.4` → `v1.1.0` …).
+
+To build the files yourself, run `npm install` and then `npm run dist:win` on Windows (or double-click `build-windows-exe.bat`), `npm run dist:mac` on a Mac, or `npm run dist:linux` on Linux. Each platform's files have to be built on that platform. They land in `dist/`.
 
 ---
 
 ## Run it from source
 
-You need **Node.js 18 or newer** (the LTS version from <https://nodejs.org>). Nothing else.
+You need **Node.js** from <https://nodejs.org>:
+- **browser mode** works with Node.js 18 or newer and needs no install step;
+- **desktop mode** needs Node.js **22.12 or newer**. The first run downloads the desktop runtime (`npm install`, about 100 MB).
 
 ### Windows
 | Double-click | What it does |
 |---|---|
-| `start-browser.bat` | Starts a tiny local server and opens the app in your browser. No install step. |
-| `start-desktop.bat` | Opens the app in its own window. The first run downloads the desktop runtime (`npm install`, about 100 MB). |
+| `start-browser.bat` | Starts a tiny local server and opens the app in your browser. |
+| `start-desktop.bat` | Opens the app in its own window. |
 | `build-windows-exe.bat` | Builds the .exe files yourself into the `dist` folder. |
 | `run-tests.bat` | Runs the automated tests. |
 
-### Linux
+### macOS and Linux
+In Terminal, in this folder:
 ```bash
-chmod +x *.sh          # once
 ./start-browser.sh     # opens http://localhost:5173 in your browser
-./start-desktop.sh     # desktop window (first run: npm install)
+./start-desktop.sh     # desktop window
 ./run-tests.sh
 ```
-If the desktop window fails with a sandbox error (common in containers), run `./start-desktop.sh --no-sandbox`.
+If a script says “Permission denied” (for example after downloading a .zip), run `chmod +x *.sh` once, or start it with `bash start-desktop.sh`. On Linux, if the desktop window fails with a sandbox error (common in containers), run `./start-desktop.sh --no-sandbox`.
 
 ### Any system, by hand
 ```bash
@@ -159,11 +169,12 @@ app/                    the web app (no build step, plain ES modules)
   js/ui/ + js/views/    presentation only
   js/lab/               Pseudocode Lab: parser (lang.js), interpreter (machine.js), analysis, exercises
 electron/main.cjs       desktop wrapper (serves app/ from a private app:// origin)
-electron/updater.cjs    update checks (installer: electron-updater; portable: GitHub Releases API)
+electron/updater.cjs    update checks (Windows installer + AppImage: electron-updater; others: GitHub Releases API)
 electron/preload.cjs    the small update API the page can call
 server.js               zero-dependency local web server (browser mode)
 tests/                  node:test suites; tests/ui/ optional Playwright browser checks
-.github/workflows/      builds the Windows .exe on GitHub
+tests/desktop/smoke.mjs launches the real desktop app and drives its core features
+.github/workflows/      builds, installs and tests the app on Windows, macOS and Linux
 docs/LECTURE_MAP.md     page-by-page mapping and corrections
 ```
 
@@ -196,6 +207,24 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `lessons.py` opens all 158 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
 
+`tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:
+- the window opens with the right title, menus (Edit menu shortcuts, the macOS app menu) and profile folder;
+- every page renders;
+- a lesson simulation steps and asks its prediction;
+- an exercise is answered and graded through the interface;
+- the Pseudocode Lab runs a program and grades it, and Explore steps an operation;
+- the update panel reports the right kind of copy (installer, portable, AppImage, .deb, macOS);
+- a second copy hands over to the first one instead of opening twice;
+- progress is still there after the app is closed and reopened;
+- no page errors occur.
+
+```bash
+npm run test:desktop -- --source --mode dev                      # this checkout
+npm run test:desktop -- --exe "/Applications/DS Study Lab.app/Contents/MacOS/DS Study Lab" --mode mac
+npm run test:desktop -- --exe /usr/bin/ds-study-lab --mode package --arg --no-sandbox   # e.g. in a container
+```
+It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs it against every installer it builds.
+
 ### What was verified for this release
 - All 105 Node tests pass.
 - In headless Chromium:
@@ -207,7 +236,9 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - The Windows portable .exe was cross-built on Linux. Its packaged contents were checked, but it was **not run on a real Windows machine**. The GitHub workflow builds it natively on `windows-latest`.
 
 ## Known limitations
-- The .exe is unsigned, so SmartScreen shows a warning the first time.
+- The app is not signed with a paid certificate: Windows SmartScreen and macOS Gatekeeper warn the first time (see *Install the desktop app*). The macOS app is ad-hoc signed but not notarized by Apple.
+- Only the Windows installer and the Linux AppImage update themselves; the portable .exe, the macOS app and the .deb show a download link instead.
+- Linux builds are for x64 only.
 - In-progress answers are not saved; a resumed session continues at the current task, not mid-task.
 - The pointer interpreter that grades “arrange / complete the code” understands pointer statements: assignments, `->`, `getnode()`, `free()`, `while`/`do-while`/`if`, `print`. It does not understand integer counters or arithmetic, so exercises keep those parts fixed.
 - Mastery and review intervals use simple fixed rules (Leitner boxes), not an adaptive model.

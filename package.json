@@ -5,6 +5,11 @@
   "description": "Interactive study app for data structures in C/C++ (Lectures 07–14): linked lists, stacks, queues, trees, graphs, traversals.",
   "author": "DS Study Lab",
   "license": "MIT",
+  "homepage": "https://github.com/Azure-Vincent/Data-Structures-Study-Tool",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure-Vincent/Data-Structures-Study-Tool.git"
+  },
   "type": "module",
   "main": "electron/main.cjs",
   "private": true,
@@ -13,7 +18,9 @@
     "serve": "node server.js --open",
     "test": "node --test",
     "dist:win": "electron-builder --win portable nsis --publish never",
-    "dist:linux": "electron-builder --linux AppImage --publish never"
+    "dist:linux": "electron-builder --linux AppImage deb --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --universal --publish never",
+    "test:desktop": "node tests/desktop/smoke.mjs"
   },
   "build": {
     "appId": "edu.dsstudylab.app",
@@ -44,10 +51,14 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "icon": "electron/icon.png",
-      "category": "Education"
+      "category": "Education",
+      "synopsis": "Interactive data-structures study app (Lectures 07-14)",
+      "maintainer": "DS Study Lab <https://github.com/Azure-Vincent/Data-Structures-Study-Tool>",
+      "artifactName": "DS-Study-Lab-${version}-linux-${arch}.${ext}"
     },
     "publish": [
       {
@@ -55,11 +66,31 @@
         "owner": "Azure-Vincent",
         "repo": "Data-Structures-Study-Tool"
       }
-    ]
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png",
+      "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "artifactName": "DS-Study-Lab-${version}-mac-${arch}.${ext}"
+    },
+    "dmg": {
+      "artifactName": "DS-Study-Lab-${version}-mac-${arch}.${ext}"
+    }
   },
   "devDependencies": {
     "electron": "^44.5.1",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "playwright-core": "^1.64.1"
   },
   "dependencies": {
     "electron-updater": "^6.8.9"
