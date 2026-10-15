@@ -1,4 +1,4 @@
-import { h, clear, md, refPill } from '../ui/dom.js';
+import { h, clear, md, refPill, stickyWhenFits } from '../ui/dom.js';
 import { LESSON_BY_LECTURE } from '../content/lessons.js';
 import { LECTURES } from '../content/concepts.js';
 import { renderVisual } from '../ui/render/visual.js';
@@ -20,18 +20,20 @@ export function lessonView(ctx, n, at) {
   const rec = store.lesson(lesson.id);
   let idx = at != null && !Number.isNaN(at) ? Math.max(0, Math.min(at, lesson.sections.length - 1)) : rec.at || 0;
   const root = h('div');
-  const outline = h('ol', { class: 'history', style: { maxHeight: 'none' }, 'aria-label': 'Lesson outline' });
+  const outline = h('ol', { class: 'history', 'aria-label': 'Lesson outline' });
   const progBar = h('span');
   const progTxt = h('span');
   const body = h('div', { style: { minWidth: 0 } });
   let cleanupWs = [];
   ctx.setCleanup(() => cleanupWs.forEach((f) => f()));
 
+  const outlineBox = h('details', { class: 'panel outline', open: window.innerWidth >= 1240 }, h('summary', {}, `Lesson outline · ${lesson.sections.length} steps`), outline);
   root.append(
     h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Lecture ${String(n).padStart(2, '0')}`), h('h1', {}, lesson.title), h('div', { class: 'subtitle' }, `Source: ${L.file} (${L.pages} pages)`)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, 'Practise this lecture'))),
     h('div', { class: 'lesson-progress' }, h('div', { class: 'bar' }, progBar), progTxt),
-    h('div', { class: 'lesson-grid' }, h('details', { class: 'panel outline', open: window.innerWidth >= 1240 }, h('summary', {}, `Lesson outline · ${lesson.sections.length} steps`), outline), body),
+    h('div', { class: 'lesson-grid' }, outlineBox, body),
   );
+  stickyWhenFits(outlineBox, 16);
 
   function done(i) {
     store.markLessonStep(lesson.id, i, lesson.sections.length);
@@ -62,7 +64,6 @@ export function lessonView(ctx, n, at) {
         ),
       ),
     );
-    outline.querySelector('li.cur')?.scrollIntoView({ block: 'nearest' });
   }
 
   function go(i) {

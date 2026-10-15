@@ -7,6 +7,7 @@ import { wantsPrediction, makeQuestion } from '../sim/predict.js';
 import { fmtPtr, GARBAGE } from '../core/pointerWorld.js';
 
 const SPEEDS = [0.5, 1, 2, 4];
+const RECENT_ROWS = 6; // history rows shown until "Show all" is pressed
 
 /**
  * createWorkspace(trace, { predictKinds, predictOn, settings, onPredict(correct), title, onEnd })
@@ -28,6 +29,7 @@ export function createWorkspace(trace, opts = {}) {
   let predictOn = opts.predictKinds ? opts.predictOn !== false : false;
   const answered = new Set();
   let pending = null; // {idx, q, picked}
+  let allHistory = false;
 
   const player = new Player(trace, () => draw());
   player.speed = opts.settings?.speed || 1;
@@ -83,7 +85,7 @@ export function createWorkspace(trace, opts = {}) {
     clear(codeP).append(
       h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code'), code.ref ? h('span', { class: 'pill' }, code.ref) : null),
       st.opLabel ? h('div', { class: 'small muted' }, `Operation: ${st.opLabel}`) : null,
-      h('ol', { 'aria-label': 'code' }, code.lines.map((l, k) => h('li', { class: k === st.line ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': k === st.line ? 'step' : null }, l))),
+      h('ol', { 'aria-label': 'code' }, code.lines.map((l, k) => h('li', { class: k === st.line ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': k === st.line ? 'step' : null }, codeLine(l)))),
     );
     // variables
     clear(varsP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Variables and pointers')), varsView(st.state, prev && prev.state));
@@ -99,19 +101,22 @@ export function createWorkspace(trace, opts = {}) {
       );
       if (player.atEnd && tr.output && tr.output.length) explainP.append(h('p', { class: 'small' }, h('b', {}, 'Output: '), tr.output.join(' ')));
     }
-    // history (rebuilt on every step; keep the list's own scroll position across rebuilds)
-    const keepScroll = histP.querySelector('ol.history')?.scrollTop || 0;
+    // history: the latest steps only (no scroll box inside the page); "Show all" lists every step
+    const first = allHistory ? 0 : Math.max(0, i + 1 - RECENT_ROWS);
     clear(histP).append(
       h('div', { class: 'panel-title' }, h('h3', {}, 'Operation history')),
+      i + 1 > RECENT_ROWS
+        ? h('div', { class: 'history-more small muted' }, first > 0 ? `… ${first} earlier step${first === 1 ? '' : 's'}` : `All ${i + 1} steps`, h('button', { class: 'btn ghost small', 'aria-pressed': String(allHistory), onclick: () => { allHistory = !allHistory; draw(); } }, allHistory ? 'Show recent only' : 'Show all'))
+        : null,
       h(
         'ol',
         { class: 'history' },
-        tr.steps.slice(0, i + 1).map((s2, k) => h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain.length > 110 ? s2.explain.slice(0, 108) + '…' : s2.explain)),
+        tr.steps.slice(first, i + 1).map((s2, j) => {
+          const k = first + j;
+          return h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain.length > 110 ? s2.explain.slice(0, 108) + '…' : s2.explain);
+        }),
       ),
     );
-    const list = histP.querySelector('ol.history');
-    list.scrollTop = keepScroll;
-    revealInList(list, list.querySelector('li.cur'));
     // counters
     const cnt = st.counters || {};
     clear(cntP).append(
@@ -177,14 +182,12 @@ export function createWorkspace(trace, opts = {}) {
   };
 }
 
-// Scroll only `list` so `item` is visible. Element.scrollIntoView would scroll every
-// scrollable ancestor too, moving the page away from the diagram and the controls.
-function revealInList(list, item) {
-  if (!item) return;
-  const box = list.getBoundingClientRect();
-  const r = item.getBoundingClientRect();
-  if (r.top < box.top) list.scrollTop -= box.top - r.top;
-  else if (r.bottom > box.bottom) list.scrollTop += r.bottom - box.bottom;
+// One line of code that wraps instead of scrolling sideways: the indentation is kept,
+// and continuation rows hang two characters further in so they read as one statement.
+function codeLine(text) {
+  const rest = text.trimStart();
+  const indent = text.length - rest.length;
+  return h('span', { class: 'cl', style: { paddingLeft: `${indent + 2}ch`, textIndent: '-2ch' } }, rest);
 }
 
 function chips(list, empty = 'none') {

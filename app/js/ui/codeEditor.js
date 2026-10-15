@@ -2,10 +2,12 @@
 // with a line-number gutter, current-line / error-line marks and pseudocode
 // auto-indentation. The textarea stays the real input, so native undo/redo,
 // selection, copy/paste and screen readers keep working.
+// The editor has no scrollbars: it grows with its text and wraps long lines (the
+// <pre> and the textarea wrap identically; each gutter row takes its line's height).
 import { h } from './dom.js';
 import { highlightLine, nextIndent, reindent } from '../lab/lang.js';
 
-const LINE_H = 21; // px — must match .code-editor line-height
+const LINE_H = 21; // px — must match .code-editor line-height (a line that wraps is taller)
 const CLOSER = /^\s*(end\b|endif\b|endwhile\b|endfor\b|endfunction\b|else\b|elif\b|elseif\b|until\b)/i;
 
 const esc = (t) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -15,7 +17,7 @@ const esc = (t) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>':
  * returns { el, textarea, getValue, setValue, setMarks({active, activeKind, error, warn:[lines]}), revealLine, focus }
  */
 export function createCodeEditor(opts = {}) {
-  const ta = h('textarea', { class: 'ce-input', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', autocorrect: 'off', wrap: 'off', 'aria-label': opts.label || 'Pseudocode editor', 'aria-multiline': 'true' });
+  const ta = h('textarea', { class: 'ce-input', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', autocorrect: 'off', wrap: 'soft', 'aria-label': opts.label || 'Pseudocode editor', 'aria-multiline': 'true' });
   ta.value = opts.value || '';
   const code = h('code', { class: 'ce-code' });
   const pre = h('pre', { class: 'ce-hl', 'aria-hidden': 'true' }, code);
@@ -46,7 +48,17 @@ export function createCodeEditor(opts = {}) {
     });
     code.innerHTML = html;
     nums.innerHTML = g;
+    fitGutter();
     sync();
+  }
+  // a wrapped line is several rows tall: give its line number the same height
+  function fitGutter() {
+    const rows = code.children;
+    const ln = nums.children;
+    for (let i = 0; i < rows.length && i < ln.length; i++) {
+      const tall = rows[i].offsetHeight;
+      ln[i].style.height = tall > LINE_H ? `${tall}px` : '';
+    }
   }
   function sync() {
     pre.style.transform = `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`;
@@ -132,6 +144,8 @@ export function createCodeEditor(opts = {}) {
     opts.onChange && opts.onChange(ta.value);
   });
   ta.addEventListener('scroll', sync);
+  // re-measure wrapped lines when the editor's width changes
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fitGutter).observe(body);
 
   render();
   return {
@@ -153,14 +167,9 @@ export function createCodeEditor(opts = {}) {
       marks = { ...marks, ...m };
       render();
     },
-    revealLine(n) {
-      if (!n) return;
-      const top = (n - 1) * LINE_H;
-      if (top < ta.scrollTop + LINE_H || top > ta.scrollTop + ta.clientHeight - 2 * LINE_H) {
-        ta.scrollTop = Math.max(0, top - ta.clientHeight / 3);
-        sync();
-      }
-    },
+    // every line is always shown (the editor grows to fit), so there is nothing to scroll;
+    // kept so callers need not know that
+    revealLine() {},
     focus: () => ta.focus(),
   };
 }

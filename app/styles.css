@@ -222,11 +222,15 @@ hr {
   border-right: 1px solid var(--rule);
   background: var(--panel);
   padding: 16px 12px 24px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
+}
+/* pinned while the page scrolls only when the whole menu fits in the window (the
+   "fits" class comes from stickyWhenFits); otherwise it scrolls with the page */
+@media (min-width: 901px) {
+  .side.fits {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
 }
 .brand {
   display: flex;
@@ -262,7 +266,7 @@ hr {
   color: var(--ink-3);
 }
 .nav-group {
-  margin: 18px 0 4px;
+  margin: 14px 0 4px;
   padding: 0 10px;
   font-size: 11px;
   font-weight: 600;
@@ -278,7 +282,7 @@ hr {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 5px 10px;
   border-radius: var(--radius-s);
   color: var(--ink-2);
   text-decoration: none;
@@ -405,6 +409,7 @@ h3 {
     transform: translateX(-100%);
     transition: transform var(--dur) ease, visibility var(--dur);
     visibility: hidden;
+    overflow-y: auto; /* the slide-in menu on narrow windows */
   }
   .side.open {
     transform: none;
@@ -617,6 +622,7 @@ label.inline {
 }
 .panel-title {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
@@ -790,7 +796,8 @@ pre.code {
   border: 1px solid var(--rule);
   border-radius: var(--radius-s);
   padding: 12px 14px;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: 8px 0;
   line-height: 1.55;
   font-size: 13.5px;
@@ -1045,8 +1052,9 @@ pre.code {
   gap: 12px;
 }
 @container (min-width: 620px) {
+  /* code gets the wider column: its lines are long, the variables table is short */
   .ws-side {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
   .ws-side > :first-child {
     grid-column: 1 / -1;
@@ -1080,8 +1088,12 @@ pre.code {
   position: relative;
   box-shadow: var(--shadow-s);
 }
+/* wide diagrams shrink to the box instead of scrolling sideways (drag targets use
+   getScreenCTM, so they keep working at any scale) */
 .diagram-box svg {
   display: block;
+  max-width: 100%;
+  height: auto;
 }
 .code-panel ol {
   list-style: none;
@@ -1094,19 +1106,22 @@ pre.code {
 }
 .code-panel li {
   counter-increment: ln;
-  white-space: pre;
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  column-gap: 12px;
   padding: 0 8px 0 0;
   border-radius: 4px;
-  overflow-x: auto;
 }
 .code-panel li::before {
   content: counter(ln);
-  display: inline-block;
-  width: 2.2em;
   color: var(--ink-3);
   text-align: right;
-  margin-right: 12px;
   opacity: 0.7;
+}
+/* long lines wrap (hanging indent set inline) instead of scrolling */
+.code-panel .cl {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .code-panel li.cur {
   background: var(--marker);
@@ -1146,6 +1161,11 @@ pre.code {
   color: var(--ink-2);
   white-space: nowrap;
 }
+/* "(local)" goes under the name, leaving the value column room to stay on one line */
+.vars-table td:first-child .small {
+  display: block;
+  font-size: 11px;
+}
 .vars-table tr.changed td {
   background: var(--marker-soft);
 }
@@ -1180,8 +1200,6 @@ pre.code {
   margin: 2px 4px;
 }
 .history {
-  max-height: 220px;
-  overflow-y: auto;
   font-size: 13px;
   margin: 0;
   padding-left: 0;
@@ -1203,6 +1221,12 @@ pre.code {
 }
 .history li.bad {
   color: var(--bad);
+}
+.history-more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 4px;
 }
 .history li .k {
   display: inline-block;
@@ -1846,7 +1870,7 @@ a.dot:hover {
 }
 .lec-table td,
 .lec-table th {
-  padding: 9px 10px;
+  padding: 9px 7px;
   border-bottom: 1px solid var(--rule);
   vertical-align: middle;
 }
@@ -1855,7 +1879,7 @@ a.dot:hover {
   font-weight: 600;
   color: var(--ink-3);
   text-align: left;
-  white-space: nowrap;
+  vertical-align: bottom; /* long headings wrap rather than widen the table */
 }
 .lec-table tr:last-child td {
   border-bottom: 0;
@@ -1876,9 +1900,17 @@ a.dot:hover {
   background: var(--pointer-softer);
 }
 .table-wrap {
+  container-type: inline-size;
   overflow-x: auto;
   margin: 0 -18px -16px;
   padding: 0 8px 4px;
+}
+/* narrow panels: tighter cells so all eight columns fit without a scrollbar */
+@container (max-width: 680px) {
+  .lec-table td,
+  .lec-table th {
+    padding: 8px 4px;
+  }
 }
 .concept-list {
   display: flex;
@@ -1975,7 +2007,7 @@ a.dot:hover {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border: 0;
   border-radius: var(--radius-s);
   color: var(--ink-2);
@@ -2083,12 +2115,10 @@ a.dot:hover {
   .lesson-grid {
     grid-template-columns: 264px minmax(0, 1fr);
   }
-  .lesson-grid .outline {
+  /* pinned only while the whole outline fits in the window (see stickyWhenFits) */
+  .lesson-grid .outline.fits {
     position: sticky;
     top: 16px;
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
-    scrollbar-width: thin;
   }
 }
 @media (max-width: 700px) {
@@ -2440,9 +2470,6 @@ a.dot:hover {
 .code-editor {
   --ce-lh: 21px;
   display: flex;
-  height: 360px;
-  min-height: 160px;
-  resize: vertical;
   overflow: hidden;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-s);
@@ -2495,23 +2522,23 @@ a.dot:hover {
 .ce-mk.warn {
   color: var(--warn);
 }
+/* the editor grows with its text (at least 14 lines) instead of scrolling */
 .ce-body {
   position: relative;
   flex: 1;
   min-width: 0;
+  min-height: calc(var(--ce-lh) * 14 + 20px);
   overflow: hidden;
 }
 .ce-hl {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   margin: 0;
   padding: 10px 12px;
-  min-width: 100%;
-  width: max-content;
+  width: 100%;
   pointer-events: none;
   font: inherit;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   tab-size: 2;
   background: none;
   border: 0;
@@ -2556,8 +2583,9 @@ textarea.ce-input {
   color: transparent;
   caret-color: var(--ink);
   font: inherit;
-  white-space: pre;
-  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: hidden;
   resize: none;
   tab-size: 2;
   box-shadow: none;
@@ -2699,8 +2727,8 @@ pre.lab-code-block .ce-line {
 }
 pre.lab-output {
   margin: 0;
-  max-height: 170px;
-  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   background: var(--panel-2);
   border: 1px solid var(--rule);
   border-radius: var(--radius-s);
@@ -2764,11 +2792,8 @@ pre.lab-output {
 .lab-ba figcaption {
   margin-bottom: 4px;
 }
-.lab-ba .diagram-box {
-  max-height: 340px;
-}
-.lab-history .history {
-  max-height: 300px;
+.lab-ba .diagram-box svg {
+  max-height: 320px;
 }
 .lab-history .history li.warn {
   box-shadow: inset 3px 0 0 var(--warn);

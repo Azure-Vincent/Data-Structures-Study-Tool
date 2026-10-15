@@ -1,6 +1,6 @@
-# Browser check (optional): stepping or playing a simulation must not scroll the page.
-# The Operation history panel may scroll inside itself; the page must stay put so the
-# diagram and the playback controls remain visible.
+# Browser check (optional): stepping or playing a simulation must not scroll the page,
+# so the diagram and the playback controls remain visible, and the Operation history
+# shows the current step without a scrollbar of its own.
 # Start the app first:  node server.js 5173
 # Requires:  pip install playwright && python -m playwright install chromium
 import os
@@ -40,8 +40,9 @@ def visible(pg, sel):
 
 def hist_state(pg):
     return pg.evaluate("""() => { const ol = document.querySelector('.ws-wrap .history'); const cur = ol.querySelector('li.cur');
-      const o = ol.getBoundingClientRect(), c = cur.getBoundingClientRect();
-      return { scrollTop: ol.scrollTop, overflows: ol.scrollHeight > ol.clientHeight, curInside: c.top >= o.top - 1 && c.bottom <= o.bottom + 1 }; }""")
+      const st = getComputedStyle(ol);
+      return { rows: ol.children.length, hasCur: !!cur && cur === ol.lastElementChild,
+               scrollBox: ['auto', 'scroll'].includes(st.overflowY) && ol.scrollHeight > ol.clientHeight + 1 }; }""")
 
 
 def step_through(pg, ws, n):
@@ -74,7 +75,7 @@ with sync_playwright() as p:
         hs = hist_state(pg)
         check(f'{w}x{hgt} predict sim: Step keeps the page still', abs(y1 - y0) <= 1 and title > 0, f'scrollY {y0} → {y1}')
         check(f'{w}x{hgt} predict sim: diagram and controls stay visible', visible(pg, '.ws-wrap .ws-controls') and visible(pg, '.ws-wrap .ws-diagram'))
-        check(f'{w}x{hgt} predict sim: history scrolled inside its own panel', hs['curInside'] and (hs['scrollTop'] > 0 or not hs['overflows']), str(hs))
+        check(f'{w}x{hgt} predict sim: history ends at the current step, no inner scrollbar', hs['hasCur'] and not hs['scrollBox'], str(hs))
 
         # 2. Play (predictions off) from the start
         press(ws.locator('button:has-text("↺ Reset")'))

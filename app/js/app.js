@@ -1,5 +1,5 @@
 // Application shell: navigation, routing, theme/motion settings.
-import { h, clear } from './ui/dom.js';
+import { h, clear, stickyWhenFits } from './ui/dom.js';
 import { ProgressStore } from './progress/store.js';
 import { LECTURES } from './content/concepts.js';
 import { LESSON_BY_LECTURE } from './content/lessons.js';
@@ -171,6 +171,7 @@ function route() {
 }
 
 document.body.append(h('a', { href: '#main', class: 'sr-only' }, 'Skip to content'), h('div', { class: 'shell' }, side, scrim, h('div', { style: { minWidth: 0 } }, h('header', { class: 'topbar' }, menuBtn, brand()), main)));
+stickyWhenFits(side);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && side.classList.contains('open')) {
     setMenu(false);

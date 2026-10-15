@@ -206,7 +206,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `kinds.py` answers all 65 templates through the real interface.
 - `lessons.py` opens all 158 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
-- `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the Operation history scrolls inside its own panel, and the diagram and controls stay in view.
+- `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the diagram and controls stay in view, and the Operation history shows the current step without a scrollbar of its own.
 
 `tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:
 - the window opens with the right title, menus (Edit menu shortcuts, the macOS app menu) and profile folder;
@@ -253,4 +253,4 @@ It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs i
 - Two things depend on reading the handwriting, which was ambiguous:
   - the directed graph on Lec 13 p.6;
   - the remark on Lec 14 p.3 that the distance “between e and a is 2”, which the app treats as an edge label rather than a distance.
-- Diagrams with many nodes scroll sideways instead of shrinking. Symbols such as → depend on the fonts installed (no web fonts, so the app stays fully offline).
+- Nothing inside the window has its own scrollbar: wide diagrams shrink to fit, long code lines wrap, and history panels show the latest steps (with **Show all**). A list with many nodes therefore gets small on a narrow window. Symbols such as → depend on the fonts installed (no web fonts, so the app stays fully offline).

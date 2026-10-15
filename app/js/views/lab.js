@@ -12,6 +12,7 @@ import { STRUCTURES, STRUCTURE_ORDER, GRAPH_EXAMPLES, parseValues, describeSetup
 import { REFERENCE, UNSUPPORTED, LIMITS_TEXT } from '../lab/reference.js';
 import { highlightLine, reindent } from '../lab/lang.js';
 
+const OUTPUT_LINES = 12; // output lines shown until "Show all" is pressed
 // the editor accepts Ctrl+Enter and Cmd+Enter; show the one this keyboard has
 const RUN_KEY = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl';
 const SPEEDS = [
@@ -106,6 +107,8 @@ export function labView(ctx, a, b) {
   let lastCheckedCode = null;
   let savedMine = null;
   let openIssue = null;
+  let moreHistory = false;
+  let allOutput = false;
 
   function freeSetup() {
     const saved = freeVals();
@@ -429,7 +432,9 @@ export function labView(ctx, a, b) {
     clear(diagram).append(renderLabDiagram(step.state, exe.graph, step.hl));
     clear(varsP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Variables & call stack')), renderVariables(step.state, prev && prev.state));
     const colls = renderCollections(step.state);
-    clear(outP).append(colls ? [h('div', { class: 'panel-title' }, h('h3', {}, 'Queues, stacks, sets, arrays')), colls] : null, h('div', { class: 'panel-title', style: colls ? { marginTop: '12px' } : null }, h('h3', {}, 'Output')), step.state.output.length ? h('pre', { class: 'lab-output' }, step.state.output.join('\n')) : h('p', { class: 'small muted', style: { margin: 0 } }, 'Nothing printed yet.'));
+    const out = step.state.output;
+    const shownOut = allOutput ? out : out.slice(-OUTPUT_LINES);
+    clear(outP).append(colls ? [h('div', { class: 'panel-title' }, h('h3', {}, 'Queues, stacks, sets, arrays')), colls] : null, h('div', { class: 'panel-title', style: colls ? { marginTop: '12px' } : null }, h('h3', {}, 'Output'), out.length > OUTPUT_LINES ? h('button', { class: 'btn ghost small', 'aria-pressed': String(allOutput), onclick: () => { allOutput = !allOutput; draw(); } }, allOutput ? 'Show the last lines' : `Show all ${out.length} lines`) : null), shownOut.length < out.length ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${out.length - shownOut.length} earlier lines`) : null, out.length ? h('pre', { class: 'lab-output' }, shownOut.join('\n')) : h('p', { class: 'small muted', style: { margin: 0 } }, 'Nothing printed yet.'));
     drawProblems();
     drawHistory();
     // editor marks
@@ -491,20 +496,16 @@ export function labView(ctx, a, b) {
   }
 
   function drawHistory() {
-    const from = Math.max(0, exe.index - 120);
-    const to = Math.min(exe.steps.length, exe.index + 40);
+    // a few steps around the current one (no scroll box inside the page); "Show more" widens it
+    const from = Math.max(0, exe.index - (moreHistory ? 120 : 6));
+    const to = Math.min(exe.steps.length, exe.index + (moreHistory ? 40 : 3));
     const ol = h('ol', { class: 'history', start: from });
     for (let k = from; k < to; k++) {
       const s2 = exe.steps[k];
       ol.append(h('li', { class: [k === exe.index ? 'cur' : '', s2.kind === 'error' ? 'bad' : '', s2.issues.some((x) => x.severity !== 'note') ? 'warn' : ''].join(' '), onclick: () => gotoStep(k) }, h('span', { class: 'k' }, `${k}${s2.line ? ` · L${s2.line}` : ''}`), h('span', { class: `kind-badge k-${s2.kind}` }, KIND_LABEL[s2.kind] || s2.kind), ' ', s2.text.length > 120 ? s2.text.slice(0, 118) + '…' : s2.text));
     }
-    clear(historyP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Execution history'), h('span', { class: 'small muted' }, 'click a step to jump to it')), from > 0 ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${from} earlier steps`) : null, ol);
-    // scroll only the list (scrollIntoView would also scroll the page on every step)
-    const cur = ol.querySelector('li.cur');
-    if (cur) {
-      const top = cur.offsetTop - ol.offsetTop;
-      if (top < ol.scrollTop || top + cur.offsetHeight > ol.scrollTop + ol.clientHeight) ol.scrollTop = Math.max(0, top - ol.clientHeight / 2);
-    }
+    const more = exe.index > 6 || exe.steps.length > exe.index + 4 ? h('button', { class: 'btn ghost small', 'aria-pressed': String(moreHistory), onclick: () => { moreHistory = !moreHistory; drawHistory(); } }, moreHistory ? 'Show fewer' : 'Show more') : null;
+    clear(historyP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Execution history'), h('span', { class: 'small muted' }, 'click a step to jump to it'), more), from > 0 ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${from} earlier step${from === 1 ? '' : 's'}`) : null, ol);
   }
 
   // keyboard: arrows/space/home when focus is not in a text field
