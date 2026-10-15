@@ -99,7 +99,8 @@ export function createWorkspace(trace, opts = {}) {
       );
       if (player.atEnd && tr.output && tr.output.length) explainP.append(h('p', { class: 'small' }, h('b', {}, 'Output: '), tr.output.join(' ')));
     }
-    // history
+    // history (rebuilt on every step; keep the list's own scroll position across rebuilds)
+    const keepScroll = histP.querySelector('ol.history')?.scrollTop || 0;
     clear(histP).append(
       h('div', { class: 'panel-title' }, h('h3', {}, 'Operation history')),
       h(
@@ -108,8 +109,9 @@ export function createWorkspace(trace, opts = {}) {
         tr.steps.slice(0, i + 1).map((s2, k) => h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain.length > 110 ? s2.explain.slice(0, 108) + '…' : s2.explain)),
       ),
     );
-    const hl = histP.querySelector('li.cur');
-    if (hl) hl.scrollIntoView({ block: 'nearest' });
+    const list = histP.querySelector('ol.history');
+    list.scrollTop = keepScroll;
+    revealInList(list, list.querySelector('li.cur'));
     // counters
     const cnt = st.counters || {};
     clear(cntP).append(
@@ -173,6 +175,16 @@ export function createWorkspace(trace, opts = {}) {
       player.pause();
     },
   };
+}
+
+// Scroll only `list` so `item` is visible. Element.scrollIntoView would scroll every
+// scrollable ancestor too, moving the page away from the diagram and the controls.
+function revealInList(list, item) {
+  if (!item) return;
+  const box = list.getBoundingClientRect();
+  const r = item.getBoundingClientRect();
+  if (r.top < box.top) list.scrollTop -= box.top - r.top;
+  else if (r.bottom > box.bottom) list.scrollTop += r.bottom - box.bottom;
 }
 
 function chips(list, empty = 'none') {

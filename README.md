@@ -206,6 +206,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `kinds.py` answers all 65 templates through the real interface.
 - `lessons.py` opens all 158 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
+- `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the Operation history scrolls inside its own panel, and the diagram and controls stay in view.
 
 `tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:
 - the window opens with the right title, menus (Edit menu shortcuts, the macOS app menu) and profile folder;
