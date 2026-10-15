@@ -15,7 +15,7 @@
 // Exit code 0 = every check passed. A JSON report lists each check.
 import { _electron, chromium } from 'playwright-core';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +48,18 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Same folder? Resolves symlinks (macOS: /var -> /private/var) and Windows short names and case.
+function samePath(a, b) {
+  const real = (p) => {
+    try {
+      return realpathSync.native(p);
+    } catch {
+      return resolve(p);
+    }
+  };
+  const [x, y] = [real(a), real(b)];
+  return process.platform === 'win32' ? x.toLowerCase() === y.toLowerCase() : x === y;
+}
 
 // A fresh profile per run; automatic update checks off so CI never depends on GitHub.
 const profile = mkdtempSync(join(tmpdir(), 'dslab-smoke-'));
@@ -203,7 +215,7 @@ try {
       return { platform: process.platform, arch: process.arch, packaged: app.isPackaged, userData: app.getPath('userData'), electron: process.versions.electron, menuRoles: items.flatMap(roles) };
     });
     check('runs on this platform', true, `${main.platform}/${main.arch}, Electron ${main.electron}, packaged ${main.packaged}`);
-    check('uses the given profile folder', resolve(main.userData) === resolve(profile), main.userData);
+    check('uses the given profile folder', samePath(main.userData, profile), main.userData);
     check('Edit menu provides copy/paste/undo/select all', ['copy', 'paste', 'undo', 'selectall'].every((r) => main.menuRoles.includes(r)));
     if (main.platform === 'darwin') check('macOS app menu present', main.menuRoles.includes('appmenu'));
   }
