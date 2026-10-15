@@ -226,14 +226,21 @@ npm run test:desktop -- --exe /usr/bin/ds-study-lab --mode package --arg --no-sa
 It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs it against every installer it builds.
 
 ### What was verified for this release
-- All 105 Node tests pass.
-- In headless Chromium:
+- All 127 Node tests pass on Windows, macOS and Linux.
+- The **Build desktop apps** workflow built, installed and launched every download and ran the desktop smoke test against it:
+
+  | Download | Installed / launched on | Smoke test |
+  |---|---|---|
+  | Windows `setup.exe` | Windows (GitHub `windows-latest`): silent per-user install, Start-menu entry and Apps & features entry checked, then a clean uninstall | 18/18 |
+  | Windows `portable.exe` | Windows, run straight from the file | 14/14 (attached through DevTools, so the main-process and second-launch checks don't apply) |
+  | macOS `.dmg` (universal) | macOS on Apple Silicon (`macos-latest`): copied from the mounted dmg, signature verified, both architectures present | 19/19 natively, 19/19 as Intel under Rosetta |
+  | Linux `.deb` | Ubuntu 24.04: installed with apt, launched as `ds-study-lab`, then removed cleanly | 18/18 |
+  | Linux AppImage | Ubuntu 24.04, run directly (no `--no-sandbox`) | 18/18 |
+- In headless Chromium (browser mode):
   - every route and all 158 lesson sections open with no console errors;
   - all 65 templates (2 seeds each) were answered correctly through the UI;
-  - the primary interactions work: predictions, click/drag/keyboard rewiring with undo, practice resume after reload, repair diagnosis, BFS/DFS, tree traversal;
-  - dark mode and a 390 px phone width render correctly.
-- The Electron app launched on Linux and kept its saved data across a restart.
-- The Windows portable .exe was cross-built on Linux. Its packaged contents were checked, but it was **not run on a real Windows machine**. The GitHub workflow builds it natively on `windows-latest`.
+  - the primary interactions work: predictions, click/drag/keyboard rewiring with undo, practice resume after reload, repair diagnosis, BFS/DFS, tree traversal.
+- Not verified: a physical Intel Mac, Windows on ARM, Linux distributions other than Ubuntu, and the self-update download itself (it needs a published Release newer than the installed copy).
 
 ## Known limitations
 - The app is not signed with a paid certificate: Windows SmartScreen and macOS Gatekeeper warn the first time (see *Install the desktop app*). The macOS app is ad-hoc signed but not notarized by Apple.
