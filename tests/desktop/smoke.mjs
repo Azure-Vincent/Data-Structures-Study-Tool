@@ -11,6 +11,9 @@
 //                     not pass the app's console through)
 //     --arg <a>       extra command-line argument for the app (repeatable)
 //     --source        run `electron .` from this checkout instead of --exe
+//     --launch-timeout <s>  how long the app may take to start (default 120; the
+//                     first start of an Intel build under Rosetta translates
+//                     the whole binary and needs longer)
 //
 // Exit code 0 = every check passed. A JSON report lists each check.
 import { _electron, chromium } from 'playwright-core';
@@ -23,7 +26,7 @@ import { createRequire } from 'node:module';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const argv = process.argv.slice(2);
-const opt = { extra: [] };
+const opt = { extra: [], launchTimeout: 120 };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--exe') opt.exe = argv[++i];
@@ -33,6 +36,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--arg') opt.extra.push(argv[++i]);
   else if (a === '--cdp') opt.cdp = true;
   else if (a === '--source') opt.source = true;
+  else if (a === '--launch-timeout') opt.launchTimeout = Number(argv[++i]);
   else throw new Error(`unknown option ${a}`);
 }
 if (opt.source) opt.exe = createRequire(import.meta.url)('electron'); // path to the electron binary
@@ -68,8 +72,8 @@ const appArgs = [...(opt.source ? [ROOT] : []), `--user-data-dir=${profile}`, ..
 
 // ---------------------------------------------------------------- launching
 async function launchElectron() {
-  const app = await _electron.launch({ executablePath: opt.exe, args: appArgs, timeout: 120000, env: { ...process.env } });
-  const page = await app.firstWindow({ timeout: 120000 });
+  const app = await _electron.launch({ executablePath: opt.exe, args: appArgs, timeout: opt.launchTimeout * 1000, env: { ...process.env } });
+  const page = await app.firstWindow({ timeout: opt.launchTimeout * 1000 });
   return { app, page, close: () => app.close() };
 }
 

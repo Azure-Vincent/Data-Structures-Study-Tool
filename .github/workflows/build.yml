@@ -157,7 +157,8 @@ jobs:
           fi
           printf '#!/bin/sh\nexec arch -x86_64 "%s/Contents/MacOS/DS Study Lab" "$@"\n' "$DSLAB_APP" > /tmp/dslab-x64
           chmod +x /tmp/dslab-x64
-          node tests/desktop/smoke.mjs --exe /tmp/dslab-x64 --mode mac --label macos-x64-rosetta --out smoke-out
+          # the first start under Rosetta translates the whole Intel binary: allow more time to start
+          node tests/desktop/smoke.mjs --exe /tmp/dslab-x64 --mode mac --label macos-x64-rosetta --out smoke-out --launch-timeout 360
       - uses: actions/upload-artifact@v4
         with:
           name: DS-Study-Lab-macos
