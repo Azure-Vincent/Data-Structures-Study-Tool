@@ -119,7 +119,7 @@ async function coreChecks(page) {
   check('window opens on the dashboard', (await page.locator('h1').first().textContent()).includes('Your study desk'));
   check('window title', (await page.title()).includes('DS Study Lab'), await page.title());
 
-  const routes = ['#/', '#/lesson/8', '#/practice', '#/explore', '#/repair', '#/complexity', '#/progress', '#/settings', '#/lab'];
+  const routes = ['#/', '#/lesson/8', '#/practice', '#/explore', '#/repair', '#/progress', '#/settings', '#/lab'];
   const blank = [];
   for (const r of routes) {
     await go(page, r);
@@ -128,8 +128,11 @@ async function coreChecks(page) {
   }
   check(`all ${routes.length} main pages render`, !blank.length, blank.join(' '));
 
+  // lesson steps are addressed by their stable key (positions change when lessons grow)
+  const lessonRoute = (key) => page.evaluate((k) => import('./js/content/lessons.js').then((m) => { for (const l of m.LESSONS) { const i = l.sections.findIndex((s) => s.key === k); if (i >= 0) return `#/lesson/${l.lecture}/${i}`; } return null; }), key);
+
   // a lesson simulation steps forward (answering any prediction question)
-  await go(page, '#/lesson/8/10');
+  await go(page, await lessonRoute('s:predict-the-intermediate-states-insert-15-at-pos'));
   const step = page.locator('button:has-text("Step ▶")').first();
   const before = await page.locator('.stepnum').first().textContent();
   for (let k = 0; k < 4; k++) {
@@ -141,6 +144,16 @@ async function coreChecks(page) {
   }
   const after = await page.locator('.stepnum').first().textContent();
   check('lesson simulation steps forward', before !== after, `${before} → ${after}`);
+
+  // a "Build it in code" walkthrough: the same statement is highlighted in C++ and in Python
+  await go(page, await lessonRoute('w:sll-insert-beg'));
+  const walk = page.locator('.walk');
+  for (let k = 0; k < 3; k++) await walk.locator('button:has-text("Step ▶")').click();
+  await walk.locator('.lang-tabs button[data-lang="cpp"]').click();
+  const cppLine = ((await walk.locator('.walk-code li.cur').first().textContent().catch(() => '')) || '').trim();
+  await walk.locator('.lang-tabs button[data-lang="py"]').click();
+  const pyLine = ((await walk.locator('.walk-code li.cur').first().textContent().catch(() => '')) || '').trim();
+  check('walkthrough highlights the statement in C++ and Python', /newnode/.test(cppLine) && /newnode/.test(pyLine) && cppLine !== pyLine, `C++: ${cppLine} | Python: ${pyLine}`);
 
   // a graded exercise: put the statements in a correct order with the ↑ buttons, then Check
   await go(page, '#/try/l08-order-insert/3');

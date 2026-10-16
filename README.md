@@ -86,29 +86,32 @@ Opening `app/index.html` by double-clicking does **not** work: browsers block Ja
 
 ## What is inside
 
-**Guided lessons (one per lecture).** Every section cites its PDF page. Each concept follows the same cycle:
-1. A short explanation and a worked example.
-2. The simulation pauses before key steps and asks you to predict them.
-3. You perform the operation yourself.
-4. Your result is explained immediately.
-5. A fresh variation with less guidance.
-6. The concept returns later in mixed practice.
+**Guided lessons (one per lecture, 228 steps in all).** Every section cites its PDF page. For each structure in the course a lesson covers:
+- its **purpose, organisation, terminology and when to use it**;
+- **prerequisites** where they are needed: reading C++, Python and pseudocode side by side; memory in each language (C++ pointers with `new`/`delete`, Python references and garbage collection, the pseudocode’s addresses); node types and `NULL`/`nullptr`/`None`; recursion; loops that test at the bottom;
+- **every operation in the lectures** (creation, traversal, insertion, deletion, push/pop, enqueue/dequeue, traversals, BFS/DFS) as a simulation that pauses for predictions, and as a **“Build it in code”** walkthrough (below);
+- **common mistakes and edge cases**: empty structures, one node, invalid positions, full and empty arrays;
+- exercises that progress from **predicting** behaviour to **completing** missing steps to **writing** the operation yourself, followed by mixed practice later.
 
-“Correction / clarification” callouts flag where the notes miss an edge case or use non-standard names. These include one-node deletions, the circular `NULL` loop, the depth convention, and “full” vs “perfect”. See `docs/LECTURE_MAP.md`.
+“Correction / clarification” callouts flag where the notes miss an edge case or use non-standard names. These include one-node deletions, the circular `NULL` loop, allocating before validating a position, the depth convention, and “full” vs “perfect”. See `docs/LECTURE_MAP.md`.
 
-**Workspace.** It shows the diagram, the code with the current line highlighted, variables and pointers (address vs value), an explanation of the last step, the operation history and the operation counters. All of these come from one simulation state. Controls: Step forward, Step back, Play/Pause, Reset and Speed. Keyboard: → step, ← back, Space play/pause, Home reset.
+**Code in C++, Python and pseudocode.** Every code panel offers C++, Python and pseudocode (plus the notes’ original C where it exists). The choice applies to the whole app — pick a language on any panel or under **Settings & data** — so the same example can be compared language by language. The pseudocode is the Pseudocode Lab’s syntax, so it always runs.
 
-**Exercises.** There are 65 templates (at least 5 per lecture), and values, positions, shapes and operation sequences are generated randomly. Types:
-- predict
+**“Build it in code” walkthroughs.** 34 complete programs, from an array with shifting to BFS, written once in C++, once in Python and once in pseudocode. Node-based structures are built explicitly from nodes (no library containers), and C++ gives every node back with `delete`. The pseudocode runs in the Lab interpreter step by step; the matching C++ and Python statements are highlighted at every step, next to the diagram, the variables, the output and an explanation of what that statement changed. Each program has several starting situations (for example a normal list, one node, an empty list, an invalid position). The C++ and Python versions are compiled and run by `tests/langs/verify.mjs`, which checks that they print exactly what the pseudocode prints.
+
+**Workspace.** It shows the diagram, the code with the current line highlighted (in the language you chose), variables and pointers (address vs value), an explanation of the last step and the operation history. All of these come from one simulation state. Controls: Step forward, Step back, Play/Pause, Reset and Speed. Keyboard: → step, ← back, Space play/pause, Home reset.
+
+**Exercises.** There are 83 templates (at least 5 per lecture), and values, positions, shapes and operation sequences are generated randomly. Types:
+- predict (a state, a traversal, or everything a complete program prints)
 - rewire pointers (click, drag, or keyboard panel)
 - arrange pseudocode
-- complete the code
+- complete the code (including “which statement fills the gap?”, shown in your chosen language)
+- write the operation yourself in pseudocode, graded on several starting structures
 - find the bug with a failing example
 - click a traversal while the stack/queue is shown
 - drawing ↔ matrix ↔ adjacency list
 - build a tree from its array
 - choose a structure
-- count the work
 
 Answers are computed by the simulator. Ordering and fill-in answers are *executed* on several test lists, so any equivalent correct solution is accepted. Each exercise offers three hints: a concept, a highlight on the diagram, and the next concrete step. You can reveal the full solution, which replays its reasoning step by step. After a mistake you get an explanation of what your action changed and why it broke things, plus a similar exercise.
 
@@ -133,23 +136,16 @@ You can also edit pointers by hand with a live diagnosis.
 
 **Pseudocode Lab.** You write pseudocode and run it line by line on a simulated heap. A real parser and interpreter execute it; nothing is evaluated as JavaScript. You watch nodes being created, pointers changing, traversals and deletions as separate steps. Nodes keep stable addresses (@100, @200, …), so a value change looks different from a pointer change. Controls: Run/Pause, Step, Back, Run to end, Reset, Stop, speed and an instruction limit.
 - Feedback separates syntax errors, runtime errors (NULL, deleted nodes, undefined variables, endless loops) and logic warnings (unreachable nodes, cycles, broken links). Each problem has a before/after view of the step that caused it.
-- 21 guided exercises cover singly, doubly and circular lists, stacks, queues, trees and graphs. Each is checked on several test cases, including empty and single-node structures, with three hints before the solution.
-- In free mode you build any starting structure.
+- 35 guided exercises cover arrays, singly, doubly and circular lists, array and linked stacks and queues, trees and graphs. Each is checked on several test cases, including empty and single-node structures and invalid positions, with three hints before the solution. After solving one you can compare it with the complete C++ and Python program.
+- In free mode you build any starting structure, or start from **Arrays only** for programs that create their own arrays (2-D arrays are drawn as a table, arrays of lists as chains).
 
 The language is documented in `docs/PSEUDOCODE.md` and in the app's syntax reference.
 
-**Complexity lab.** Plots real operation counts for n = 1…24, for example:
-- head-only vs tail pointer
-- stack at the head vs at the tail
-- creatlist Θ(n²)
-- BFS with a list vs a matrix
-- recursion depth
-
-Each plot ends with a prediction question about the growth rate.
-
 **Progress.** Mastery means at least 3 independent correct answers (no hints, no revealed solution, not the fully guided version) on at least 2 different exercise templates, with the latest attempt correct. Watching a simulation or revealing a solution never counts. The dashboard shows the next activity, recent mistakes, recurring mistake types and topics due for review (simple spaced repetition). Practice sessions are 8 tasks, one at a time, and can be resumed after closing the app. The timer is optional. Progress can be exported, imported or reset under **Settings & data**.
 
-Free-text reflections and “write your own pseudocode” boxes are clearly marked **ungraded**. The app never pretends to evaluate them.
+Free-text reflections are clearly marked **ungraded**; the app never pretends to evaluate them. Pseudocode you write is graded by running it.
+
+**Saved progress from earlier versions** is migrated automatically: lesson steps are remembered by a stable key (so lessons can grow), and only the attempts, statistics and topics of the removed running-time material are taken out.
 
 ---
 
@@ -163,9 +159,11 @@ app/                    the web app (no build step, plain ES modules)
       invariants.js     detects lost access, dangling pointers, cycles, bad back links
       interp.js         tiny interpreter for pointer statements (grades order/fill answers)
   js/sim/               specs → traces, prediction questions
-  js/exercises/         65 templates (l07.js … l14.js), checkers (kit.js), solver, repair scenarios
-  js/progress/          storage, mastery, spaced review, session builder
-  js/content/           lessons (with page references) and concept list
+  js/exercises/         83 templates (l07.js … l14.js, impl.js), checkers (kit.js), solver, repair scenarios
+  js/progress/          storage, mastery, spaced review, session builder, migration of old saves
+  js/content/           lessons (with page references), concept list,
+                        translations.js (traced code in C++/Python/pseudocode),
+                        impl/ (the "Build it in code" programs, one file per structure)
   js/ui/ + js/views/    presentation only
   js/lab/               Pseudocode Lab: parser (lang.js), interpreter (machine.js), analysis, exercises
 electron/main.cjs       desktop wrapper (serves app/ from a private app:// origin)
@@ -173,13 +171,14 @@ electron/updater.cjs    update checks (Windows installer + AppImage: electron-up
 electron/preload.cjs    the small update API the page can call
 server.js               zero-dependency local web server (browser mode)
 tests/                  node:test suites; tests/ui/ optional Playwright browser checks
+tests/langs/verify.mjs  compiles and runs the C/C++/Python versions and compares them with the pseudocode
 tests/desktop/smoke.mjs launches the real desktop app and drives its core features
 .github/workflows/      builds, installs and tests the app on Windows, macOS and Linux
 docs/LECTURE_MAP.md     page-by-page mapping and corrections
 ```
 
 ## Testing
-`npm test` runs 127 automated tests, covering:
+`npm test` runs 159 automated tests, covering:
 - every pointer operation on empty, one-node and longer lists
 - invalid positions and repeated operations
 - doubly linked consistency in both directions
@@ -188,7 +187,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - tree measures, classification and array round-trips
 - graph matrices and lists, self-loops, cycles and disconnected graphs
 - the Lecture 14 BFS/DFS orders
-- BFS edges vs weights, and list vs matrix costs
+- BFS edges vs weights
 - **every exercise template across 40 random seeds**: the model answer is accepted, a wrong answer is rejected, generation is deterministic, and there are 3 hints each
 - every lesson simulation and exercise
 - the Pseudocode Lab:
@@ -199,13 +198,18 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
   - the final structure checks
   - step back/forward/stop/reset over real snapshots
   - every lab exercise: its solution passes, its starter fails, and each common mistake gets the right diagnosis
-- progress persistence across reload, mastery rules, import/export/reset, corrupted storage, and session rebuilding
+- progress persistence across reload, mastery rules, import/export/reset, corrupted storage, session rebuilding, and migrating saves from the previous version
+- every “Build it in code” program and starting situation: it runs in the Lab, all three languages carry the same statement labels, every executed line can be highlighted in C++ and Python, and the outputs match the lecture answers
+- every lesson’s pseudocode is valid Lab syntax, every program is taught in a lesson, each lesson has the predict → complete → write progression, and no running-time material is left
+
+`node tests/langs/verify.mjs` compiles every C++ program (`-std=c++17 -Wall -Wextra -Werror`), runs every Python program, and requires the output of every starting situation to equal the pseudocode’s output (148 comparisons). Lesson code sections marked as complete programs are compared the same way, including the notes-style C. It needs a C/C++ compiler and Python 3 and works on Windows, macOS and Linux; CI runs it on all three.
 
 `tests/ui/*.py` are optional browser checks, run with Playwright against `node server.js 5173`:
 - `interact.py` covers predictions, rewiring (click, drag and keyboard), practice resume after reload, explore, repair, BFS and a tree traversal.
-- `kinds.py` answers all 65 templates through the real interface.
-- `lessons.py` opens all 158 lesson sections.
+- `kinds.py` answers all 83 templates through the real interface (including writing pseudocode in the exercise editor).
+- `lessons.py` opens all 228 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
+- Set `CHROMIUM=/path/to/chrome` to use an already installed Chromium.
 - `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the diagram and controls stay in view, and the Operation history shows the current step without a scrollbar of its own.
 
 `tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:
@@ -249,6 +253,7 @@ It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs i
 - Linux builds are for x64 only.
 - In-progress answers are not saved; a resumed session continues at the current task, not mid-task.
 - The pointer interpreter that grades “arrange / complete the code” understands pointer statements: assignments, `->`, `getnode()`, `free()`, `while`/`do-while`/`if`, `print`. It does not understand integer counters or arithmetic, so exercises keep those parts fixed.
+- The app runs only the pseudocode. In a walkthrough the C++ and Python lines are highlighted through statement labels; that those programs really behave the same is checked by `tests/langs/verify.mjs` (and CI), not inside the app. “Write it yourself” is graded in pseudocode; C++ and Python versions you write are compared with the model program, not graded.
 - Mastery and review intervals use simple fixed rules (Leitner boxes), not an adaptive model.
 - Two things depend on reading the handwriting, which was ambiguous:
   - the directed graph on Lec 13 p.6;

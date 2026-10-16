@@ -1,7 +1,9 @@
 name: Build desktop apps
 
 # Builds DS Study Lab for Windows, macOS and Linux and proves each build works:
-# every platform job runs the unit tests, builds the installers, installs them
+# every platform job runs the unit tests and the cross-language check (the C++
+# and Python programs compiled and run with that platform's own compiler and
+# Python), builds the installers, installs them
 # the way a user would, launches the installed app and drives its core
 # features (tests/desktop/smoke.mjs), then uninstalls.
 #  - Every push / pull request: all of the above; the files are downloadable
@@ -30,6 +32,9 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: npm test
+      # the C++ and Python versions of every program must print what the pseudocode prints
+      - name: Compare the C++, Python and pseudocode programs
+        run: node tests/langs/verify.mjs
 
   windows:
     needs: test
@@ -43,6 +48,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # the C++ and Python versions of every program must print what the pseudocode prints
+      - name: Compare the C++, Python and pseudocode programs
+        run: node tests/langs/verify.mjs
       # The app compares its own version with the latest release, so a tagged
       # build must carry the tag's version (v1.2.0 -> 1.2.0).
       - name: Use the tag as the app version
@@ -114,6 +122,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # the C++ and Python versions of every program must print what the pseudocode prints
+      - name: Compare the C++, Python and pseudocode programs
+        run: node tests/langs/verify.mjs
       - name: Use the tag as the app version
         if: startsWith(github.ref, 'refs/tags/v')
         run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
@@ -170,6 +181,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # the C++ and Python versions of every program must print what the pseudocode prints
+      - name: Compare the C++, Python and pseudocode programs
+        run: node tests/langs/verify.mjs
       - name: Use the tag as the app version
         if: startsWith(github.ref, 'refs/tags/v')
         run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
