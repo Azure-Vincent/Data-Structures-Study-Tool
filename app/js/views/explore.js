@@ -13,6 +13,8 @@ import * as SQ from '../core/stackQueue.js';
 import * as T from '../core/tree.js';
 import * as G from '../core/graph.js';
 import { problems } from '../core/invariants.js';
+import { createWalkthrough } from '../ui/walkthrough.js';
+import { IMPLEMENTATIONS, IMPL_BY_ID } from '../content/impl/index.js';
 
 const STRUCTS = [
   { id: 'sll', label: 'Singly linked list', ref: 'Lec 08–09' },
@@ -25,6 +27,7 @@ const STRUCTS = [
   { id: 'lqueue', label: 'Linked queue', ref: 'Lec 12' },
   { id: 'tree', label: 'Binary tree', ref: 'Lec 13–14' },
   { id: 'graph', label: 'Graph', ref: 'Lec 13–14' },
+  { id: 'code', label: 'Programs (C++ / Python / pseudocode)', ref: 'Lec 07–14' },
 ];
 
 const LIST_OPS = {
@@ -89,6 +92,7 @@ export function exploreView(ctx, which) {
     if (struct === 'sll' || struct === 'dll' || struct === 'csll') c = listExplorer(store, struct);
     else if (struct === 'tree') c = treeBuilder(store, { traverse: true });
     else if (struct === 'graph') c = graphEditor(store);
+    else if (struct === 'code') c = programExplorer(store);
     else c = seqExplorer(store, struct);
     destroy.push(c.destroy);
     area.append(h('p', { class: 'small muted' }, `Based on ${STRUCTS.find((s) => s.id === struct).ref}.`), c.el);
@@ -96,6 +100,41 @@ export function exploreView(ctx, which) {
   drawTabs();
   drawArea();
   return root;
+}
+
+// ------------------------------------------------------------------ "Build it in code" programs
+// Every walkthrough program of the lessons, chosen freely: run it step by step in any language.
+function programExplorer(store) {
+  const last = store.data.settings.exploreProgram;
+  let id = IMPL_BY_ID[last] ? last : IMPLEMENTATIONS[0].id;
+  let wt = null;
+  const el = h('div');
+  const host = h('div');
+  const groups = {};
+  for (const ex of IMPLEMENTATIONS) (groups[ex.lecture] ||= []).push(ex);
+  const sel = h(
+    'select',
+    { 'aria-label': 'program', onchange: (e) => { id = e.target.value; store.setSetting('exploreProgram', id); draw(); } },
+    Object.entries(groups).map(([lec, list]) => h('optgroup', { label: `Lecture ${String(lec).padStart(2, '0')}` }, list.map((ex) => h('option', { value: ex.id, selected: ex.id === id }, ex.title)))),
+  );
+  const draw = () => {
+    if (wt) wt.destroy();
+    const ex = IMPL_BY_ID[id];
+    wt = createWalkthrough(ex, {
+      onOpenLab: (code, setup) => {
+        store.setLabDraft(`free:${setup.structure}`, code);
+        const lab = store.labData();
+        lab.freeValues ||= {};
+        lab.freeValues[setup.structure] = setup.graph ? { graph: setup.graph, s: setup.vars?.s } : { values: setup.values || [] };
+        store.save();
+        location.hash = `#/lab/free/${setup.structure}`;
+      },
+    });
+    clear(host).append(h('p', { class: 'small muted' }, ex.intro.replace(/`/g, '')), wt.el);
+  };
+  el.append(h('div', { class: 'panel' }, h('div', { class: 'row' }, h('label', { class: 'inline' }, 'Program', sel), h('span', { class: 'small muted' }, 'The same program in C++, Python and pseudocode; the pseudocode runs, and the matching C++ / Python line is highlighted at every step.'))), host);
+  draw();
+  return { el, destroy: () => wt && wt.destroy() };
 }
 
 // ------------------------------------------------------------------ lists

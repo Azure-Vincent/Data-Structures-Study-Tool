@@ -125,12 +125,13 @@ Answers are computed by the simulator. Ordering and fill-in answers are *execute
 
 The checker names the first problematic action. Click any action to undo back to it.
 
-**Explore.** Free play with all ten structures:
+**Explore.** Free play with all ten structures and the walkthrough programs:
 - singly, doubly and circular linked lists
 - array stack, linked stack at the head, linked stack at the tail (as in the notes)
 - linear and circular array queue, linked queue
 - binary tree builder (with an optional, clearly labelled BST mode)
 - graph editor that updates the matrix and adjacency list live, and runs BFS/DFS with discovered, processed, frontier and output shown separately
+- every “Build it in code” program, chosen from a list, stepped through in C++, Python or pseudocode
 
 You can also edit pointers by hand with a live diagnosis.
 
