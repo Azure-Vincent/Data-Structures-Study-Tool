@@ -32,12 +32,10 @@ const LIST_OPS = {
     ['insertBeg', 'insert at beginning', 'v'],
     ['insertMid', 'insert at position (middle)', 'vp'],
     ['insertEnd', 'insert at end', 'v'],
-    ['insertEndTail', 'insert at end using a tail pointer', 'v'],
     ['deleteBeg', 'delete at beginning', ''],
     ['deleteMid', 'delete at position (middle)', 'p'],
     ['deleteEnd', 'delete at end (corrected)', ''],
     ['deleteEndNotes', 'delete at end (exactly as in notes)', ''],
-    ['deleteEndTail', 'delete at end with tail pointer', ''],
     ['traverse', 'traverse / display', ''],
   ],
   dll: [
@@ -417,21 +415,20 @@ export function graphEditor(store) {
     );
     clear(canvas).append(renderGraph(g, { onNode: (v) => { if (!first) first = v; else { toggleEdge(first, v); first = null; } draw(); }, picked: first ? [first] : [] }));
     const m = G.matrix(g);
-    clear(reps).append(h('h3', {}, 'Adjacency matrix (rows = from)'), m.labels.length ? renderMatrixRO(m) : h('p', { class: 'muted small' }, 'No vertices.'), h('h3', { style: { marginTop: '10px' } }, 'Adjacency list (ascending order)'), renderAdjList({ list: G.adjList(g) }), h('p', { class: 'small muted' }, `V = ${g.vertices.length}, E = ${g.edges.length}. Matrix space Θ(V²) = ${g.vertices.length ** 2} cells; list space Θ(V + E).`));
+    clear(reps).append(h('h3', {}, 'Adjacency matrix (rows = from)'), m.labels.length ? renderMatrixRO(m) : h('p', { class: 'muted small' }, 'No vertices.'), h('h3', { style: { marginTop: '10px' } }, 'Adjacency list (ascending order)'), renderAdjList({ list: G.adjList(g) }), h('p', { class: 'small muted' }, `V = ${g.vertices.length} vertices, E = ${g.edges.length} edges. The matrix has a cell for every pair of vertices; the list stores only the edges that exist.`));
     const startSel = h('select', { 'aria-label': 'start vertex' }, G.sortedVertices(g).map((v) => h('option', { value: v }, v)));
     const orderSel = h('select', { 'aria-label': 'neighbour order' }, h('option', { value: 'alpha' }, 'ascending'), h('option', { value: 'insertion' }, 'edge insertion order'));
-    const repSel = h('select', { 'aria-label': 'representation' }, h('option', { value: 'list' }, 'adjacency list'), h('option', { value: 'matrix' }, 'adjacency matrix'));
     const all = h('input', { type: 'checkbox' });
     const run = (kind) => {
       if (!g.vertices.length) return;
       if (ws) ws.destroy();
-      const o = { order: orderSel.value, rep: repSel.value, all: all.checked };
+      const o = { order: orderSel.value, all: all.checked };
       const tr = kind === 'bfs' ? G.traceBFS(g, startSel.value, o) : G.traceDFS(g, startSel.value, o);
       ws = createWorkspace(tr, { predictKinds: ['discover', 'output'], predictOn: false, settings: store.data.settings });
       clear(stage).append(ws.el);
     };
     clear(runP).append(
-      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'start', startSel), h('label', { class: 'inline' }, 'neighbour order', orderSel), h('label', { class: 'inline' }, 'stored as', repSel), h('label', { class: 'inline small' }, all, 'whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
+      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'start', startSel), h('label', { class: 'inline' }, 'neighbour order', orderSel), h('label', { class: 'inline small' }, all, 'whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
       g.weighted ? h('p', { class: 'small muted' }, 'BFS and DFS ignore weights: BFS finds paths with the fewest EDGES, not the smallest total weight.') : null,
     );
   }

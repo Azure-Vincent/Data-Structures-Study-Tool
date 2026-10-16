@@ -419,6 +419,10 @@ export const EXAMPLES = {
     { title: 'Count nodes', code: EXERCISE_BY_ID['tree-count'].solution },
     { title: 'Insert into a BST (number tree)', code: EXERCISE_BY_ID['bst-insert'].solution, values: [50, 30, 70, 20, 40, 60, 80] },
   ],
+  arrays: [
+    { title: 'Insert into an array by shifting', code: 'MAX = 5\na = new Array(MAX)\na[0] = 10\na[1] = 20\na[2] = 30\nn = 3\n# insert 15 at index 1: move the later elements right, from the end\ni = n\nwhile i > 1 do\n  a[i] = a[i - 1]\n  i = i - 1\nend\na[1] = 15\nn = n + 1\nfor i = 0 to n - 1 do\n  print a[i]\nend\n' },
+    { title: 'Array stack (top = number of items)', code: 'MAX = 3\nstack = new Array(MAX)\ntop = 0\nfunction push(x)\n  if top == MAX then\n    print "stack overflow"\n    return\n  end\n  stack[top] = x\n  top = top + 1\nend\n\npush(11)\npush(22)\npush(33)\npush(44)\n' },
+  ],
   graph: [
     { title: 'Breadth-first search', code: EXERCISE_BY_ID['graph-bfs'].solution },
     { title: 'Depth-first search', code: EXERCISE_BY_ID['graph-dfs'].solution },
@@ -435,4 +439,5 @@ export const FREE_DEFAULTS = {
   queue: [10, 20, 30],
   tree: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
   graph: [],
+  arrays: [],
 };

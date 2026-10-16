@@ -8,7 +8,6 @@ import { lessonView } from './views/lesson.js';
 import { practiceView } from './views/practice.js';
 import { exploreView } from './views/explore.js';
 import { repairView } from './views/repair.js';
-import { complexityView } from './views/complexity.js';
 import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
 import { labView } from './views/lab.js';
@@ -16,6 +15,7 @@ import { generateExercise } from './exercises/registry.js';
 import { renderExercise } from './ui/exercise.js';
 import { icon } from './ui/icons.js';
 import { mountUpdateBanner } from './ui/updates.js';
+import { initCodeLang } from './ui/langs.js';
 
 function safeStorage() {
   try {
@@ -62,7 +62,7 @@ function lessonPct(L) {
   const lesson = LESSON_BY_LECTURE[L.n];
   const rec = store.data.lessons[L.id];
   if (!lesson || !rec) return 0;
-  return Math.round((rec.done.length / lesson.sections.length) * 100);
+  return Math.round((store.lessonDoneCount(L.id, lesson.sections.map((x) => x.key)) / lesson.sections.length) * 100);
 }
 
 function navLink(href, label, extra, ico) {
@@ -95,7 +95,7 @@ function drawNav() {
       }),
     ),
     h('div', { class: 'nav-group' }, 'Tools'),
-    h('div', { class: 'nav' }, navLink('#/lab', 'Pseudocode Lab', null, 'code'), navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair'), navLink('#/complexity', 'Complexity lab', null, 'complexity')),
+    h('div', { class: 'nav' }, navLink('#/lab', 'Pseudocode Lab', null, 'code'), navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair')),
     h('div', { class: 'nav-group' }, 'App'),
     h('div', { class: 'nav' }, navLink('#/settings', 'Settings & data', null, 'settings')),
   );
@@ -138,7 +138,9 @@ function route() {
         view = labView(ctx, parts[1] || null, parts[2] || null);
         break;
       case 'complexity':
-        view = complexityView(ctx);
+        // the Complexity lab was removed with the time-complexity material; old links land on the dashboard
+        history.replaceState(null, '', '#/');
+        view = dashboardView(ctx);
         break;
       case 'progress':
         view = progressView(ctx);
@@ -178,6 +180,7 @@ document.addEventListener('keydown', (e) => {
     menuBtn.focus();
   }
 });
+initCodeLang(store.data.settings.codeLang, (id) => store.setSetting('codeLang', id));
 applySettings();
 window.addEventListener('hashchange', route);
 store.onChange(() => drawNav());

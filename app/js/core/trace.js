@@ -3,20 +3,20 @@
 // meaningful action. Each step stores a full snapshot, so the player can
 // step back without having to "undo" anything.
 
-export const COUNTER_LABELS = {
-  comparisons: 'comparisons (conditions tested)',
-  moves: 'pointer moves (p = p->next)',
-  linkWrites: 'link writes (x->next = ...)',
-  varWrites: 'pointer variable writes',
-  allocs: 'allocations (malloc)',
-  frees: 'deallocations (free)',
-  visits: 'nodes visited',
-  arrayReads: 'array reads',
-  arrayWrites: 'array writes',
-  shifts: 'element shifts',
-  calls: 'function calls',
-  neighborChecks: 'neighbour checks',
-};
+/**
+ * Give every code block in a (nested) table a stable key, e.g. 'sll.insertBeg',
+ * so translations (content/translations.js) can be found for it.
+ */
+export function keyCodes(table, prefix) {
+  for (const [k, v] of Object.entries(table)) {
+    if (v && Array.isArray(v.lines)) v.key = `${prefix}.${k}`;
+    else if (v && typeof v === 'object') keyCodes(v, `${prefix}.${k}`);
+  }
+  return table;
+}
+
+// Steps also keep internal tallies (t.count) that some exercises read, e.g. the
+// number of recursive calls; they are not shown to the learner.
 
 export class Tracer {
   /**

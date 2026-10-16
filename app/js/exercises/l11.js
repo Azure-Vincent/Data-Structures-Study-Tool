@@ -131,47 +131,6 @@ export const l11 = [
     },
   },
   {
-    id: 'l11-count',
-    lecture: 11,
-    concept: 'cx.circular-costs',
-    type: 'complexity',
-    title: 'Counting work in a circle',
-    generate(rng) {
-      const n = rng.int(1, 8);
-      const vs = values(rng, n);
-      const w = csl(rng, vs);
-      const k = rng.pick(['insBeg', 'insEnd', 'trav', 'delBeg']);
-      let tr;
-      let q;
-      let explain;
-      if (k === 'insBeg') {
-        tr = CSLL.insertBeg(w, 0, { detail: false });
-        q = 'insert_at_beg() — count `last = last->next` moves';
-        explain = `To close the circle again the last node must be found: n − 1 = ${n - 1} moves. So inserting at the FRONT of a circular list with only start costs Θ(n). (Keeping a pointer to the last node instead of start makes both ends Θ(1).)`;
-      } else if (k === 'insEnd') {
-        tr = CSLL.insertEnd(w, 0, { detail: false });
-        q = 'insert_at_end() — count `temp = temp->next` moves';
-        explain = `temp walks from node 1 to node n: ${n - 1} moves → Θ(n).`;
-      } else if (k === 'delBeg') {
-        tr = CSLL.deleteBeg(w);
-        q = 'delete_at_beg() — count `last = last->next` moves';
-        explain = n === 1 ? 'One node: the special case frees it without walking (0 moves).' : `The last node must be found to update its next: ${n - 1} moves.`;
-      } else {
-        tr = CSLL.traverse(w);
-        q = 'traverse() with do-while — count how many values are printed';
-        explain = `Exactly one lap: ${n} values.`;
-      }
-      const ans = k === 'trav' ? tr.output.length : tr.counters.moves || 0;
-      return {
-        prompt: `Circular list with **${n}** node(s). ${q}?`,
-        visual: { type: 'list', world: w },
-        edge: n === 1,
-        ...numeric(ans, { explain }),
-        hints: ['Which loop runs, and when does it stop?', { text: 'The walk stops on the node whose next is start.' }, 'Count the arrows walked.'],
-      };
-    },
-  },
-  {
     id: 'l11-one-lap',
     lecture: 11,
     concept: 'l11.circular-links',

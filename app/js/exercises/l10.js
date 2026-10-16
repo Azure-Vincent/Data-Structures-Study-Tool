@@ -160,7 +160,7 @@ export const l10 = [
         visual: { type: 'list', world: w },
         edge: n === 0,
         ...numeric(ans, {
-          explain: `One call per node plus one final call with NULL: ${calls} calls; they are all active at once at the deepest point (${depth} frames). Return value = ${tr.result}. Each call adds 1 on the way BACK out. Time Θ(n); auxiliary space Θ(n) for the call stack (an iterative loop would use Θ(1)).`,
+          explain: `One call per node plus one final call with NULL: ${calls} calls; they are all active at once at the deepest point (${depth} frames). Return value = ${tr.result}. Each call adds 1 on the way BACK out.`,
           wrong: { [n]: { msg: ask === 'ret' ? '' : 'Do not forget the last call, made with NULL (the base case).', tag: 'recursion-base' } },
         }),
         hints: ['Each call handles one node, then calls itself on the next.', { text: 'The recursion stops at the call that receives NULL.' }, ask === 'ret' ? 'Add 1 for every non-NULL node.' : 'Count the non-NULL calls and add the one NULL call.'],

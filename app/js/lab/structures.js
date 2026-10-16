@@ -15,9 +15,11 @@ export const STRUCTURES = {
   queue: { id: 'queue', label: 'Queue (linked)', fields: ['next'], aliases: {}, roots: ['front', 'rear'], forward: 'next', render: 'list', listKind: 'sll', lecture: 12, valuesHelp: 'Values from front to rear, e.g. 10 20 30 (10 leaves first).' },
   tree: { id: 'tree', label: 'Binary tree', fields: ['left', 'right'], aliases: {}, roots: ['root'], render: 'tree', lecture: 13, valuesHelp: 'Level order with - for an empty spot, e.g. A B C D E - G or 50 30 70 20 40 60 80.' },
   graph: { id: 'graph', label: 'Graph', fields: ['next'], aliases: {}, roots: [], render: 'graph', lecture: 14, valuesHelp: 'Choose one of the lecture graphs. G is the graph, s the start vertex.' },
+  // no starting nodes: for programs that work with arrays (Lec 07, the array stack and queue of Lec 12)
+  arrays: { id: 'arrays', label: 'Arrays only (no nodes)', fields: ['next'], aliases: {}, roots: [], render: 'none', lecture: 7, valuesHelp: 'Nothing is set up: the program creates its own arrays with new Array(n).' },
 };
 
-export const STRUCTURE_ORDER = ['sll', 'dll', 'csll', 'stack', 'queue', 'tree', 'graph'];
+export const STRUCTURE_ORDER = ['sll', 'dll', 'csll', 'stack', 'queue', 'tree', 'graph', 'arrays'];
 
 export const GRAPH_EXAMPLES = {
   lec14: { label: 'Lecture 14 graph (a–i)', make: G.lec14Graph, start: 'a' },
@@ -138,6 +140,7 @@ export function describeSetup(setup) {
     const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.lec14;
     return `${ex.label}, s = ${setup.vars?.s ?? ex.start}`;
   }
+  if (S.render === 'none') return 'no nodes — only the arrays and variables the program creates';
   if (S.render === 'tree') return vals.length ? `tree (level order) ${setup.values.map((v) => (v === null ? '–' : v)).join(' ')}` : 'empty tree (root = NULL)';
   const root = S.roots[0];
   if (!vals.length) return S.id === 'queue' ? 'empty queue (front = rear = NULL)' : `empty (${root} = NULL)`;

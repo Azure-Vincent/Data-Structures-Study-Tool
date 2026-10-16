@@ -175,7 +175,7 @@ export const l13 = [
     id: 'l13-formulas',
     lecture: 13,
     concept: 'l13.tree-measures',
-    type: 'complexity',
+    type: 'predict',
     title: 'Node-count formulas',
     generate(rng) {
       const kind = rng.pick(['maxNodes', 'maxLeaves', 'atLevel', 'nextLevel', 'edges', 'minHeight']);
@@ -247,7 +247,7 @@ export const l13 = [
           labels.forEach((u, i) => labels.forEach((v, j) => {
             if ((resp?.[i]?.[j] ?? 0) !== m[i][j]) wrong.push({ u, v, want: m[i][j] });
           }));
-          if (!wrong.length) return { correct: true, message: `${directed ? 'A directed graph’s matrix need not be symmetric.' : 'An undirected edge appears twice (row u col v AND row v col u), so the matrix is symmetric.'}${hasLoop ? ' A self-loop is a 1 on the diagonal.' : ''} Space: Θ(V²) entries regardless of how many edges exist.` };
+          if (!wrong.length) return { correct: true, message: `${directed ? 'A directed graph’s matrix need not be symmetric.' : 'An undirected edge appears twice (row u col v AND row v col u), so the matrix is symmetric.'}${hasLoop ? ' A self-loop is a 1 on the diagonal.' : ''} The matrix always has V × V entries, one for every possible pair, whether or not that edge exists.` };
           const sym = !directed && wrong.some((w) => resp?.[labels.indexOf(w.v)]?.[labels.indexOf(w.u)] === w.want);
           const transposed = directed && wrong.every((w) => (resp?.[labels.indexOf(w.v)]?.[labels.indexOf(w.u)] ?? 0) === w.want);
           return {
@@ -285,7 +285,7 @@ export const l13 = [
             const want = list[v].map((x) => x.toUpperCase()).sort();
             return got.join() !== want.join();
           });
-          if (!bad.length) return { correct: true, message: `Each row of the matrix becomes one linked list (Lec 13 p.6, bottom). Space: Θ(V + E) — smaller than Θ(V²) for sparse graphs. The ORDER inside a list does not change the graph, but it does change BFS/DFS results.` };
+          if (!bad.length) return { correct: true, message: `Each row of the matrix becomes one linked list (Lec 13 p.6, bottom). A list stores only the edges that exist. The ORDER inside a list does not change the graph, but it does change BFS/DFS results.` };
           return { correct: false, message: `Check ${bad.map((v) => `${v} (should be: ${list[v].join(' ') || 'none'})`).join('; ')}.`, tag: 'adjlist' };
         },
         solutionText: labels.map((v) => `${v}: ${list[v].join(' → ') || '(none)'}`).join('\n'),

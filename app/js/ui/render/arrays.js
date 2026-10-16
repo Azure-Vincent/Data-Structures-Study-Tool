@@ -69,6 +69,7 @@ export function renderArray(v) {
     const g = s('g', { class: ['cell', filled && v.filled != null ? 'live' : '', v.highlight === i ? 'hl' : ''].join(' ') });
     g.append(s('rect', { x, y: 34, width: cw, height: 38 }));
     g.append(s('text', { class: 'i', x: x + cw / 2, y: 26, 'text-anchor': 'middle' }, `[${i}]`));
+    if (v.values && v.values[i] != null) g.append(s('text', { class: 'v', x: x + cw / 2, y: 58, 'text-anchor': 'middle' }, String(v.values[i])));
     if (v.base != null) g.append(s('text', { class: 'i', x: x + 3, y: 90 }, String(v.base + i * v.size)));
     svg.append(g);
   }

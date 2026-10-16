@@ -210,7 +210,7 @@ export const l12 = [
       return {
         prompt: `This stack keeps its top at the HEAD of the list (top points to the first node). ${op === 'push' ? `Push **${v}**.` : `Pop (remove ${vs[0]} and free it).`}${n === 1 && op === 'pop' ? ' It is the last item.' : ''}\n\n${guide(guidance, op === 'push' ? 'Exactly like insert at the beginning.' : 'Exactly like delete at the beginning.', '')}`,
         edge: n <= 1,
-        ...rewire(spec, { explain: 'Θ(1): no walking needed when the top is at the head.' }),
+        ...rewire(spec, { explain: 'With the top at the head, push and pop change only the links next to top — no walking through the list.' }),
         hints: ['A head-based stack is insert/delete at the beginning.', { text: 'Only top and one link change.', hl: { vars: ['top'] } }, op === 'push' ? 'getnode(); new->next = top; top = new.' : 'temp = top; top = top->next; free(temp).'],
       };
     },
@@ -241,29 +241,6 @@ export const l12 = [
         ...mcq(o),
         reflection: reflect('Describe what goes wrong if you used the other structure here.'),
         hints: ['Which item should be removed next — the newest or the oldest?', { text: 'LIFO vs FIFO (Lec 12 p.1, p.5).' }, 'Newest first → stack; oldest first → queue.'],
-      };
-    },
-  },
-  {
-    id: 'l12-ends-cost',
-    lecture: 12,
-    concept: 'cx.stack-ends',
-    type: 'complexity',
-    title: 'Linked stack: which end?',
-    generate(rng) {
-      const n = rng.int(1, 10);
-      const which = rng.pick(['tail', 'head']);
-      const pushes = Array.from({ length: n }, (_, i) => ({ op: 'push', x: i + 1 }));
-      const before = SQ.runOps(which === 'tail' ? 'lstack-tail' : 'lstack-head', pushes).counters.moves || 0;
-      const after = SQ.runOps(which === 'tail' ? 'lstack-tail' : 'lstack-head', [...pushes, { op: 'pop' }]).counters.moves || 0;
-      const ans = after - before;
-      return {
-        prompt: `A linked stack holds **${n}** item(s). ${which === 'tail' ? 'It pushes and pops at the END of the list, like Lec 12 p.4 (start = bottom, top = last node).' : 'It pushes and pops at the HEAD of the list (top = first node).'}\n\nCounting \`temp = temp->next\` moves, how many moves does ONE pop make?`,
-        edge: n === 1,
-        ...numeric(ans, {
-          explain: which === 'tail' ? `To pop at the tail we must make the node BELOW top the new top, and singly linked nodes cannot point back — so we walk from start: ${ans} move(s) → Θ(n) per pop. Pushing at the tail is Θ(1) because top is known.` : 'Pop at the head is temp = top; top = top->next; free(temp) — no walking: Θ(1). That is why linked stacks normally use the head.',
-        }),
-        hints: ['Which node becomes the new top after a pop?', { text: which === 'tail' ? 'Can you reach the second-to-last node directly?' : 'The new top is top->next.' }, which === 'tail' ? 'Walk from start until temp->next == top.' : 'No loop is needed.'],
       };
     },
   },

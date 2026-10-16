@@ -11,7 +11,7 @@ export const LECTURES = [
 ];
 
 export const CONCEPTS = [
-  { id: 'l07.arrays-vs-lists', lecture: 7, name: 'Arrays vs linked lists: operation costs' },
+  { id: 'l07.arrays-vs-lists', lecture: 7, name: 'Arrays vs linked lists: how insertion and deletion work' },
   { id: 'l07.linear-nonlinear', lecture: 7, name: 'Linear vs non-linear structures' },
   { id: 'l07.memory-layout', lecture: 7, name: 'Contiguous memory and storage location' },
   { id: 'l07.pointers-alloc', lecture: 7, name: 'Pointers, malloc() and free()' },
@@ -21,13 +21,11 @@ export const CONCEPTS = [
   { id: 'l08.insert-beg', lecture: 8, name: 'Insert at the beginning' },
   { id: 'l08.insert-mid', lecture: 8, name: 'Insert in the middle' },
   { id: 'l08.insert-end', lecture: 8, name: 'Insert at the end' },
-  { id: 'cx.list-costs', lecture: 8, name: 'Cost: finding a position vs changing links' },
   { id: 'l09.delete-beg', lecture: 9, name: 'Delete at the beginning' },
   { id: 'l09.delete-mid', lecture: 9, name: 'Delete at an intermediate position' },
   { id: 'l09.delete-end', lecture: 9, name: 'Delete at the end (incl. one node)' },
   { id: 'l09.traverse', lecture: 9, name: 'Traversal and output' },
   { id: 'l09.preserve-access', lecture: 9, name: 'Preserving access & freeing safely' },
-  { id: 'cx.tail-pointer', lecture: 9, name: 'Cost: what a tail pointer does (not) fix' },
   { id: 'l10.dll-links', lecture: 10, name: 'left/right links agree' },
   { id: 'l10.dll-insert', lecture: 10, name: 'Doubly linked insertion' },
   { id: 'l10.dll-delete', lecture: 10, name: 'Doubly linked deletion' },
@@ -38,13 +36,11 @@ export const CONCEPTS = [
   { id: 'l11.csll-insert', lecture: 11, name: 'Circular insertion' },
   { id: 'l11.csll-delete', lecture: 11, name: 'Circular deletion' },
   { id: 'l11.csll-edge', lecture: 11, name: 'Empty and one-node circles' },
-  { id: 'cx.circular-costs', lecture: 11, name: 'Cost: finding the last node in a circle' },
   { id: 'l12.lifo-fifo', lecture: 12, name: 'LIFO vs FIFO' },
   { id: 'l12.array-stack', lecture: 12, name: 'Array stack: top, overflow, underflow' },
   { id: 'l12.linked-stack', lecture: 12, name: 'Linked stack' },
   { id: 'l12.array-queue', lecture: 12, name: 'Array queue: F, R, full/empty' },
   { id: 'l12.linked-queue', lecture: 12, name: 'Linked queue: front and rear' },
-  { id: 'cx.stack-ends', lecture: 12, name: 'Cost: stack at the head vs at the tail' },
   { id: 'l13.tree-terms', lecture: 13, name: 'Tree terminology' },
   { id: 'l13.tree-measures', lecture: 13, name: 'Levels, height, depth, formulas' },
   { id: 'l13.tree-classify', lecture: 13, name: 'Strict / full(perfect) / complete' },
@@ -54,14 +50,12 @@ export const CONCEPTS = [
   { id: 'l14.dfs', lecture: 14, name: 'Depth-first search' },
   { id: 'l14.bfs', lecture: 14, name: 'Breadth-first search' },
   { id: 'l14.components', lecture: 14, name: 'Reachable component vs whole graph' },
-  { id: 'l14.traversal-cost', lecture: 14, name: 'Traversal cost: list vs matrix' },
 ];
 
 export const CONCEPT_BY_ID = Object.fromEntries(CONCEPTS.map((c) => [c.id, c]));
 
 export const MISTAKE_LABELS = {
   'lost-access': 'Overwrote the only pointer to the rest of the list',
-  'wrong-result': 'Result did not match the goal',
   'undefined-var': 'Used a variable before giving it a value',
   runtime: 'Runtime error in pseudocode',
   'free-before-unlink': 'Freed a node that was still linked',
@@ -92,11 +86,10 @@ export const MISTAKE_LABELS = {
   'order-confusion': 'Mixed up preorder / inorder / postorder',
   'bfs-dfs-confusion': 'Mixed up BFS and DFS',
   'bfs-weight': 'Assumed BFS minimises total weight',
-  'list-vs-matrix': 'List vs matrix traversal cost',
   relation: 'Tree relationship terms',
   'position-range': 'Valid position ranges',
-  'shift-count': 'Counting array shifts',
   'memory-bug': 'Leak / dangling / double free',
+  'array-shift': 'Shifted array elements the wrong way',
   'storage-location': 'Stack vs heap vs static storage',
   sizeof: 'sizeof in malloc',
   'recursion-base': 'Forgot the base-case call',

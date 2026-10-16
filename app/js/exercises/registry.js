@@ -21,7 +21,6 @@ export const TYPE_LABELS = {
   traverse: 'Click the traversal',
   convert: 'Convert representations',
   choose: 'Choose a structure',
-  complexity: 'Count the work',
   classify: 'Classify',
   build: 'Build',
   lab: 'Pseudocode Lab',

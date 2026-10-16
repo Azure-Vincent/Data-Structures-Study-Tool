@@ -153,10 +153,3 @@ test('BFS minimises edges, not weight', () => {
   assert.deepEqual(best.path, ['A', 'B', 'C', 'D']);
 });
 
-test('traversal cost: adjacency list vs matrix neighbour checks', () => {
-  const g = G.lec14Graph();
-  const L = G.traceBFS(g, 'a', { rep: 'list' }).counters.neighborChecks;
-  const M = G.traceBFS(g, 'a', { rep: 'matrix' }).counters.neighborChecks;
-  assert.equal(L, 2 * g.edges.length);
-  assert.equal(M, g.vertices.length ** 2);
-});

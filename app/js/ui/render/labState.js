@@ -64,6 +64,7 @@ export function renderLabDiagram(st, graph, hl = {}) {
   const S = STRUCTURES[st.structure];
   if (S.render === 'graph') return renderGraph(graph, { state: graphState(st, graph), size: [520, 340] });
   if (S.render === 'tree') return renderHeapTree(st, hl);
+  if (S.render === 'none') return renderCollections(st) || h('p', { class: 'small muted', style: { padding: '12px' } }, 'No arrays yet — the program creates them with new Array(n).');
   return renderList(toWorld(st), { hl, head: S.roots[0], lost: lostAddrs(st) });
 }
 
@@ -184,8 +185,8 @@ export function renderHeapTree(st, hl = {}) {
 // ---------------------------------------------------------------- panels
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-/** Variables of every frame (current first), changed values highlighted against prev. */
-export function renderVariables(st, prev) {
+/** Variables of every frame (current first), changed values highlighted against prev. lines:false hides pseudocode line numbers. */
+export function renderVariables(st, prev, { lines = true } = {}) {
   const wrap = h('div', { class: 'lab-vars' });
   const frames = [...st.frames].reverse();
   frames.forEach((fr, k) => {
@@ -200,7 +201,7 @@ export function renderVariables(st, prev) {
         return h('tr', { class: changed ? 'changed' : '' }, h('td', {}, name), h('td', {}, isRef(v) ? [h('span', { class: 'addr' }, `@${v.ref}`), h('span', { class: 'val' }, st.nodes[v.ref]?.freed ? '  → deleted node!' : `  → node with data ${dataText(st.nodes[v.ref]?.data)}`)] : v === null ? h('span', { class: 'addr' }, 'NULL') : fmt(st, v)), h('td', { class: 'small muted' }, kind));
       });
     wrap.append(
-      h('div', { class: 'lab-frame' + (isTop ? ' top' : '') }, h('div', { class: 'lab-frame-title' }, fr.fn === 'main' ? 'Global variables' : `${fr.fn}() — ${isTop ? 'running now' : 'waiting'}${fr.callLine ? `, called on line ${fr.callLine}` : ''}`), rows.length ? h('table', { class: 'vars-table' }, rows) : h('p', { class: 'small muted', style: { margin: '4px 0' } }, 'No variables yet.')),
+      h('div', { class: 'lab-frame' + (isTop ? ' top' : '') }, h('div', { class: 'lab-frame-title' }, fr.fn === 'main' ? 'Global variables' : `${fr.fn}() — ${isTop ? 'running now' : 'waiting'}${fr.callLine && lines ? `, called on line ${fr.callLine}` : ''}`), rows.length ? h('table', { class: 'vars-table' }, rows) : h('p', { class: 'small muted', style: { margin: '4px 0' } }, 'No variables yet.')),
     );
   });
   return wrap;
@@ -213,8 +214,56 @@ export function renderCollections(st) {
     if (!isColl(value)) continue;
     const c = st.colls[value.coll];
     if (!c) continue;
-    const cells = c.items.map((x, i) => h('span', { class: 'cell' }, c.kind === 'array' ? h('small', { class: 'idx' }, String(i)) : null, isRef(x) ? `@${x.ref}` : x === null ? '–' : typeof x === 'string' ? x : String(x)));
-    rows.push(h('div', { class: 'lab-coll' }, h('div', { class: 'small' }, h('b', {}, name), ' ', h('span', { class: 'muted' }, COLL_LABEL[c.kind])), h('div', { class: 'frontier' }, cells.length ? cells : h('span', { class: 'muted small' }, 'empty'))));
+    const title = h('div', { class: 'small' }, h('b', {}, name), ' ', h('span', { class: 'muted' }, COLL_LABEL[c.kind]));
+    if (c.kind === 'array' && c.items.length && c.items.every((x) => isColl(x) && st.colls[x.coll])) rows.push(h('div', { class: 'lab-coll' }, title, renderMatrix(st, c)));
+    else if (c.kind === 'array' && st.structure === 'arrays' && c.items.some(isRef) && c.items.every((x) => x === null || isRef(x))) rows.push(h('div', { class: 'lab-coll' }, title, renderChains(st, c)));
+    else {
+      const cells = c.items.map((x, i) => h('span', { class: 'cell' }, c.kind === 'array' ? h('small', { class: 'idx' }, String(i)) : null, cellText(st, x)));
+      rows.push(h('div', { class: 'lab-coll' }, title, h('div', { class: 'frontier' }, cells.length ? cells : h('span', { class: 'muted small' }, 'empty'))));
+    }
   }
   return rows.length ? h('div', { class: 'lab-colls' }, rows) : null;
+}
+
+function cellText(st, x) {
+  if (isRef(x)) {
+    const n = st.nodes[x.ref];
+    return n ? `@${x.ref} (${dataText(n.data)})` : `@${x.ref}`;
+  }
+  if (isColl(x)) return `array #${x.coll}`;
+  return x === null ? '–' : typeof x === 'string' ? x : String(x);
+}
+
+// an array of arrays (e.g. an adjacency matrix): one row per inner array
+function renderMatrix(st, c) {
+  const inner = c.items.map((x) => st.colls[x.coll].items);
+  const width = Math.max(0, ...inner.map((r) => r.length));
+  const cols = Array.from({ length: width }, (_, j) => j);
+  return h(
+    'table',
+    { class: 'lab-matrix' },
+    h('thead', {}, h('tr', {}, h('th', {}, ''), cols.map((j) => h('th', { scope: 'col' }, String(j))))),
+    h('tbody', {}, inner.map((r, i) => h('tr', {}, h('th', { scope: 'row' }, String(i)), cols.map((j) => h('td', { class: r[j] === 1 ? 'on' : '' }, j < r.length ? cellText(st, r[j]) : ''))))),
+  );
+}
+
+// an array whose slots hold the first node of a linked list (e.g. adjacency lists)
+function renderChains(st, c) {
+  return h(
+    'div',
+    { class: 'lab-chains' },
+    c.items.map((x, i) => {
+      const parts = [h('span', { class: 'idx' }, `[${i}]`)];
+      let a = isRef(x) ? x.ref : null;
+      const seen = new Set();
+      while (a != null && st.nodes[a] && !seen.has(a) && seen.size < 30) {
+        seen.add(a);
+        const n = st.nodes[a];
+        parts.push(h('span', { class: 'arrow', 'aria-hidden': 'true' }, '→'), h('span', { class: `cell${n.freed ? ' freed' : ''}`, title: `node @${a}` }, dataText(n.data)));
+        a = n.next;
+      }
+      parts.push(h('span', { class: 'arrow', 'aria-hidden': 'true' }, '→'), h('span', { class: 'null' }, 'NULL'));
+      return h('div', { class: 'frontier' }, parts);
+    }),
+  );
 }

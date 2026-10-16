@@ -1,5 +1,5 @@
 // Binary trees (Lectures 13 and 14). Node ids are their labels (unique).
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 
 export function emptyTree() {
   return { type: 'tree', nodes: {}, root: null };
@@ -265,6 +265,8 @@ export const TRAV_CODE = {
     lines: ['cur = root;', 'while (cur != NULL || !isEmpty(S)) {', '    while (cur != NULL) {     // go as far left as possible', '        push(S, cur);', '        cur = cur->left;', '    }', '    cur = pop(S);', '    visit(cur);', '    cur = cur->right;', '}'],
   },
 };
+keyCodes(TRAV_CODE, 'tree');
+
 
 const VISIT_LINE = { preorder: 2, inorder: 3, postorder: 4 };
 

@@ -9,8 +9,11 @@ import { generateExercise } from '../exercises/registry.js';
 import { randomSeed } from '../core/rng.js';
 import { formulasDemo, treeReprDemo } from './demos.js';
 import { treeBuilder, graphEditor } from './explore.js';
+import { langCode } from '../ui/langs.js';
+import { createWalkthrough } from '../ui/walkthrough.js';
+import { IMPL_BY_ID } from '../content/impl/index.js';
 
-const TYPE_NAMES = { read: 'Read', note: 'Note', code: 'Code', sim: 'Worked example', codesim: 'Run the code', exercise: 'Your turn', demo: 'Interactive', pseudo: 'Write pseudocode' };
+const TYPE_NAMES = { read: 'Read', note: 'Note', code: 'Code', sim: 'Worked example', codesim: 'Run the code', walk: 'Build it in code', exercise: 'Your turn', lab: 'Write it yourself', demo: 'Interactive', pseudo: 'Write pseudocode' };
 
 export function lessonView(ctx, n, at) {
   const { store } = ctx;
@@ -18,7 +21,8 @@ export function lessonView(ctx, n, at) {
   const L = LECTURES.find((x) => x.n === n);
   if (!lesson) return h('p', {}, 'No such lecture.');
   const rec = store.lesson(lesson.id);
-  let idx = at != null && !Number.isNaN(at) ? Math.max(0, Math.min(at, lesson.sections.length - 1)) : rec.at || 0;
+  const keys = lesson.sections.map((s) => s.key);
+  let idx = at != null && !Number.isNaN(at) ? Math.max(0, Math.min(at, lesson.sections.length - 1)) : Math.max(0, keys.indexOf(rec.at));
   const root = h('div');
   const outline = h('ol', { class: 'history', 'aria-label': 'Lesson outline' });
   const progBar = h('span');
@@ -36,7 +40,7 @@ export function lessonView(ctx, n, at) {
   stickyWhenFits(outlineBox, 16);
 
   function done(i) {
-    store.markLessonStep(lesson.id, i, lesson.sections.length);
+    store.markLessonStep(lesson.id, keys[i], keys);
     const s = lesson.sections[i];
     const concepts = [...(s.concepts || [])];
     if (s.type === 'exercise') {
@@ -49,18 +53,19 @@ export function lessonView(ctx, n, at) {
 
   function drawOutline() {
     const r = store.lesson(lesson.id);
-    const pct = Math.round((r.done.length / lesson.sections.length) * 100);
+    const nDone = store.lessonDoneCount(lesson.id, keys);
+    const pct = Math.round((nDone / lesson.sections.length) * 100);
     progBar.style.width = pct + '%';
-    progTxt.textContent = `${r.done.length} of ${lesson.sections.length} steps done`;
+    progTxt.textContent = `${nDone} of ${lesson.sections.length} steps done`;
     clear(outline).append(
       lesson.sections.map((s, i) =>
         h(
           'li',
-          { class: [i === idx ? 'cur' : '', r.done.includes(i) ? 'done' : ''], onclick: () => go(i), 'aria-current': i === idx ? 'step' : null },
-          h('span', { class: 'step-dot', 'aria-hidden': 'true' }, r.done.includes(i) ? '✓' : String(i + 1)),
+          { class: [i === idx ? 'cur' : '', r.done.includes(s.key) ? 'done' : ''], onclick: () => go(i), 'aria-current': i === idx ? 'step' : null },
+          h('span', { class: 'step-dot', 'aria-hidden': 'true' }, r.done.includes(s.key) ? '✓' : String(i + 1)),
           h('span', { class: 'k' }, TYPE_NAMES[s.type]),
           h('span', {}, s.title),
-          h('span', { class: 'sr-only' }, r.done.includes(i) ? '(done)' : ''),
+          h('span', { class: 'sr-only' }, r.done.includes(s.key) ? '(done)' : ''),
         ),
       ),
     );
@@ -99,7 +104,7 @@ export function lessonView(ctx, n, at) {
         break;
       case 'code':
         if (s.body) card.append(md(s.body));
-        card.append(codeTabs(s));
+        card.append(langCode({ c: s.c, cpp: s.cpp, py: s.py, pseudo: s.pseudo }));
         break;
       case 'sim': {
         if (s.body) card.append(md(s.body));
@@ -120,6 +125,14 @@ export function lessonView(ctx, n, at) {
         card.append(h('p', { class: 'small muted' }, s.predict ? 'The simulation will pause before key steps and ask you to predict them. ' : '', 'Keys: ', h('kbd', {}, '→'), ' step, ', h('kbd', {}, '←'), ' back, ', h('kbd', {}, 'Space'), ' play/pause.'), ws.el);
         break;
       }
+      case 'walk': {
+        if (s.body) card.append(md(s.body));
+        const ex = IMPL_BY_ID[s.impl];
+        const wt = createWalkthrough(ex, { onEnd: () => done(idx), onOpenLab: (code, setup) => openInLab(code, setup) });
+        cleanupWs.push(() => wt.destroy());
+        card.append(h('p', { class: 'small muted' }, 'The same program in C++, Python and pseudocode: switch language at any step — the highlighted statement and the diagram stay in sync. Keys: ', h('kbd', {}, '→'), ' step, ', h('kbd', {}, '←'), ' back, ', h('kbd', {}, 'Space'), ' play/pause.'), wt.el);
+        break;
+      }
       case 'codesim': {
         if (s.body) card.append(md(s.body));
         const host = h('div');
@@ -131,7 +144,7 @@ export function lessonView(ctx, n, at) {
         const pick = (k) => {
           tabs.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-selected', j === k ? 'true' : 'false'));
           const v = s.variants[k];
-          const ws = createWorkspace(buildTrace({ struct: 'code', lines: v.lines, setup: v.setup, newValue: v.newValue, title: `${v.label} version`, ref: s.ref }), { settings: store.data.settings });
+          const ws = createWorkspace(buildTrace({ struct: 'code', lines: v.lines, langs: v.langs, setup: v.setup, newValue: v.newValue, title: `${v.label} version`, ref: s.ref }), { settings: store.data.settings });
           cleanupWs.push(() => ws.destroy());
           clear(host).append(ws.el);
         };
@@ -156,7 +169,7 @@ export function lessonView(ctx, n, at) {
             }),
           );
         };
-        make(n * 1000 + idx * 17 + (store.lesson(lesson.id).done.includes(idx) ? randomSeed() : 0));
+        make(n * 1000 + idx * 17 + (store.lesson(lesson.id).done.includes(keys[idx]) ? randomSeed() : 0));
         card.append(host, h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn small ghost', onclick: () => make(randomSeed()) }, 'New variation')));
         break;
       }
@@ -194,8 +207,18 @@ export function lessonView(ctx, n, at) {
     clear(body).append(card);
   }
 
+  // open a walkthrough's pseudocode in the Lab's free mode, on the same starting structure
+  function openInLab(code, setup) {
+    const lab = store.labData();
+    store.setLabDraft(`free:${setup.structure}`, code);
+    lab.freeValues ||= {};
+    lab.freeValues[setup.structure] = setup.graph ? { graph: setup.graph, s: setup.vars?.s } : { values: setup.values || [] };
+    store.save();
+    ctx.go(`#/lab/free/${setup.structure}`);
+  }
+
   function finish() {
-    store.markLessonStep(lesson.id, lesson.sections.length - 1, lesson.sections.length);
+    store.markLessonStep(lesson.id, keys[keys.length - 1], keys);
     drawOutline();
     clear(body).append(
       h(
@@ -211,35 +234,4 @@ export function lessonView(ctx, n, at) {
 
   draw();
   return root;
-}
-
-function codeTabs(s) {
-  const wrap = h('div');
-  const tabs = h('div', { class: 'tabs', role: 'tablist' });
-  const pane = h('div', { role: 'tabpanel' });
-  const variants = [
-    ['C (as in the notes)', s.c],
-    ['C++', s.cpp],
-    ['Pseudocode', s.pseudo],
-  ].filter(([, t]) => t);
-  variants.forEach(([label, text], k) => {
-    tabs.append(
-      h(
-        'button',
-        {
-          role: 'tab',
-          'aria-selected': k === 0 ? 'true' : 'false',
-          onclick: (e) => {
-            tabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', 'false'));
-            e.target.setAttribute('aria-selected', 'true');
-            clear(pane).append(h('pre', { class: 'code' }, text));
-          },
-        },
-        label,
-      ),
-    );
-  });
-  pane.append(h('pre', { class: 'code' }, variants[0][1]));
-  wrap.append(tabs, pane);
-  return wrap;
 }

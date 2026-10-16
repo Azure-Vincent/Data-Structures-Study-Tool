@@ -1059,9 +1059,6 @@ pre.code {
   .ws-side > :first-child {
     grid-column: 1 / -1;
   }
-  .ws-bottom {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 @container (min-width: 980px) {
   .ws {
@@ -1117,6 +1114,14 @@ pre.code {
   color: var(--ink-3);
   text-align: right;
   opacity: 0.7;
+}
+/* the call site of the function that is running (walkthroughs) */
+.code-panel li.site {
+  background: var(--marker-soft);
+}
+/* setup lines that build the starting structure (walkthroughs): not part of the operation */
+.code-panel li.setup {
+  opacity: 0.55;
 }
 /* long lines wrap (hanging indent set inline) instead of scrolling */
 .code-panel .cl {
@@ -1234,16 +1239,6 @@ pre.code {
   color: var(--ink-3);
   font-size: 11.5px;
   font-family: var(--mono);
-}
-.counters {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 12px;
-  font-size: 13.5px;
-}
-.counters b {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
 }
 .predict-box {
   border: 1.5px solid var(--pointer);
@@ -2882,4 +2877,104 @@ button.linkish {
 }
 button.linkish:hover {
   text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- code walkthroughs */
+.walk {
+  container-type: inline-size;
+  margin-top: 12px;
+}
+.walk:focus {
+  outline: none;
+}
+.walk-cases {
+  margin-bottom: 10px;
+}
+/* narrow: diagram, code, explanation stacked. medium: the diagram across the
+   top, code beside the explanation. wide: code beside the diagram. */
+.walk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'diagram' 'code' 'side';
+  gap: 12px;
+  margin-top: 12px;
+  align-items: start;
+}
+.walk-diagram {
+  grid-area: diagram;
+  min-height: 180px;
+}
+.walk-code {
+  grid-area: code;
+}
+.walk-side {
+  grid-area: side;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.walk-note {
+  margin-top: 8px;
+  color: var(--ink-2);
+}
+.walk > .panel {
+  margin-top: 12px;
+}
+@container (min-width: 620px) {
+  .walk-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: 'diagram diagram' 'code side';
+  }
+}
+@container (min-width: 1100px) {
+  .walk-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'code diagram' 'code side';
+  }
+}
+
+/* Lab arrays: a 2-D array as a matrix, an array of linked lists as chains */
+.lab-matrix {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13px;
+  margin-top: 4px;
+}
+.lab-matrix th,
+.lab-matrix td {
+  border: 1px solid var(--rule);
+  padding: 2px 8px;
+  text-align: center;
+  min-width: 26px;
+}
+.lab-matrix th {
+  color: var(--ink-3);
+  font-weight: 500;
+  font-size: 11px;
+  background: var(--panel-2);
+}
+.lab-matrix td.on {
+  background: var(--pointer-soft);
+  font-weight: 700;
+}
+.lab-chains {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+.lab-chains .idx {
+  font-size: 11px;
+  color: var(--ink-3);
+  min-width: 28px;
+}
+.lab-chains .arrow {
+  color: var(--pointer);
+}
+.lab-chains .null {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.lab-chains .cell.freed {
+  opacity: 0.45;
+  text-decoration: line-through;
 }

@@ -1,10 +1,11 @@
 // The synchronized workspace: diagram, highlighted code, variables,
-// explanation, history and counters — all driven by ONE Player over a trace.
+// explanation and history — all driven by ONE Player over a trace.
 import { h, clear } from './dom.js';
-import { Player, COUNTER_LABELS } from '../core/trace.js';
+import { Player } from '../core/trace.js';
 import { renderState } from './render/visual.js';
 import { wantsPrediction, makeQuestion } from '../sim/predict.js';
 import { fmtPtr, GARBAGE } from '../core/pointerWorld.js';
+import { langTabs, traceLangs, traceLines, pickLang, onCodeLang } from './langs.js';
 
 const SPEEDS = [0.5, 1, 2, 4];
 const RECENT_ROWS = 6; // history rows shown until "Show all" is pressed
@@ -22,8 +23,7 @@ export function createWorkspace(trace, opts = {}) {
   const varsP = h('div', { class: 'panel' });
   const explainP = h('div', { class: 'panel ws-explain', 'aria-live': 'polite' });
   const histP = h('div', { class: 'panel' });
-  const cntP = h('div', { class: 'panel' });
-  grid.append(diag, controls, h('div', { class: 'ws-side' }, explainP, codeP, varsP), h('div', { class: 'ws-bottom' }, histP, cntP));
+  grid.append(diag, controls, h('div', { class: 'ws-side' }, explainP, codeP, varsP), h('div', { class: 'ws-bottom' }, histP));
   el.append(grid);
 
   let predictOn = opts.predictKinds ? opts.predictOn !== false : false;
@@ -32,6 +32,11 @@ export function createWorkspace(trace, opts = {}) {
   let allHistory = false;
 
   const player = new Player(trace, () => draw());
+  // one language tab row for the whole run; every panel follows the app-wide choice
+  const langs = traceLangs(trace.code);
+  const tabs = langs.length > 1 ? langTabs(langs) : null;
+  const born = Date.now();
+  const offLang = onCodeLang(() => (!el.isConnected && Date.now() - born > 1000 ? offLang() : draw()));
   player.speed = opts.settings?.speed || 1;
   player.gate = (step, idx) => predictOn && !answered.has(idx) && wantsPrediction(player.trace, idx, opts.predictKinds) && (pending = { idx, q: makeQuestion(player.trace, idx), picked: null }) && true;
 
@@ -82,10 +87,13 @@ export function createWorkspace(trace, opts = {}) {
     if (st.state.type === 'tree' && (st.state.stack || st.state.callStack)) diag.append(treeStrip(st.state));
     // code
     const code = st.code || tr.code;
+    const lang = pickLang(traceLangs(code));
+    const cur = (x) => x.lead && x.src === st.line;
     clear(codeP).append(
       h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code'), code.ref ? h('span', { class: 'pill' }, code.ref) : null),
+      tabs,
       st.opLabel ? h('div', { class: 'small muted' }, `Operation: ${st.opLabel}`) : null,
-      h('ol', { 'aria-label': 'code' }, code.lines.map((l, k) => h('li', { class: k === st.line ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': k === st.line ? 'step' : null }, codeLine(l)))),
+      h('ol', { 'aria-label': `code (${lang === 'c' ? 'C, as in the notes' : lang === 'py' ? 'Python' : lang === 'cpp' ? 'C++' : 'pseudocode'})` }, traceLines(code, lang).map((x) => h('li', { class: cur(x) ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': cur(x) ? 'step' : null }, codeLine(x.text)))),
     );
     // variables
     clear(varsP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Variables and pointers')), varsView(st.state, prev && prev.state));
@@ -116,13 +124,6 @@ export function createWorkspace(trace, opts = {}) {
           return h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain.length > 110 ? s2.explain.slice(0, 108) + '…' : s2.explain);
         }),
       ),
-    );
-    // counters
-    const cnt = st.counters || {};
-    clear(cntP).append(
-      h('div', { class: 'panel-title' }, h('h3', {}, 'Operation counts so far')),
-      Object.keys(cnt).length ? h('div', { class: 'counters' }, Object.entries(cnt).map(([k, v]) => [h('span', {}, COUNTER_LABELS[k] || k), h('b', {}, String(v))])) : h('p', { class: 'small muted' }, 'Nothing counted yet.'),
-      h('p', { class: 'small muted' }, 'Counting model: each listed action costs 1 unit.'),
     );
     stepNum.textContent = `Step ${i} / ${tr.steps.length - 1}`;
     bBack.disabled = player.atStart;
@@ -178,6 +179,7 @@ export function createWorkspace(trace, opts = {}) {
     },
     destroy() {
       player.pause();
+      offLang();
     },
   };
 }

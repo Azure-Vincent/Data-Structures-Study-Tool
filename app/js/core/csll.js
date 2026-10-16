@@ -1,7 +1,7 @@
 // Circular singly linked list algorithms (Lecture 11).
 // In a non-empty circular list the last node's next holds the address of the
 // first node, so NO node's next is ever NULL.
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 import { addVar, fmtPtr, buildList } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
@@ -99,6 +99,8 @@ export const CSLL_CODE = {
     ],
   },
 };
+keyCodes(CSLL_CODE, 'csll');
+
 
 export function build(values) {
   return buildList('csll', values);

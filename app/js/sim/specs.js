@@ -10,7 +10,7 @@ import * as G from '../core/graph.js';
 import { runLines } from '../core/interp.js';
 
 export const OPS = {
-  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, insertEndTail: SLL.insertEndTail, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndNotes: (w) => SLL.deleteEnd(w, { notesVersion: true }), deleteEndTail: SLL.deleteEndTail, deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
+  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndNotes: (w) => SLL.deleteEnd(w, { notesVersion: true }), deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
   dll: { insertBeg: DLL.insertBeg, insertEnd: DLL.insertEnd, insertMid: DLL.insertMid, deleteBeg: DLL.deleteBeg, deleteBegNotes: (w) => DLL.deleteBeg(w, { notesVersion: true }), deleteEnd: DLL.deleteEnd, deleteMid: DLL.deleteMid, traverseFwd: DLL.traverseFwd, traverseBwd: DLL.traverseBwd, countnode: DLL.countnode },
   csll: { insertBeg: CSLL.insertBeg, insertEnd: CSLL.insertEnd, deleteBeg: CSLL.deleteBeg, deleteEnd: CSLL.deleteEnd, traverse: CSLL.traverse, traverseNullBug: CSLL.traverseNullBug },
 };
@@ -113,7 +113,7 @@ export function buildTrace(spec) {
   }
   if (s.struct === 'code') {
     const w = s.world ? PW.clone(s.world) : worldFromSetup(s.kind || 'sll', s.setup);
-    return runLines(w, s.lines, { title: s.title, newValue: s.newValue, ref: s.ref });
+    return runLines(w, s.lines, { title: s.title, newValue: s.newValue, ref: s.ref, langs: s.langs });
   }
   if (['astack', 'aqueue', 'lstack-head', 'lstack-tail', 'lqueue'].includes(s.struct)) return chain(s.struct, s.ops || [], s.setup || {});
   if (s.struct === 'lqueue1') {

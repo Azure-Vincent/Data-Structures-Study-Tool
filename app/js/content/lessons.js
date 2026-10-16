@@ -83,15 +83,15 @@ p ← NULL`,
         title: 'Trade-offs between arrays and linked lists',
         ref: 'Lec 07 p.2–4',
         concepts: ['l07.arrays-vs-lists', 'l07.tradeoffs'],
-        body: `| Operation | Array | Singly linked list |
+        body: `| What you want to do | Array | Singly linked list |
 |---|---|---|
-| Read element *k* | Θ(1): base + k·size | Θ(k): follow k − 1 links |
-| Insert at the front | Θ(n): shift everything right | Θ(1): two pointer writes |
-| Delete at a known spot | Θ(n): shift left | Θ(1) once the previous node is known |
-| Memory per element | just the value | value + one pointer |
-| Size | fixed when declared | grows and shrinks at run time |
+| Read element *k* | compute its address: base + k·size | follow the links from start, node by node, until node *k* |
+| Insert at the front | move every element one slot right, then store the value | create a node and change two links |
+| Delete at a known spot | move every later element one slot left | redirect the link that points into the node, then free it |
+| Memory per element | just the value | the value + one pointer |
+| Size | fixed when it is declared | grows and shrinks while the program runs |
 
-Linked lists also make searching slower (no jumping to the middle), as the notes say on p.3.`,
+Searching a linked list means visiting the nodes one by one from start, because there is no address formula that jumps to the middle (Lec 07 p.3).`,
       },
       {
         type: 'note',
@@ -100,7 +100,7 @@ Linked lists also make searching slower (no jumping to the middle), as the notes
         ref: 'Lec 07 p.2 (c), p.4 ⑥',
         body: `You **can** delete an element from an array: shift every later element one slot left and decrease a separate count of used slots. What a plain array cannot do is **shrink (or grow) its allocated size** — the capacity stays fixed. Deletion is possible; *resizing* is not.`,
       },
-      { type: 'exercise', title: 'Count the shifts', templateId: 'l07-shifts', guidance: 'full' },
+      { type: 'exercise', key: 'e:count-the-shifts', title: 'Shift the elements', templateId: 'l07-shifts', guidance: 'full' },
       { type: 'exercise', title: 'Spot the memory bug', templateId: 'l07-membug', guidance: 'full' },
       { type: 'exercise', title: 'Variation: choose a structure', templateId: 'l07-choose', guidance: 'less' },
       { type: 'exercise', title: 'Variation: linear or non-linear?', templateId: 'l07-classify', guidance: 'less' },
@@ -185,7 +185,7 @@ Node* getnode(int value) {
         variant: 'correction',
         title: 'Prose vs code on creation',
         ref: 'Lec 08 p.2 vs p.3',
-        body: `The steps on p.2 (c-1, c-2) describe adding each new node at the **front** (newnode->next = start; start = newnode). The code on p.3 adds at the **end** (walk temp to the last node; temp->next = newnode). Both build a list, but in opposite orders: entering 10, 20, 30 gives 30 → 20 → 10 with the p.2 steps and 10 → 20 → 30 with the p.3 code. The appending version also walks the whole list for every node: Θ(n²) moves in total — keeping a pointer to the last node makes it Θ(n).`,
+        body: `The steps on p.2 (c-1, c-2) describe adding each new node at the **front** (newnode->next = start; start = newnode). The code on p.3 adds at the **end** (walk temp to the last node; temp->next = newnode). Both build a list, but in opposite orders: entering 10, 20, 30 gives 30 → 20 → 10 with the p.2 steps and 10 → 20 → 30 with the p.3 code. The p.3 version walks temp from start to the last node before every append.`,
       },
       {
         type: 'sim',
@@ -199,6 +199,7 @@ Node* getnode(int value) {
         predict: ['link', 'var'],
         body: 'Order matters: (1) newnode->next = start, then (2) start = newnode. Predict each change before it happens.',
       },
+      { type: 'walk', key: 'w:sll-insert-beg', title: 'Build it in code: insert at the beginning', ref: 'Lec 08 p.4', impl: 'sll-insert-beg' },
       { type: 'exercise', title: 'Your turn: insert at the beginning', templateId: 'l08-rewire-insert', params: { kind: 'beg' }, guidance: 'full' },
       {
         type: 'sim',
@@ -256,20 +257,6 @@ Node* getnode(int value) {
       { type: 'exercise', title: 'Variation: arrange the steps', templateId: 'l08-order-insert', guidance: 'less' },
       { type: 'exercise', title: 'Variation: complete the code', templateId: 'l08-fill', guidance: 'less' },
       { type: 'exercise', title: 'Find the bug', templateId: 'l08-bug', guidance: 'less' },
-      {
-        type: 'read',
-        title: 'Cost: finding the position vs changing links',
-        ref: 'Supplementary (applies Lec 08 p.4–7)',
-        concepts: ['cx.list-costs'],
-        body: `Every insertion has two parts:
-1. **Finding the position** — walking temp/prev. Cost depends on where: 0 moves at the front, *n − 1* at the end, *pos − 1* in the middle.
-2. **Changing links** — always a constant number of pointer writes (2 for a singly linked list).
-
-**Assumption** for all counts here: one unit per \`temp = temp->next\` (pointer move); the list has *n* nodes and only a start pointer. So insert at the front is Θ(1), insert at the end is Θ(n), and building a list by repeated appends (creatlist) is Θ(n²). With a tail pointer, insert at the end becomes Θ(1).
-
-Big-O gives an upper bound (O), Θ a tight bound (both upper and lower), Ω a lower bound: insert-at-end is Ω(n) here because it *must* walk past every node.`,
-      },
-      { type: 'exercise', title: 'Count the pointer moves', templateId: 'l08-cost', guidance: 'less' },
       { type: 'exercise', title: 'Predict the final list', templateId: 'l08-predict-state', guidance: 'none' },
       {
         type: 'pseudo',
@@ -345,24 +332,6 @@ If the list is empty, report it and do nothing (underflow).`,
       { type: 'exercise', title: 'Arrange the deletion steps', templateId: 'l09-order-delete', guidance: 'less' },
       { type: 'exercise', title: 'Find the deletion bug', templateId: 'l09-bug', guidance: 'less' },
       { type: 'exercise', title: 'Which positions are valid?', templateId: 'l09-valid-pos', guidance: 'less' },
-      {
-        type: 'read',
-        title: 'Head only vs head + tail',
-        ref: 'Supplementary (complexity)',
-        concepts: ['cx.tail-pointer'],
-        body: `Counting model: one unit per pointer move; *n* nodes.
-
-| Operation | start only | start + tail |
-|---|---|---|
-| insert at front | Θ(1) | Θ(1) |
-| insert at end | Θ(n) | **Θ(1)** |
-| delete at front | Θ(1) | Θ(1) |
-| delete at end | Θ(n) | **still Θ(n)** |
-
-Why doesn’t tail help delete-at-end? After removing the last node, the node **before** it must get next = NULL and become the new tail. A singly linked node has no backward link, so that node can only be found by walking from start. (A doubly linked list with a tail pointer can do it in Θ(1).)`,
-      },
-      { type: 'sim', title: 'Deleting the tail even though tail is known', ref: 'Supplementary', struct: 'sll', setup: { values: [10, 20, 30, 40, 50] }, op: 'deleteEndTail' },
-      { type: 'exercise', title: 'Count the work', templateId: 'l09-tail-cost', guidance: 'less' },
       { type: 'exercise', title: 'Predict traverse() after deletions', templateId: 'l09-traverse-predict', guidance: 'none' },
       {
         type: 'pseudo',
@@ -452,13 +421,12 @@ Node* getnode(int v) { return new Node{nullptr, v, nullptr}; }`,
       { type: 'exercise', title: 'Complete the code', templateId: 'l10-fill', guidance: 'less' },
       {
         type: 'read',
-        title: 'What the extra link buys',
-        ref: 'Supplementary (complexity)',
-        body: `- Deleting a node you already point at: Θ(1) — its left neighbour is \`temp->left\`, no search for prev.
-- Backward traversal: Θ(n) without needing a stack.
-- Cost: one more pointer per node (more memory) and twice as many link writes per insert/delete.
-- With a tail pointer, delete-at-end is Θ(1) (tail->left is the new tail) — unlike the singly linked list.
-- Recursive countnode is Θ(n) time and Θ(n) call-stack space; a loop would use Θ(1) extra space.`,
+        key: 'r:what-the-extra-link-buys',
+        title: 'What the extra link makes possible',
+        ref: 'Lec 10 p.1–7',
+        body: `- **Delete a node you already point at** without searching for the node before it: its left neighbour is \`temp->left\`.
+- **Walk backwards** from the last node to the first by following left links.
+- **The price:** every node stores one more pointer, and every insertion or deletion has to update twice as many links — forgetting one of them leaves the list broken in one direction (see the backward-traversal repair exercise).`,
       },
       {
         type: 'pseudo',
@@ -515,14 +483,6 @@ Consequence: in a non-empty circle **no next field is NULL**, so every loop that
       { type: 'exercise', title: 'Required: delete the only node correctly', templateId: 'l11-rewire-delete', params: { single: true, kind: 'end' }, guidance: 'full' },
       { type: 'exercise', title: 'Variation: delete from a longer circle', templateId: 'l11-rewire-delete', params: { single: false }, guidance: 'less' },
       { type: 'exercise', title: 'Order the delete-at-beginning steps', templateId: 'l11-order-delbeg', guidance: 'less' },
-      {
-        type: 'read',
-        title: 'Cost of the circle',
-        ref: 'Supplementary (complexity)',
-        concepts: ['cx.circular-costs'],
-        body: `With only start, inserting or deleting at the FRONT of a circular list costs Θ(n): the last node’s next must be updated, and finding the last node means walking the whole circle. A common improvement keeps a pointer to the **last** node instead: then the first node is \`last->next\`, and both front and end insertion are Θ(1).`,
-      },
-      { type: 'exercise', title: 'Count the moves', templateId: 'l11-count', guidance: 'less' },
       { type: 'exercise', title: 'What happens with the NULL loop?', templateId: 'l11-null-loop', guidance: 'none' },
     ],
   },
@@ -591,9 +551,8 @@ pop():   if top = 0: underflow; else top ← top − 1; return a[top]`,
       },
       { type: 'sim', title: 'Array stack: pushes until overflow, then pops until underflow', ref: 'Lec 12 p.1–3', struct: 'astack', setup: { MAX: 3 }, ops: [{ op: 'push', x: 11 }, { op: 'push', x: 22 }, { op: 'push', x: 33 }, { op: 'push', x: 44 }, { op: 'pop' }, { op: 'pop' }, { op: 'pop' }, { op: 'pop' }], predict: ['write', 'read'] },
       { type: 'exercise', title: 'Track top', templateId: 'l12-astack-top', guidance: 'full' },
-      { type: 'sim', title: 'Linked stack, notes style: push/pop at the END', ref: 'Lec 12 p.4', concepts: ['l12.linked-stack'], struct: 'lstack-tail', ops: [{ op: 'push', x: 10 }, { op: 'push', x: 20 }, { op: 'push', x: 30 }, { op: 'pop' }] , body: 'Count the moves in the pop: it must find the node below top.' },
-      { type: 'sim', title: 'Linked stack at the HEAD', ref: 'Supplementary', struct: 'lstack-head', ops: [{ op: 'push', x: 10 }, { op: 'push', x: 20 }, { op: 'push', x: 30 }, { op: 'pop' }] , body: 'Same pushes and pop — no walking at all.' },
-      { type: 'exercise', title: 'Which end is cheaper?', templateId: 'l12-ends-cost', guidance: 'full' },
+      { type: 'sim', title: 'Linked stack, notes style: push/pop at the END', ref: 'Lec 12 p.4', concepts: ['l12.linked-stack'], struct: 'lstack-tail', ops: [{ op: 'push', x: 10 }, { op: 'push', x: 20 }, { op: 'push', x: 30 }, { op: 'pop' }] , body: 'Watch the pop: temp has to walk from start to the node BELOW top, because a node only knows the node after it.' },
+      { type: 'sim', title: 'Linked stack at the HEAD', ref: 'Supplementary', struct: 'lstack-head', ops: [{ op: 'push', x: 10 }, { op: 'push', x: 20 }, { op: 'push', x: 30 }, { op: 'pop' }] , body: 'Same pushes and pop with the top at the head: push and pop only touch the first node, so nothing walks.' },
       { type: 'exercise', title: 'Push/pop by rewiring', templateId: 'l12-rewire-stack', guidance: 'full' },
       { type: 'sim', title: 'Linear array queue: wasted slots', ref: 'Lec 12 p.5', concepts: ['l12.array-queue'], struct: 'aqueue', setup: { MAX: 4 }, ops: [{ op: 'enqueue', x: 11 }, { op: 'enqueue', x: 22 }, { op: 'dequeue' }, { op: 'enqueue', x: 33 }, { op: 'enqueue', x: 44 }, { op: 'enqueue', x: 55 }] , predict: ['write', 'read'], body: 'The last enqueue fails although slot 0 is free: F and R only move forward.' },
       { type: 'note', variant: 'supplementary', title: 'Circular array queue', ref: 'Supplementary (fixes Lec 12 p.5)', body: 'Advance indices with `R = (R + 1) % MAX` and `F = (F + 1) % MAX`, and keep a `count` (or leave one slot unused) to tell full from empty. Freed slots are then reused. Try mode “circular” in Explore.' },
@@ -681,8 +640,8 @@ So “full binary tree” in an exam may mean either — read the definition giv
         concepts: ['l13.graph-repr'],
         body: `A graph allows **more than one incoming link** and cycles. Edges may be **directed** (arrows) or **undirected**, and may carry **weights**.
 
-- **Adjacency matrix**: V×V table; [u][v] = 1 (or the weight) if there is an edge u→v. Undirected graphs give a symmetric matrix. In the notes’ weighted matrix, “no edge” is ∞ and the diagonal is 0. A **self-loop** is a 1 on the diagonal. Space Θ(V²).
-- **Adjacency list**: for each vertex a linked list of its neighbours (Lec 13 p.6 bottom). Space Θ(V + E).`,
+- **Adjacency matrix**: V×V table; [u][v] = 1 (or the weight) if there is an edge u→v. Undirected graphs give a symmetric matrix. In the notes’ weighted matrix, “no edge” is ∞ and the diagonal is 0. A **self-loop** is a 1 on the diagonal. The matrix has a cell for every pair of vertices, whether the edge exists or not.
+- **Adjacency list**: for each vertex a linked list of its neighbours (Lec 13 p.6 bottom). It stores only the edges that exist.`,
       },
       { type: 'demo', title: 'Graph editor: watch the matrix and list update', ref: 'Lec 13 p.6', kind: 'graphEditor', body: 'Add vertices and edges (directed or not, weighted or not, self-loops allowed). Start from the notes’ examples.' },
       { type: 'exercise', title: 'Drawing → matrix', templateId: 'l13-matrix', guidance: 'full' },
@@ -749,23 +708,14 @@ Four separate things to track: **discovered** (seen), **processed** (all neighbo
       { type: 'exercise', title: 'Component or whole graph?', templateId: 'l14-components', guidance: 'less' },
       { type: 'note', variant: 'correction', title: 'BFS minimises edges, not total weight', ref: 'Lec 13 p.6 graph, Lec 14', body: 'On the weighted graph from Lec 13, BFS from A reaches D via A–B–D (2 edges, weight 3 + 4 = 7), but A–B–C–D weighs 3 + 2 + 1 = 6. BFS ignores weights; minimum-weight paths need Dijkstra’s algorithm (not covered in these lectures).' },
       { type: 'exercise', title: 'BFS on a weighted graph', templateId: 'l14-bfs-weight', guidance: 'less' },
-      {
-        type: 'read',
-        title: 'Cost of traversals',
-        ref: 'Supplementary (complexity)',
-        concepts: ['l14.traversal-cost'],
-        body: `Counting model: one unit per neighbour entry examined; every vertex processed once.
-
-- **Adjacency list**: each vertex scans only its own list → total Θ(V + E) time.
-- **Adjacency matrix**: each vertex scans a whole row of V entries → Θ(V²), even for sparse graphs.
-- **Auxiliary space**: visited marks Θ(V); the queue (BFS) or the stack/recursion (DFS) can hold up to Θ(V) vertices.
-- **Tree traversals**: Θ(n) time; recursion depth = height + 1, so Θ(h) extra space (Θ(n) for a skewed tree, Θ(log n) for a balanced one).`,
-      },
-      { type: 'exercise', title: 'List vs matrix', templateId: 'l14-cost', guidance: 'less' },
       { type: 'exercise', title: 'Variation: BFS on a new graph', templateId: 'l14-bfs-click', guidance: 'none' },
       { type: 'exercise', title: 'Variation: DFS on a new graph', templateId: 'l14-dfs-click', guidance: 'none' },
     ],
   },
 ];
+
+// Every section has a stable key (progress is saved by key, not by position).
+const slug = (t) => t.toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+for (const l of LESSONS) for (const sec of l.sections) sec.key ||= `${sec.type[0]}:${slug(sec.title)}`;
 
 export const LESSON_BY_LECTURE = Object.fromEntries(LESSONS.map((l) => [l.lecture, l]));

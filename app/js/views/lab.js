@@ -203,6 +203,8 @@ export function labView(ctx, a, b) {
       const sIn = h('input', { type: 'text', value: setup.vars.s, 'aria-label': 'start vertex s', style: { width: '64px' } });
       gSel.addEventListener('change', () => (sIn.value = GRAPH_EXAMPLES[gSel.value].start));
       input = [h('label', { class: 'inline' }, 'Graph', gSel), h('label', { class: 'inline' }, 's =', sIn), h('button', { class: 'btn primary', onclick: () => build({ structure, graph: gSel.value, vars: { s: sIn.value.trim() || GRAPH_EXAMPLES[gSel.value].start } }) }, 'Use this graph')];
+    } else if (S.render === 'none') {
+      input = null;
     } else {
       const vIn = h('input', { type: 'text', value: (setup.values || []).map((v) => (v === null ? '-' : v)).join(' '), 'aria-label': 'initial values', placeholder: 'empty', style: { minWidth: '220px' }, onkeydown: (e) => e.key === 'Enter' && build({ structure, values: parseValues(vIn.value) }) });
       input = [h('label', { class: 'inline' }, S.render === 'tree' ? 'Level order' : 'Values', vIn), h('button', { class: 'btn primary', onclick: () => build({ structure, values: parseValues(vIn.value) }) }, 'Build'), h('button', { class: 'btn ghost', onclick: () => build({ structure, values: [] }) }, 'Start empty')];
@@ -221,7 +223,7 @@ export function labView(ctx, a, b) {
     });
     ctxPanel.append(
       h('div', { class: 'row' }, h('label', { class: 'inline' }, h('b', {}, 'Structure'), sSel), input, h('span', { class: 'spacer' }), exSel),
-      h('p', { class: 'small muted', style: { margin: '8px 0 0' } }, S.valuesHelp, ' Pointer variables: ', S.roots.length ? S.roots.join(', ') : 'G (graph), s (start vertex)', '.'),
+      h('p', { class: 'small muted', style: { margin: '8px 0 0' } }, S.valuesHelp, S.render === 'none' ? null : [' Pointer variables: ', S.roots.length ? S.roots.join(', ') : 'G (graph), s (start vertex)', '.']),
       h('div', { class: 'callout', style: { marginBottom: 0 } }, h('span', { class: 'tag' }, 'Free experiment'), h('div', { class: 'small' }, 'There is no goal here, so the lab can catch errors (NULL, deleted nodes, undefined variables, endless loops) and structural problems (lost nodes, cycles, broken links) — but it can’t know whether the final result is the one you intended. Compare it with what you expected, or pick a guided exercise to be checked against test cases.')),
     );
   }
