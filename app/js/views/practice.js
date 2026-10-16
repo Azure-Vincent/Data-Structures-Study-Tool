@@ -109,11 +109,17 @@ function runner(ctx) {
         it.tag = r.tag;
         it.independent = r.correct && !r.hints && !r.revealed && it.guidance !== 'full';
         store.recordAttempt({ templateId: it.templateId, seed: it.seed, concept: ex.concept, type: ex.type, lecture: ex.lecture, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: it.guidance, tag: r.tag, message: r.message });
+        if (ex.kind === 'lab' && r.correct && !r.revealed) store.markLabSolved(ex.labId);
         if (!r.correct && !it.followUp && !it.followUpQueued) {
           it.followUpQueued = true;
           s.items.splice(Math.min(s.items.length, i + 3), 0, followUpItem(it));
         }
         store.setSession(s);
+      },
+      onOpenLab: (id, code) => {
+        store.setLabDraft(`ex:${id}`, code);
+        store.setSession(s);
+        ctx.go(`#/lab/${id}`);
       },
       onSimilar: () => {
         // move the queued follow-up (or a new one) to right after this task

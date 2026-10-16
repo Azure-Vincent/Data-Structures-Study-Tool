@@ -17,6 +17,8 @@ export function modelResponse(ex) {
       return ex.answer;
     case 'text':
       return ex.answer.join(' ');
+    case 'lab':
+      return ex.answer;
     case 'rewire':
       return solveRewire(ex).actions;
     default:

@@ -16,6 +16,13 @@ const SPEEDS = [
   ['fast', 'Fast', 350],
 ];
 const RECENT = 6;
+// a trailing comment (after 2+ spaces) wraps as one unit instead of splitting at the comment sign
+const TRAILING = { cpp: /^(.*?\S)\s{2,}(\/\/.*)$/, py: /^(.*?\S)\s{2,}(#.*)$/, pseudo: /^(.*?\S)\s{2,}(#.*)$/ };
+function codeWithComment(text, lang) {
+  const m = TRAILING[lang] && TRAILING[lang].exec(text);
+  if (!m) return text || ' ';
+  return [m[1], ' ', h('span', { class: 'cmt' }, m[2])];
+}
 const KIND_LABEL = { start: 'Start', alloc: 'New node', link: 'Pointer change', move: 'Pointer moves', data: 'Value change', assign: 'Assign', free: 'Delete', cond: 'Check', call: 'Call', return: 'Return', print: 'Output', op: 'Collection', error: 'Error', end: 'Finished' };
 
 /**
@@ -30,6 +37,7 @@ export function createWalkthrough(ex, opts = {}) {
   let timer = null;
   let speed = 'normal';
   let allHistory = false;
+  let showSetup = false;
   let ended = false;
 
   const caseTabs = (ex.cases || []).length > 1 ? h('div', { class: 'tabs walk-cases', role: 'tablist', 'aria-label': 'Starting situation' }) : null;
@@ -120,10 +128,19 @@ export function createWalkthrough(ex, opts = {}) {
     const curLines = new Set(linesWithLabels(target, at));
     const siteLines = new Set(linesWithLabels(target, site));
     codeTitle.textContent = `${ex.title} — ${LANG_LABEL[lang]}`;
+    // setup helpers (build / clean-up) are folded to one line unless opened
+    const isSetup = (i) => target.labels[i].includes('setup');
+    const folded = (i) => !showSetup && isSetup(i) && (i > 0 && isSetup(i - 1));
     clear(codeOl).append(
       target.lines.map((text, i) => {
-        const cls = curLines.has(i) ? (step.kind === 'error' ? 'cur err' : 'cur') : siteLines.has(i) ? 'site' : target.labels[i].includes('setup') ? 'setup' : '';
-        return h('li', { class: cls, 'aria-current': curLines.has(i) ? 'step' : null, title: cls === 'setup' ? 'Setup: builds the starting structure the diagram shows at step 0 (the Lab does this before the program starts).' : null }, h('span', { class: 'cl', style: { paddingLeft: `${text.length - text.trimStart().length + 2}ch`, textIndent: '-2ch' } }, text.trimStart() || ' '));
+        if (folded(i)) return null;
+        if (!showSetup && isSetup(i) && i + 1 < target.lines.length && isSetup(i + 1) && !curLines.has(i)) {
+          let n = 1;
+          while (i + n < target.lines.length && isSetup(i + n)) n++;
+          return h('li', { class: 'fold', 'data-ln': i + 1 }, h('span', { class: 'cl' }, `${text.trim().replace(/\s*\{$/, '').replace(/:$/, '')} … `, h('button', { class: 'linkish', onclick: () => { showSetup = true; draw(); } }, `show ${n} setup lines`)));
+        }
+        const cls = curLines.has(i) ? (step.kind === 'error' ? 'cur err' : 'cur') : siteLines.has(i) ? 'site' : isSetup(i) ? 'setup' : '';
+        return h('li', { class: cls, 'data-ln': i + 1, 'aria-current': curLines.has(i) ? 'step' : null, title: cls === 'setup' ? 'Setup: builds the starting structure the diagram shows at step 0 (the Lab does this before the program starts).' : null }, h('span', { class: 'cl', style: { paddingLeft: `${text.length - text.trimStart().length + 2}ch`, textIndent: '-2ch' } }, codeWithComment(text.trimStart(), lang)));
       }),
     );
     // explanation: what the interpreter did + why, in the chosen language

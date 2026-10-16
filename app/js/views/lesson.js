@@ -13,6 +13,9 @@ import { langCode } from '../ui/langs.js';
 import { createWalkthrough } from '../ui/walkthrough.js';
 import { IMPL_BY_ID } from '../content/impl/index.js';
 
+const NOTE_TAGS = { correction: 'Correction / clarification', terms: 'Terminology', supplementary: 'Supplementary', prereq: 'Before you start', pitfalls: 'Common mistakes & edge cases' };
+const isWriting = (s) => s.type === 'exercise' && /-write-code$/.test(s.templateId);
+const typeName = (s) => (isWriting(s) ? 'Write it yourself' : TYPE_NAMES[s.type] || s.type);
 const TYPE_NAMES = { read: 'Read', note: 'Note', code: 'Code', sim: 'Worked example', codesim: 'Run the code', walk: 'Build it in code', exercise: 'Your turn', lab: 'Write it yourself', demo: 'Interactive', pseudo: 'Write pseudocode' };
 
 export function lessonView(ctx, n, at) {
@@ -63,7 +66,7 @@ export function lessonView(ctx, n, at) {
           'li',
           { class: [i === idx ? 'cur' : '', r.done.includes(s.key) ? 'done' : ''], onclick: () => go(i), 'aria-current': i === idx ? 'step' : null },
           h('span', { class: 'step-dot', 'aria-hidden': 'true' }, r.done.includes(s.key) ? '✓' : String(i + 1)),
-          h('span', { class: 'k' }, TYPE_NAMES[s.type]),
+          h('span', { class: 'k' }, typeName(s)),
           h('span', {}, s.title),
           h('span', { class: 'sr-only' }, r.done.includes(s.key) ? '(done)' : ''),
         ),
@@ -85,7 +88,7 @@ export function lessonView(ctx, n, at) {
     const s = lesson.sections[idx];
     const card = h('section', { class: 'section-card' });
     card.append(
-      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `Step ${idx + 1} of ${lesson.sections.length}`), h('span', { class: 'pill type' }, TYPE_NAMES[s.type] || s.type), refPill(s.ref), s.variant === 'supplementary' ? h('span', { class: 'pill supp' }, 'Supplementary') : null, h('h2', { tabindex: '-1' }, s.title)),
+      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `Step ${idx + 1} of ${lesson.sections.length}`), h('span', { class: 'pill type' }, typeName(s)), refPill(s.ref), s.variant === 'supplementary' ? h('span', { class: 'pill supp' }, 'Supplementary') : null, h('h2', { tabindex: '-1' }, s.title)),
     );
     const nav = h(
       'div',
@@ -100,7 +103,7 @@ export function lessonView(ctx, n, at) {
         if (s.visual) card.append(renderVisual(s.visual));
         break;
       case 'note':
-        card.append(h('div', { class: `callout ${s.variant}` }, h('span', { class: 'tag' }, s.variant === 'correction' ? 'Correction / clarification' : s.variant === 'terms' ? 'Terminology' : 'Supplementary'), md(s.body)));
+        card.append(h('div', { class: `callout ${s.variant}` }, h('span', { class: 'tag' }, NOTE_TAGS[s.variant] || 'Note'), md(s.body)));
         break;
       case 'code':
         if (s.body) card.append(md(s.body));
@@ -161,8 +164,10 @@ export function lessonView(ctx, n, at) {
             renderExercise(ex, {
               onResult: (r) => {
                 store.recordAttempt({ templateId: ex.templateId, seed, concept: ex.concept, type: ex.type, lecture: ex.lecture, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: s.guidance, tag: r.tag, message: r.message });
+                if (ex.kind === 'lab' && r.correct && !r.revealed) store.markLabSolved(ex.labId);
                 done(idx);
               },
+              onOpenLab: (id, code) => openExerciseInLab(id, code),
               onSimilar: () => make(randomSeed()),
               onNext: () => (idx < lesson.sections.length - 1 ? go(idx + 1) : finish()),
               nextLabel: 'Continue the lesson',
@@ -170,7 +175,8 @@ export function lessonView(ctx, n, at) {
           );
         };
         make(n * 1000 + idx * 17 + (store.lesson(lesson.id).done.includes(keys[idx]) ? randomSeed() : 0));
-        card.append(host, h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn small ghost', onclick: () => make(randomSeed()) }, 'New variation')));
+        // a "write it yourself" task has one fixed goal, so there is no other variation to offer
+        card.append(host, isWriting(s) ? null : h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn small ghost', onclick: () => make(randomSeed()) }, 'New variation')));
         break;
       }
       case 'demo':
@@ -215,6 +221,13 @@ export function lessonView(ctx, n, at) {
     lab.freeValues[setup.structure] = setup.graph ? { graph: setup.graph, s: setup.vars?.s } : { values: setup.values || [] };
     store.save();
     ctx.go(`#/lab/free/${setup.structure}`);
+  }
+
+  // continue a "write it yourself" exercise in the Pseudocode Lab, keeping the code written so far
+  function openExerciseInLab(id, code) {
+    store.setLabDraft(`ex:${id}`, code);
+    store.save();
+    ctx.go(`#/lab/${id}`);
   }
 
   function finish() {

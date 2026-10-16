@@ -253,7 +253,7 @@ function renderChains(st, c) {
     'div',
     { class: 'lab-chains' },
     c.items.map((x, i) => {
-      const parts = [h('span', { class: 'idx' }, `[${i}]`)];
+      const parts = [h('span', { class: 'slot' }, `[${i}]`)];
       let a = isRef(x) ? x.ref : null;
       const seen = new Set();
       while (a != null && st.nodes[a] && !seen.has(a) && seen.size < 30) {

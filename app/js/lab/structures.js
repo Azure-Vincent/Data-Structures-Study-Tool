@@ -132,9 +132,19 @@ function parentMissing(values, i) {
   return false;
 }
 
-/** Short human description of a setup, e.g. "start → 10 → 20 → 30". */
+/** Short human description of a setup, e.g. "start → 10 → 20 → 30" (plus any given variables). */
 export function describeSetup(setup) {
   const S = STRUCTURES[setup.structure] || STRUCTURES.sll;
+  const given = Object.entries(setup.vars || {})
+    .filter(([k]) => !(S.render === 'graph' && k === 's'))
+    .map(([k, v]) => `${k} = ${typeof v === 'string' ? `"${v}"` : v}`)
+    .join(', ');
+  const base = baseSetupText(S, setup);
+  if (S.render === 'none') return given ? `given ${given}` : base;
+  return given ? `${base}; given ${given}` : base;
+}
+
+function baseSetupText(S, setup) {
   const vals = (setup.values || []).filter((v) => v !== null);
   if (S.render === 'graph') {
     const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.lec14;

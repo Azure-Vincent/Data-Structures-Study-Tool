@@ -8,7 +8,8 @@ export const ARRAY_EXAMPLES = [
     title: 'An array with insertion and deletion by shifting',
     ref: 'Lec 07 p.2–4',
     intro: 'An array is one block of MAX slots side by side. The block never grows, so a separate count `n` remembers how many slots are in use. Inserting makes room by moving the later elements one slot RIGHT (starting from the end); deleting closes the gap by moving them one slot LEFT.',
-    params: { max: 6 },
+    params: { max: 6, v1: 10, v2: 30, v3: 20, v4: 5 },
+    vary: ['v1', 'v2', 'v3', 'v4'],
     cases: [
       { label: 'Room for 6', setup: { values: [] }, params: { max: 6 } },
       { label: 'Room for 3 (it fills up)', setup: { values: [] }, params: { max: 3 } },
@@ -47,11 +48,11 @@ export const ARRAY_EXAMPLES = [
     end for
 @fp_end|end function
 
-@m1|insert_at(0, 10)
-@m2|insert_at(1, 30)
-@m3|insert_at(1, 20)              # 20 goes between 10 and 30
-@m4|insert_at(0, 5)               # everything moves right
-@m5|delete_at(1)                  # 10 disappears, the rest moves left
+@m1|insert_at(0, {{v1}})
+@m2|insert_at(1, {{v2}})
+@m3|insert_at(1, {{v3}})              # goes between the first two values
+@m4|insert_at(0, {{v4}})               # everything moves right
+@m5|delete_at(1)                  # the value in slot 1 disappears, the rest moves left
 @m6|display()`,
     cpp: `#include <iostream>
 using namespace std;
@@ -89,11 +90,11 @@ using namespace std;
 @fp_end|}
 
 int main() {
-@m1|    insert_at(0, 10);
-@m2|    insert_at(1, 30);
-@m3|    insert_at(1, 20);            // 20 goes between 10 and 30
-@m4|    insert_at(0, 5);             // everything moves right
-@m5|    delete_at(1);                // 10 disappears, the rest moves left
+@m1|    insert_at(0, {{v1}});
+@m2|    insert_at(1, {{v2}});
+@m3|    insert_at(1, {{v3}});            // goes between the first two values
+@m4|    insert_at(0, {{v4}});             // everything moves right
+@m5|    delete_at(1);                // the value in slot 1 disappears, the rest moves left
 @m6|    display();
 }`,
     py: `@s1|MAX = {{max}}
@@ -124,11 +125,11 @@ int main() {
 @p1|    for i in range(n):
 @p2|        print(a[i])
 
-@m1|insert_at(0, 10)
-@m2|insert_at(1, 30)
-@m3|insert_at(1, 20)             # 20 goes between 10 and 30
-@m4|insert_at(0, 5)              # everything moves right
-@m5|delete_at(1)                 # 10 disappears, the rest moves left
+@m1|insert_at(0, {{v1}})
+@m2|insert_at(1, {{v2}})
+@m3|insert_at(1, {{v3}})             # goes between the first two values
+@m4|insert_at(0, {{v4}})              # everything moves right
+@m5|delete_at(1)                 # the value in slot 1 disappears, the rest moves left
 @m6|display()`,
     notes: {
       s2: '**One contiguous block.** C++ `int a[MAX]` reserves MAX ints side by side. Python has no fixed-size array type in the core language, so a list of MAX slots stands in for one — the program never calls append or insert, so the slots behave like an array. The pseudocode `new Array(MAX)` is the Lab’s array.',

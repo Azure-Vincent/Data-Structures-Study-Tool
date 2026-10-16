@@ -6,7 +6,7 @@ import json, sys
 from playwright.sync_api import sync_playwright
 BASE='http://localhost:5173/'
 with sync_playwright() as p:
-    b=p.chromium.launch(); pg=b.new_page(viewport={'width':1400,'height':1000})
+    b=p.chromium.launch(executable_path=os.environ.get('CHROMIUM') or None); pg=b.new_page(viewport={'width':1400,'height':1000})
     errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('dialog', lambda d: d.accept())
     pg.goto(BASE); pg.wait_for_timeout(300)
     ids = pg.evaluate("import('./js/exercises/registry.js').then(m=>m.TEMPLATES.map(t=>t.id))")
@@ -26,6 +26,7 @@ with sync_playwright() as p:
           elif k=='fields':
             for fid,v in a.items(): task.locator('input[type=text]').nth(list(a.keys()).index(fid)).fill(str(v) if str(v) else 'none')
           elif k=='fill': task.locator('.fill-code input').fill(a)
+          elif k=='lab': task.locator('textarea.ce-input').fill(a)
           elif k=='order':
             # reorder via up buttons until it matches answer
             for target_i, idv in enumerate(a):

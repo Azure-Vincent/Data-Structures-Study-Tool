@@ -85,11 +85,13 @@ export function buildSession(store, { mode = 'mixed', lecture = null, concept = 
     chosen.push(c);
   }
   const typesUsed = {};
+  let writing = 0; // "write the code" tasks take longest: at most one per session
   const items = chosen.map((c) => {
     const lvl = store.level(c);
     const guidance = lvl === 'new' || lvl === 'learning' ? (mode === 'concept' ? 'full' : 'less') : lvl === 'mastered' ? 'none' : 'less';
-    const it = pickForConcept(c, rng, { avoidTypes: typesUsed[c] || [], guidance });
+    const it = pickForConcept(c, rng, { avoidTypes: [...(typesUsed[c] || []), ...(writing ? ['lab'] : [])], guidance });
     const t = TEMPLATES.find((x) => x.id === it.templateId);
+    if (t.type === 'lab') writing++;
     (typesUsed[c] ||= []).push(t.type);
     return { ...it, status: 'pending', hints: 0, revealed: false, followUp: false };
   });

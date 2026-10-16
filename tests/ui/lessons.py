@@ -3,7 +3,7 @@
 import os; os.makedirs('shots', exist_ok=True)
 from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
-    b=p.chromium.launch(); pg=b.new_page(viewport={'width':1300,'height':900})
+    b=p.chromium.launch(executable_path=os.environ.get('CHROMIUM') or None); pg=b.new_page(viewport={'width':1300,'height':900})
     errs=[]; pg.on('pageerror', lambda e: errs.append((pg.url,str(e)))); pg.on('console', lambda m: errs.append((pg.url,m.text)) if m.type=='error' else None)
     pg.goto('http://localhost:5173/'); pg.wait_for_timeout(300)
     counts = pg.evaluate("import('./js/content/lessons.js').then(m=>m.LESSONS.map(l=>[l.lecture,l.sections.length]))")

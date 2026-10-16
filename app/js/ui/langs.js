@@ -87,6 +87,19 @@ export function langCode(variants, { extra } = {}) {
   return wrap;
 }
 
+/** Inline text offered in several languages ({ cpp, py, pseudo }); follows the app-wide choice. */
+export function langText(variants, tag = 'code') {
+  const avail = ORDER.filter((l) => variants[l] != null);
+  const el = h(tag, {});
+  const draw = () => {
+    el.textContent = variants[pickLang(avail)];
+  };
+  draw();
+  const born = Date.now();
+  const off = onCodeLang(() => (!el.isConnected && Date.now() - born > 1000 ? off() : draw()));
+  return el;
+}
+
 // ---------------------------------------------------------------- traced code in other languages
 
 /** Languages a traced code block can be shown in. */
