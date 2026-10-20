@@ -82,6 +82,7 @@ export function globalVal(st, name) {
 export function structureText(st) {
   const S = structureOf(st);
   if (S.render === 'graph') return 'graph G';
+  if (S.render === 'none') return 'arrays and variables';
   const root = S.roots[0];
   const rv = globalVal(st, root);
   if (rv === undefined) return `${root} is not set`;

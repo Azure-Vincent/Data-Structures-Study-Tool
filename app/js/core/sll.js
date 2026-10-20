@@ -1,6 +1,6 @@
 // Singly linked list algorithms (Lectures 08 and 09), traced step by step.
 // Code lines follow the notes' C style; corrections are marked in comments.
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 import { addVar, fmtPtr, walk, buildList, getnode as rawGetnode } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
@@ -30,19 +30,6 @@ export const SLL_CODE = {
       '    while (temp->next != NULL)',
       '        temp = temp->next;',
       '    temp->next = newnode;',
-      '}',
-    ],
-  },
-  insertEndTail: {
-    title: 'insert_at_end() with a tail pointer',
-    ref: 'Supplementary (compare with Lec 08 p.5)',
-    lines: [
-      'newnode = getnode();',
-      'if (start == NULL)',
-      '    start = tail = newnode;',
-      'else {',
-      '    tail->next = newnode;',
-      '    tail = newnode;',
       '}',
     ],
   },
@@ -108,20 +95,6 @@ export const SLL_CODE = {
       'free(temp);',
     ],
   },
-  deleteEndTail: {
-    title: 'delete_at_last() when a tail pointer exists',
-    ref: 'Supplementary (complexity comparison)',
-    lines: [
-      'if (start == NULL) return;',
-      'if (start == tail) { free(start); start = tail = NULL; return; }',
-      'temp = start;',
-      'while (temp->next != tail)      // still must FIND the node before tail',
-      '    temp = temp->next;',
-      'free(tail);',
-      'tail = temp;',
-      'tail->next = NULL;',
-    ],
-  },
   deleteMid: {
     title: 'delete_at_mid(pos)',
     ref: 'Lec 09 p.3–4',
@@ -171,6 +144,8 @@ export const SLL_CODE = {
     ],
   },
 };
+keyCodes(SLL_CODE, 'sll');
+
 
 /** Count nodes silently (countnode is a helper call, shown as one step). */
 function countSilently(t, line) {
@@ -216,27 +191,6 @@ export function insertEnd(world, value, opts = {}) {
   return endScope(t, ['newnode', 'temp']);
 }
 
-export function insertEndTail(world, value, opts = {}) {
-  const t = new Tracer(world, SLL_CODE.insertEndTail);
-  const w = t.state;
-  if (!('tail' in w.vars)) {
-    const r = walk(w, w.vars.start);
-    addVar(w, 'tail', r.addrs.length ? r.addrs[r.addrs.length - 1] : null);
-    w.globals = ['start', 'tail'];
-    t.steps[0].state = JSON.parse(JSON.stringify(w));
-  }
-  const a = getnodeSteps(t, 0, value, opts);
-  if (cond(t, 1, w.vars.start === null, `Is the list empty? start = ${fmtPtr(w.vars.start)}`, { vars: ['start'] })) {
-    w.vars.start = a;
-    w.vars.tail = a;
-    t.count('varWrites', 2);
-    t.step(2, 'var', `start = tail = newnode (${a}).`, { vars: ['start', 'tail'] });
-  } else {
-    setLink(t, 4, w.vars.tail, 'next', a, `tail->next = newnode: no walking needed, tail already knows the last node (${w.vars.tail}).`);
-    setVar(t, 5, 'tail', a, `tail = newnode (${a}).`);
-  }
-  return endScope(t, ['newnode']);
-}
 
 export function insertMid(world, value, pos, opts = {}) {
   const t = new Tracer(world, SLL_CODE.insertMid);
@@ -328,43 +282,6 @@ export function deleteEnd(world, { notesVersion = false } = {}) {
   return endScope(t, ['temp', 'prev']);
 }
 
-export function deleteEndTail(world) {
-  const t = new Tracer(world, SLL_CODE.deleteEndTail);
-  const w = t.state;
-  if (!('tail' in w.vars)) {
-    const r = walk(w, w.vars.start);
-    addVar(w, 'tail', r.addrs.length ? r.addrs[r.addrs.length - 1] : null);
-    w.globals = ['start', 'tail'];
-    t.steps[0].state = JSON.parse(JSON.stringify(w));
-  }
-  if (cond(t, 0, w.vars.start === null, `start == NULL?`)) {
-    t.fail(0, 'Underflow: empty list.');
-    return endScope(t, []);
-  }
-  if (cond(t, 1, w.vars.start === w.vars.tail, `start == tail? (only one node)`)) {
-    addVar(w, 'temp', w.vars.start);
-    freeStep(t, 1, 'temp', `free(start): the only node is released.`);
-    w.vars.start = null;
-    w.vars.tail = null;
-    t.count('varWrites', 2);
-    t.step(1, 'var', 'start = tail = NULL.', { vars: ['start', 'tail'] });
-    return endScope(t, ['temp']);
-  }
-  setVar(t, 2, 'temp', w.vars.start, `temp = start. Even though tail is known, we need the node BEFORE tail, and singly linked nodes cannot point backwards.`);
-  while (true) {
-    const tn = w.nodes[w.vars.temp];
-    t.count('visits');
-    if (!cond(t, 3, tn.next !== w.vars.tail, `temp->next != tail? temp->next = ${fmtPtr(tn.next)}, tail = ${w.vars.tail}`)) break;
-    t.count('moves');
-    setVar(t, 4, 'temp', tn.next, `temp = temp->next → ${tn.next}.`);
-  }
-  addVar(w, 'old', w.vars.tail);
-  freeStep(t, 5, 'old', `free(tail) releases ${w.vars.tail}.`);
-  setVar(t, 6, 'tail', w.vars.temp, `tail = temp (${w.vars.temp}).`);
-  setLink(t, 7, w.vars.tail, 'next', null, 'tail->next = NULL.');
-  return endScope(t, ['temp', 'old']);
-}
-
 export function deleteMid(world, pos) {
   const t = new Tracer(world, SLL_CODE.deleteMid);
   const w = t.state;
@@ -446,14 +363,6 @@ export function createList(values, { detail = false } = {}) {
   }
   cond(t, 0, false, `i < n? ${values.length} < ${values.length}`);
   return endScope(t, ['newnode', 'temp']);
-}
-
-/** Exact count of `temp = temp->next` executions in creatlist(n). */
-export function creatlistMoves(n) {
-  // inserting the i-th node (1-based) walks over i-2 links when i >= 2
-  let s = 0;
-  for (let i = 2; i <= n; i++) s += i - 2;
-  return s; // = (n-1)(n-2)/2
 }
 
 export { buildList, rawGetnode };

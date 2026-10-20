@@ -13,6 +13,11 @@ import { buildTrace, solutionSpec, graphFrom } from '../sim/specs.js';
 import { walk, forwardField, clone } from '../core/pointerWorld.js';
 import { applyAction, describeAction } from '../core/invariants.js';
 import * as T from '../core/tree.js';
+import { langText, langCode } from './langs.js';
+import { createCodeEditor } from './codeEditor.js';
+import { IMPL_BY_ID } from '../content/impl/index.js';
+import { compileExample } from '../content/impl/format.js';
+import { readableProgram } from '../exercises/impl.js';
 
 /**
  * renderExercise(ex, { onResult(res), onNext, onSimilar, nextLabel, settings })
@@ -72,7 +77,9 @@ export function renderExercise(ex, cb = {}) {
       const list = h('div', { class: 'choice-list', role: multi ? 'group' : 'radiogroup', 'aria-label': 'answer options' });
       for (const o of ex.options) {
         const inp = h('input', { type: multi ? 'checkbox' : 'radio', name, value: o.id });
-        const lab = h('label', { class: 'choice' }, inp, h('span', {}, o.text.includes('\n') || /^(Line|\d+\.)/.test(o.text) ? h('code', {}, o.text) : o.text));
+        // options written in code follow the app-wide language (C++ / Python / pseudocode)
+        const shown = o.langs ? langText(o.langs) : o.text.includes('\n') || /^(Line|\d+\.)/.test(o.text) ? h('code', {}, o.text) : o.text;
+        const lab = h('label', { class: 'choice' }, inp, h('span', {}, shown));
         inp.addEventListener('change', () => list.querySelectorAll('.choice').forEach((c) => c.classList.toggle('sel', c.querySelector('input').checked)));
         list.append(lab);
       }
@@ -288,6 +295,18 @@ export function renderExercise(ex, cb = {}) {
       getResponse = () => t;
       break;
     }
+    case 'lab': {
+      // write the operation in pseudocode; Check runs it on every test case
+      redrawVisual();
+      const editor = createCodeEditor({ value: ex.starter, label: 'Your pseudocode', onRun: () => check() });
+      const openLab = cb.onOpenLab ? h('button', { class: 'btn small', onclick: () => cb.onOpenLab(ex.labId, editor.getValue()) }, 'Step through it in the Pseudocode Lab') : null;
+      input.append(
+        editor.el,
+        h('div', { class: 'row', style: { marginTop: '6px' } }, h('button', { class: 'btn small ghost', onclick: () => editor.replaceAll(ex.starter) }, 'Reset to starter'), openLab, h('span', { class: 'small muted' }, 'Pseudocode Lab syntax: one statement per line, blocks end with end. ', h('kbd', {}, 'Ctrl'), '+', h('kbd', {}, 'Enter'), ' checks.')),
+      );
+      getResponse = () => editor.getValue();
+      break;
+    }
     default:
       input.append(h('p', {}, `Unsupported exercise kind ${ex.kind}`));
   }
@@ -331,13 +350,15 @@ export function renderExercise(ex, cb = {}) {
     checks++;
     report(res);
     clear(feedback);
+    const details = res.details ? h('ul', { class: 'small check-details' }, res.details.map((d) => h('li', { class: d.startsWith('✓') ? 'pass' : 'fail' }, d))) : null;
     if (res.correct) {
       solved = true;
-      feedback.append(h('div', { class: 'feedback ok' }, h('b', { class: 'verdict' }, checks === 1 && !hintsUsed ? 'Correct.' : 'Correct now.'), res.message || ''));
+      feedback.append(h('div', { class: 'feedback ok' }, h('b', { class: 'verdict' }, checks === 1 && !hintsUsed ? 'Correct.' : 'Correct now.'), res.message || '', details));
       bCheck.disabled = true;
+      compareWithProgram();
       endButtons(false);
     } else {
-      feedback.append(h('div', { class: 'feedback bad' }, h('b', { class: 'verdict' }, 'Not yet.'), res.message || 'Look again.'));
+      feedback.append(h('div', { class: 'feedback bad' }, h('b', { class: 'verdict' }, 'Not yet.'), res.message || 'Look again.', details));
       if (ex.kind === 'rewire' && ex._editor) ex._editor.markBad(res.firstBad ?? null, res.nodes || []);
       endButtons(true);
     }
@@ -373,7 +394,17 @@ export function renderExercise(ex, cb = {}) {
       }
     }
     feedback.append(h('div', { class: 'feedback info small' }, 'Revealing the solution does not count toward mastery. A fresh variation will come back in later practice.'));
+    compareWithProgram();
     endButtons(false);
+  }
+
+  // after writing an operation in pseudocode: the same operation as a complete C++ / Python program
+  function compareWithProgram() {
+    if (ex.kind !== 'lab' || !ex.implId || root.querySelector('.compare-program')) return;
+    const impl = IMPL_BY_ID[ex.implId];
+    const prog = compileExample(impl, 0);
+    const variants = Object.fromEntries(['cpp', 'py', 'pseudo'].map((l) => [l, readableProgram(prog[l], l, '')]));
+    root.append(h('details', { class: 'compare-program panel' }, h('summary', {}, `Compare: “${impl.title}” as a complete program in C++, Python and pseudocode`), h('p', { class: 'small muted' }, 'Translate your pseudocode into C++ or Python yourself first, then compare. The lesson’s “Build it in code” step runs this program line by line.'), langCode(variants)));
   }
 
   return root;

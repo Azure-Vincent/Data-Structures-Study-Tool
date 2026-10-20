@@ -37,7 +37,7 @@ export const l08 = [
         prompt: `You will **${what}**. Before doing it, select EVERY pointer whose value changes (ignore temporary variables like temp/prev).`,
         visual: { type: 'list', world: w },
         edge: vs.length === 1,
-        ...multi(keep(list), { explain: `Before: ${listText(vs)}. After: ${listText(vals(after))}. ${op === 'ins' ? 'Insertion touches only the links around the gap — that is why it is cheap once the position is found.' : 'Deletion only redirects the link that pointed INTO the removed node (and start/NULL in the end cases); the removed node’s own fields do not matter once it is freed.'}` }),
+        ...multi(keep(list), { explain: `Before: ${listText(vs)}. After: ${listText(vals(after))}. ${op === 'ins' ? 'Insertion touches only the links around the gap — the nodes themselves never move.' : 'Deletion only redirects the link that pointed INTO the removed node (and start/NULL in the end cases); the removed node’s own fields do not matter once it is freed.'}` }),
         hints: ['Compare the picture before and after: which arrows move?', { text: 'Only arrows next to the changed spot can move.' }, op === 'ins' ? 'Count: the new node gets a next, and ONE existing pointer is redirected to it.' : 'Exactly one existing pointer is redirected (or set to NULL).'],
         params: { op, kind },
       };
@@ -291,57 +291,6 @@ export const l08 = [
     type: 'predict',
     title: 'Predict the list after several insertions',
     generate: generatePredictState,
-  },
-  {
-    id: 'l08-cost',
-    lecture: 8,
-    concept: 'cx.list-costs',
-    type: 'complexity',
-    title: 'Count the pointer moves',
-    generate(rng) {
-      const kind = rng.pick(['end', 'end', 'beg', 'tail', 'create', 'mid']);
-      const n = kind === 'create' ? rng.int(1, 7) : rng.int(0, 9);
-      const w = randList(rng, 'sll', values(rng, kind === 'mid' ? Math.max(2, n) : n), { scatter: false });
-      let tr;
-      let q;
-      let explain;
-      if (kind === 'end') {
-        tr = SLL.insertEnd(w, 1, { detail: false });
-        q = `insert_at_end() on a list with ${n} node(s)`;
-        explain = `temp starts on node 1 and stops on node ${n}: ${Math.max(0, n - 1)} move(s). With only a head pointer, inserting at the end costs Θ(n) moves (finding the position), plus Θ(1) link writes (changing links).`;
-      } else if (kind === 'beg') {
-        tr = SLL.insertBeg(w, 1, { detail: false });
-        q = `insert_at_beg() on a list with ${n} node(s)`;
-        explain = 'No walking at all: 0 moves for any n → Θ(1).';
-      } else if (kind === 'tail') {
-        tr = SLL.insertEndTail(w, 1, { detail: false });
-        q = `insert_at_end() on a list with ${n} node(s) that ALSO keeps a tail pointer`;
-        explain = 'tail already points at the last node, so no search is needed: 0 moves → Θ(1).';
-      } else if (kind === 'mid') {
-        const m = Math.max(2, n);
-        const pos = rng.int(2, m);
-        tr = SLL.insertMid(w, 1, pos, { detail: false });
-        const moves = tr.steps.filter((s) => s.line === 6 && s.kind === 'var').length;
-        return {
-          prompt: `In \`insert_at_mid\` with pos = ${pos} on a ${m}-node list, how many times does \`temp = temp->next;\` inside the \`while (ctr < pos)\` loop run? (Do not count countnode.)`,
-          visual: { type: 'list', world: w },
-          ...numeric(moves, { explain: `ctr goes 1 → ${pos}, so the body runs pos − 1 = ${pos - 1} times. Finding the position costs Θ(pos); the two link writes cost Θ(1).` }),
-          hints: ['ctr starts at 1 and the loop stops when ctr == pos.', { text: 'Each iteration moves temp one node.' }, 'Count iterations: pos − 1.'],
-        };
-      } else {
-        tr = SLL.createList(Array.from({ length: n }, (_, i) => i + 1));
-        q = `creatlist(${n}) from Lec 08 p.3 (it appends every node by walking from start)`;
-        explain = `Appending node i walks over i−2 links, so the total is 0 + 0 + 1 + 2 + … + (n−2) = (n−1)(n−2)/2 = ${((n - 1) * (n - 2)) / 2 + 0}. That is Θ(n²) for building a list! Keeping a pointer to the last node makes it Θ(n).`;
-      }
-      const moves = tr.counters.moves || 0;
-      return {
-        prompt: `Counting model: count every execution of \`temp = temp->next;\`.\n\nHow many moves does **${q}** make?`,
-        visual: kind === 'create' ? null : { type: 'list', world: w },
-        edge: n <= 1,
-        ...numeric(moves, { explain, wrong: { [n]: { msg: 'temp already starts ON node 1.', tag: 'off-by-one' } } }),
-        hints: ['Moves happen only inside loops that walk the list.', { text: 'Where does temp start, and where must it stop?' }, kind === 'create' ? 'Add up the moves for each appended node.' : 'Count the arrows temp crosses.'],
-      };
-    },
   },
 ];
 

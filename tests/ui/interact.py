@@ -4,16 +4,23 @@ import os; os.makedirs('shots', exist_ok=True)
 from playwright.sync_api import sync_playwright, expect
 BASE='http://localhost:5173/'
 def shot(pg,name): pg.screenshot(path=f'shots/{name}.png', full_page=True)
+
+# lesson steps are addressed by their stable key (positions change when lessons grow)
+LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/lesson/' + l.lecture + '/' + i; } return null; })"
+def lesson_route(pg, key):
+    if not pg.url.startswith('http'):
+        pg.goto(BASE); pg.wait_for_timeout(200)
+    return pg.evaluate(LESSON_AT, key)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = p.chromium.launch(executable_path=os.environ.get('CHROMIUM') or None)
     ctx = b.new_context(viewport={'width': 1400, 'height': 1000})
     pg = ctx.new_page()
     errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: errs.append(m.text) if m.type=='error' else None)
     pg.on('dialog', lambda d: d.accept())
-    # 1. lesson 8 predict sim (section index 10)
-    pg.goto(BASE+'#/lesson/8/10'); pg.wait_for_timeout(400)
+    # 1. lesson 8 predict sim
+    pg.goto(BASE+lesson_route(pg, 's:predict-the-intermediate-states-insert-15-at-pos')); pg.wait_for_timeout(400)
     asked=0
     for i in range(80):
         pb = pg.locator('.predict-box')
@@ -27,8 +34,8 @@ with sync_playwright() as p:
         fwd.click()
     print('predictions asked:', asked, '| final explain:', pg.locator('.explain').inner_text()[:90])
     shot(pg,'i1_sim')
-    # 2. rewire exercise (section 11): insert 15 after 10
-    pg.goto(BASE+'#/lesson/8/11'); pg.wait_for_timeout(400)
+    # 2. rewire exercise: insert 15 after 10
+    pg.goto(BASE+lesson_route(pg, 'e:now-do-it-insert-15-after-10')); pg.wait_for_timeout(400)
     pg.locator('button:has-text("getnode(15)")').click()
     def field(addr, f='next'): return pg.locator(f'g[data-addr="{addr}"] rect.field-hit[data-field="{f}"]')
     def node(addr): return pg.locator(f'g[data-addr="{addr}"] rect.box')
@@ -85,7 +92,7 @@ with sync_playwright() as p:
     print('BFS end:', pg.locator('.explain').inner_text()[:120])
     shot(pg,'i7_bfs')
     # 7. tree lesson click traversal
-    pg.goto(BASE+'#/lesson/14/2'); pg.wait_for_timeout(300)
+    pg.goto(BASE+lesson_route(pg, 'e:required-click-the-preorder')); pg.wait_for_timeout(300)
     for v in 'ABDECFG': pg.locator(f'.task g[data-node="{v}"]').click()
     pg.locator('button:has-text("Check")').click()
     print('preorder:', pg.locator('.feedback').first.inner_text()[:80].replace('\n',' '))

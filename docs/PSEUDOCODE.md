@@ -24,8 +24,8 @@ an instruction limit, so an endless loop cannot freeze the app.
 
 | Value | Written as |
 |---|---|
-| numbers | `0`, `15`, `-3`, `2.5` — `/` on two whole numbers gives a whole number (`7 / 2` is `3`); `mod` or `%` is the remainder |
-| text | `"a"` or `'a'` — used for graph vertex labels |
+| numbers | `0`, `15`, `-3`, `2.5` — `/` on two whole numbers gives a whole number (`7 / 2` is `3`), and so does `div` (`7 div 2` is `3`); `mod` or `%` is the remainder |
+| text | `"a"` or `'a'` — graph vertex labels, tree letters, messages. `+` joins text with text or numbers: `"row " + 1` is `"row 1"` |
 | booleans | `true`, `false` |
 | the empty pointer | `NULL` (also `null`, `nil`) |
 | a pointer to a node | what `new Node(…)` returns, or what `p.next` holds |
@@ -75,6 +75,15 @@ Each structure fixes the fields its nodes have and the variables that hold it:
 | Queue (linked) | `data`, `next` | `front`, `rear` |
 | Binary tree | `data`, `left`, `right` | `root` |
 | Graph | — | `G` (the graph, read-only), `s` (start vertex) |
+| Arrays only | `data`, `next` (if the program creates nodes) | none — the program creates its own arrays with `new Array(n)` |
+
+**Arrays.** `new Array(n)` makes `n` slots (numbered from 0) holding `NULL`. A slot can hold a
+number, text, a node's address or another array, so a 2-D array (a matrix) is an array of rows:
+`M[i] = new Array(N)`, then `M[i][j] = 0`. The diagram draws an array of arrays as a table and an
+array whose slots hold first nodes (adjacency lists) as chains of nodes. The **Arrays only**
+structure is for programs that start with no nodes at all: the array, the array stack and queue,
+the tree stored in an array and the adjacency matrix. A test or setup can give such a program its
+input variables (for example `pos` and `x`).
 
 **Addresses.** Nodes are numbered `@100`, `@200`, … in creation order and an address is never
 reused, even after `delete`. That way a node's identity is stable, and a value change looks
@@ -89,6 +98,8 @@ different from a pointer change.
   (top-level) ones. Assigning to a name that already exists globally updates the global (like a
   C global such as `start`). Any other assignment creates a local variable.
 - Recursion is allowed up to 100 nested calls.
+- Your own function may use the name of a built-in helper (for example your own `push(value)` for
+  an array stack); inside the program your function is the one that runs.
 
 ## 6. Built-in helpers
 

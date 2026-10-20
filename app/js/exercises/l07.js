@@ -1,14 +1,13 @@
 // Lecture 07 — Introduction: arrays vs linked lists, memory, pointers.
-import { opts, mcq, multi, numeric, reflect } from './kit.js';
+import { opts, mcq, multi, numeric, reflect, sequenceText } from './kit.js';
 
 const SCENARIOS = [
   { s: 'You store 12 monthly temperatures and often read “the value for month k”.', a: 'array', why: 'The size is fixed and known, and an array reaches element k directly with one address calculation.' },
   { s: 'A music queue where songs are constantly inserted at the FRONT, and the number of songs is unknown when the program starts.', a: 'list', why: 'Inserting at the front of an array shifts every element; a linked list only changes two pointers, and it grows as needed.' },
-  { s: 'You must read exam score number k instantly, for any k, thousands of times per second.', a: 'array', why: 'Random access: array element k is at base + k·size. A linked list needs k−1 pointer moves.' },
+  { s: 'You keep reading exam score number k, for many different values of k, and the number of scores never changes.', a: 'array', why: 'Array element k sits at base + k·size, so it is reached directly; a linked list has to follow the links from start, one node at a time, to reach node k.' },
   { s: 'An editor keeps an undo history that grows and shrinks unpredictably while the program runs.', a: 'list', why: 'Linked lists are dynamic: nodes are allocated when needed and freed when no longer needed.' },
   { s: 'A small embedded device stores exactly 1000 sensor readings (4-byte ints) and memory is very tight.', a: 'array', why: 'Each linked node also stores a pointer, so for small items a list can use roughly double the memory.' },
   { s: 'While walking through a long collection you frequently remove the element you are standing on.', a: 'list', why: 'Removing from a linked list only relinks the neighbour; an array must shift all later elements left.' },
-  { s: 'You need to binary-search a sorted collection of 1,000,000 items.', a: 'array', why: 'Binary search jumps to the middle repeatedly — that needs constant-time access by index, which only the array gives.' },
 ];
 
 export const l07 = [
@@ -27,7 +26,7 @@ export const l07 = [
       return {
         prompt: `**Scenario.** ${sc.s}\n\nWhich structure fits better?`,
         ...mcq(o),
-        reflection: reflect('In one or two sentences, name the operation that decided it and what it would cost in the other structure.'),
+        reflection: reflect('In one or two sentences, name the operation that decided it and what the other structure would have to do instead.'),
         hints: [
           'Ask: which operation happens most often — reading by position, or inserting/removing?',
           { text: 'Lec 07 p.4 lists the six differences side by side.' },
@@ -73,44 +72,39 @@ export const l07 = [
     id: 'l07-shifts',
     lecture: 7,
     concept: 'l07.arrays-vs-lists',
-    type: 'complexity',
-    title: 'Counting shifts in an array',
+    type: 'predict',
+    title: 'Shift the elements of an array',
     generate(rng) {
-      const n = rng.int(0, 9);
-      const MAX = n + rng.int(1, 3);
-      const kind = n === 0 ? 'insertFront' : rng.pick(['insertFront', 'insertAt', 'deleteAt', 'deleteLast', 'deleteFirst']);
-      let k = 0;
-      let ans;
-      let what;
-      if (kind === 'insertFront') {
-        ans = n;
-        what = 'insert a new value at index 0 (the front)';
-      } else if (kind === 'insertAt') {
-        k = rng.int(0, n);
-        ans = n - k;
-        what = `insert a new value at index ${k}`;
-      } else if (kind === 'deleteAt') {
-        k = rng.int(0, n - 1);
-        ans = n - 1 - k;
-        what = `delete the value at index ${k}`;
-      } else if (kind === 'deleteLast') {
-        k = n - 1;
-        ans = 0;
-        what = `delete the LAST value (index ${n - 1})`;
-      } else {
-        ans = n - 1;
-        what = 'delete the value at index 0';
-      }
-      const edge = n <= 1 || ans === 0;
+      const n = rng.int(0, 6);
+      const MAX = n + rng.int(1, 2);
+      const vals = rng.sample([10, 20, 30, 40, 50, 60, 70, 80, 90], n);
+      const x = rng.pick([5, 15, 25, 35, 45, 55]);
+      const kind = n === 0 ? 'insert' : rng.pick(['insert', 'insert', 'delete']);
+      const k = kind === 'insert' ? rng.int(0, n) : rng.int(0, n - 1);
+      const after = [...vals];
+      if (kind === 'insert') after.splice(k, 0, x);
+      else after.splice(k, 1);
+      const moved = kind === 'insert' ? n - k : n - 1 - k;
+      const edge = n <= 1 || moved === 0;
+      const what = kind === 'insert' ? `insert **${x}** at index **${k}**` : `delete the value at index **${k}** (${vals[k]})`;
+      const how =
+        kind === 'insert'
+          ? `Every element from index ${k} to ${n - 1} moves one slot to the RIGHT — starting with the last one, so nothing is overwritten — then a[${k}] = ${x} and count becomes ${n + 1}.${moved === 0 ? ' Here no element has to move: the new value goes straight into the first free slot.' : ''}`
+          : `Every element after index ${k} moves one slot to the LEFT (a[${k}] = a[${k + 1}], a[${k + 1}] = a[${k + 2}], …), overwriting the deleted value, and count becomes ${n - 1}.${moved === 0 ? ' Here nothing has to move: the last value is simply dropped by decreasing count.' : ''}`;
       return {
-        prompt: `An array has capacity ${MAX} and currently holds **${n}** value(s) in indices 0..${Math.max(0, n - 1)} (a separate counter stores ${n}).\n\nYou ${what}. Counting one “shift” for every element that must move one slot, how many shifts happen?`,
-        visual: { type: 'array', n: MAX, filled: n, highlight: kind.startsWith('insert') || kind === 'deleteFirst' ? (kind === 'deleteFirst' ? 0 : k) : k },
+        prompt: `An array \`a\` with capacity ${MAX} holds **${n}** value(s), and a separate variable \`count = ${n}\` remembers how many slots are in use:\n\n\`a = [${vals.join(', ')}]\`\n\nYou ${what}, keeping the values in order with no gaps. Type the values in a[0] … a[count − 1] afterwards (type \`empty\` if there are none).`,
+        visual: { type: 'array', n: MAX, filled: n, values: vals, highlight: kind === 'insert' ? Math.min(k, MAX - 1) : k },
         edge,
-        ...numeric(ans, {
-          explain: `Every element to the ${kind.startsWith('insert') ? 'right of the insertion point moves right' : 'right of the deleted slot moves left'} by one: ${ans} shift(s); then the counter is ${kind.startsWith('insert') ? 'increased' : 'decreased'}. Worst case (front) is n shifts → Θ(n). A linked list does the same insert/delete with a constant number of pointer writes once it is at the right place. Correction to Lec 07 p.2(c): deleting FROM an array is possible (shift + counter); what an array cannot do is shrink or grow its allocated size.`,
-          wrong: { [n]: { msg: 'Not every element moves — only the ones after the position.', tag: 'shift-count' }, [ans + 1]: { msg: 'Count only elements that actually move.', tag: 'off-by-one' } },
+        ...sequenceText(after, {
+          explain: `${how} A linked list does the same job by changing two links instead of moving elements. Correction to Lec 07 p.2(c): deleting FROM an array is possible (shift + count); what a plain array cannot do is grow or shrink its allocated size.`,
+          diagnose: (got) => {
+            if (kind === 'insert' && got.length === n + 1 && got.slice(0, n).join(' ') === vals.join(' ')) return { msg: `${x} was added at the end — inserting at index ${k} means the later elements move right to make room there.`, tag: 'array-shift' };
+            if (kind === 'insert' && got.length === n && got[k] === String(x)) return { msg: `Overwriting a[${k}] loses ${vals[k]}: the elements must shift right first.`, tag: 'array-shift' };
+            if (kind === 'delete' && got.length === n) return { msg: 'After a deletion the array holds one value fewer: the later elements shift left and count decreases.', tag: 'array-shift' };
+            return null;
+          },
         }),
-        hints: ['Only elements on one side of the position have to move.', { text: 'Count the filled cells to the right of the position.' }, `Indices after the position: from ${kind.startsWith('insert') ? k : k + 1} to ${n - 1}.`],
+        hints: ['Only the elements on one side of the position move.', { text: kind === 'insert' ? 'Make room first: move the elements from the end backwards, one slot to the right.' : 'Close the gap: move each later element one slot to the left.' }, how],
       };
     },
   },
@@ -213,27 +207,6 @@ export const l07 = [
         visual: { type: 'code', lines: c.code },
         ...mcq(o),
         hints: ['Track each block: who points to it, and has it been freed?', { text: 'free() is the opposite of malloc() (Lec 07 p.2).' }, 'Draw the pointer after every line.'],
-      };
-    },
-  },
-  {
-    id: 'l07-reach',
-    lecture: 7,
-    concept: 'l07.arrays-vs-lists',
-    type: 'complexity',
-    title: 'Reaching element k',
-    generate(rng) {
-      const n = rng.int(3, 12);
-      const edge = rng.bool(0.25);
-      const k = edge ? rng.pick([1, n]) : rng.int(2, n - 1);
-      return {
-        prompt: `A singly linked list has ${n} nodes and you only have \`start\`. Starting from \`temp = start\` (temp is at node 1), how many \`temp = temp->next\` moves are needed to stand on node **${k}**?`,
-        edge,
-        ...numeric(k - 1, {
-          explain: `Node 1 needs 0 moves, node k needs k−1 = ${k - 1}. In an array, element k is one address calculation away regardless of k: that is why “searching/locating” in a list is Θ(n) in the worst case (Lec 07 p.3 disadvantage ②).`,
-          wrong: { [k]: { msg: 'temp already stands on node 1 before any move.', tag: 'off-by-one' } },
-        }),
-        hints: ['Each move advances temp by exactly one node.', { text: 'temp starts AT node 1.' }, 'Count the arrows between node 1 and node k.'],
       };
     },
   },

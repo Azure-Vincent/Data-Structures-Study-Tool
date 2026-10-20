@@ -1,6 +1,6 @@
 // Doubly linked list algorithms (Lecture 10). The notes call the links
 // "left" (previous) and "right" (next).
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 import { addVar, fmtPtr, walk } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
@@ -150,6 +150,8 @@ export const DLL_CODE = {
     ],
   },
 };
+keyCodes(DLL_CODE, 'dll');
+
 
 function countSilently(t) {
   const r = walk(t.state, t.state.vars.start, 'right');

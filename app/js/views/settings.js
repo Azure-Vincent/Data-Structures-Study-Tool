@@ -1,5 +1,6 @@
 import { h, toast, download } from '../ui/dom.js';
 import { updatesPanel } from '../ui/updates.js';
+import { CODE_LANGS, codeLang, setCodeLang } from '../ui/langs.js';
 
 export function settingsView(ctx) {
   const { store } = ctx;
@@ -38,6 +39,7 @@ export function settingsView(ctx) {
       sel('theme', [['system', 'Follow the system'], ['light', 'Light'], ['dark', 'Dark']], 'Theme'),
       sel('motion', [['system', 'Follow the system'], ['reduce', 'Reduce motion'], ['full', 'Full animation']], 'Animation'),
       sel('speed', [[0.5, '0.5×'], [1, '1×'], [2, '2×'], [4, '4×']], 'Default playback speed'),
+      h('label', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Show code in', h('small', {}, 'Every code panel, simulation and walkthrough follows this; switch any time with the language tabs above the code.')), h('select', { 'aria-label': 'code language', onchange: (e) => setCodeLang(e.target.value) }, CODE_LANGS.map((l) => h('option', { value: l.id, selected: l.id === codeLang() }, l.id === 'c' ? 'C (as in the notes, where available)' : l.label)))),
       h('label', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Ask for predictions in lessons', h('small', {}, 'Simulations pause before key steps so you can guess first.')), h('input', { type: 'checkbox', checked: !!st.predictMode, onchange: (e) => set('predictMode', e.target.checked) })),
       h('div', { class: 'setting-row' }, h('span', { class: 'lbl' }, 'Practice timer', h('small', {}, 'Optional; it never stops you.')), h('span', { class: 'row' }, h('input', { type: 'checkbox', 'aria-label': 'practice timer', checked: !!st.timer, onchange: (e) => set('timer', e.target.checked) }), h('input', { type: 'number', min: 3, max: 30, value: st.timerMinutes, style: { width: '70px' }, 'aria-label': 'timer minutes', onchange: (e) => set('timerMinutes', Math.max(3, Math.min(30, Number(e.target.value) || 8))) }), 'minutes')),
     ),

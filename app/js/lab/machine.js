@@ -644,7 +644,7 @@ export class Machine {
     });
     this.st.frames.push(fr);
     const bind = fn.params.map((p, i) => `${p} = ${this.f(args[i])}`).join(', ');
-    yield this.ev('call', fn.line, `Called ${fn.name}(${args.map((a) => this.f(a)).join(', ')}) from line ${e.line}. A new frame starts${bind ? ` with ${bind}` : ''} (parameters are copies).`, { vars: [...fn.params], nodes: args.filter(isRef).map((a) => a.ref) }, { type: 'call', fn: fn.name });
+    yield this.ev('call', fn.line, `Called ${fn.name}(${args.map((a) => this.f(a)).join(', ')}) from line ${e.line}. A new frame starts${bind ? ` with ${bind}` : ''} (parameters are copies).`, { vars: [...fn.params], nodes: args.filter(isRef).map((a) => a.ref) }, { type: 'call', fn: fn.name, from: e.line });
     let ret = null;
     try {
       yield* this.execBody(fn.body);
@@ -658,7 +658,7 @@ export class Machine {
     const value = ret ? ret.value : undefined;
     if (isRef(value)) caller.temps.push(value.ref);
     this.line = e.line;
-    yield this.ev('return', ret ? ret.line : fn.endLine, `${fn.name} ${value === undefined ? 'finished' : `returned ${this.f(value)}`} and control goes back to line ${e.line}. Its local variables${locals.length ? ` (${locals.join(', ')})` : ''} no longer exist.`, { nodes: isRef(value) ? [value.ref] : [] }, { type: 'frame-pop', fn: fn.name, vars: locals });
+    yield this.ev('return', ret ? ret.line : fn.endLine, `${fn.name} ${value === undefined ? 'finished' : `returned ${this.f(value)}`} and control goes back to line ${e.line}. Its local variables${locals.length ? ` (${locals.join(', ')})` : ''} no longer exist.`, { nodes: isRef(value) ? [value.ref] : [] }, { type: 'frame-pop', fn: fn.name, vars: locals, to: e.line });
     return value;
   }
 

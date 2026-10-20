@@ -69,6 +69,7 @@ export function renderArray(v) {
     const g = s('g', { class: ['cell', filled && v.filled != null ? 'live' : '', v.highlight === i ? 'hl' : ''].join(' ') });
     g.append(s('rect', { x, y: 34, width: cw, height: 38 }));
     g.append(s('text', { class: 'i', x: x + cw / 2, y: 26, 'text-anchor': 'middle' }, `[${i}]`));
+    if (v.values && v.values[i] != null) g.append(s('text', { class: 'v', x: x + cw / 2, y: 58, 'text-anchor': 'middle' }, String(v.values[i])));
     if (v.base != null) g.append(s('text', { class: 'i', x: x + 3, y: 90 }, String(v.base + i * v.size)));
     svg.append(g);
   }
@@ -86,7 +87,7 @@ export function renderMatrixRO(v) {
 export function renderAdjList(v) {
   const wrap = h('div', { class: 'adjlist', style: { fontFamily: 'var(--mono)' } });
   for (const [k, ns] of Object.entries(v.list)) {
-    wrap.append(h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', margin: '4px 0' } }, h('span', { class: 'chip', style: { minWidth: '34px', textAlign: 'center' } }, k), '→', ns.length ? ns.map((x, i) => [h('span', { class: 'chip' }, x), i < ns.length - 1 ? '→' : '']) : h('span', { class: 'muted' }, 'NULL'), ns.length ? h('span', { class: 'muted' }, '→ NULL') : null));
+    wrap.append(h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '4px 0' } }, h('span', { class: 'chip', style: { minWidth: '34px', textAlign: 'center' } }, k), '→', ns.length ? ns.map((x, i) => [h('span', { class: 'chip' }, x), i < ns.length - 1 ? '→' : '']) : h('span', { class: 'muted' }, 'NULL'), ns.length ? h('span', { class: 'muted' }, '→ NULL') : null));
   }
   return wrap;
 }

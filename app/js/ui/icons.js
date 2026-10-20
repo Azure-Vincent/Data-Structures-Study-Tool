@@ -7,7 +7,6 @@ const PATHS = {
   progress: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
   explore: '<rect x="2.5" y="8" width="7" height="8" rx="1.5"/><rect x="14.5" y="8" width="7" height="8" rx="1.5"/><path d="M9.5 12h5"/><path d="m12.5 10 2 2-2 2"/>',
   repair: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
-  complexity: '<path d="M3 3v18h18"/><path d="M7 15c3 0 4-8 7-8s3 4 6 4"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
   code: '<path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m13.5 4-3 16"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',

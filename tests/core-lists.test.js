@@ -89,23 +89,11 @@ test('traverse output and counters', () => {
   assert.equal(ins.counters.moves, 2); // n-1 moves for n = 3
 });
 
-test('tail pointer: insert O(1) but delete tail still walks', () => {
-  let w = PW.buildList('sll', [1, 2, 3, 4, 5]);
-  const a = SLL.insertEndTail(w, 6);
-  assert.equal(a.counters.moves || 0, 0);
-  assert.deepEqual(vals(a.final), [1, 2, 3, 4, 5, 6]);
-  assert.equal(a.final.vars.tail, PW.walk(a.final, a.final.vars.start).addrs.at(-1));
-  const d = SLL.deleteEndTail(a.final);
-  assert.equal(d.counters.moves, 4); // n-2 moves for n = 6
-  assert.deepEqual(vals(d.final), [1, 2, 3, 4, 5]);
-});
-
-test('creatlist move count matches (n-1)(n-2)/2', () => {
+test('creatlist appends in input order (Lec 08 p.3)', () => {
   for (const n of [1, 2, 3, 5, 8]) {
-    const tr = SLL.createList(Array.from({ length: n }, (_, i) => i));
-    const want = ((n - 1) * (n - 2)) / 2 + 0;
-    assert.equal(tr.counters.moves || 0, want);
-    assert.equal(SLL.creatlistMoves(n), want);
+    const want = Array.from({ length: n }, (_, i) => i);
+    const tr = SLL.createList(want);
+    assert.deepEqual(vals(tr.final), want);
   }
 });
 

@@ -268,39 +268,4 @@ export const l09 = [
       };
     },
   },
-  {
-    id: 'l09-tail-cost',
-    lecture: 9,
-    concept: 'cx.tail-pointer',
-    type: 'complexity',
-    title: 'Does a tail pointer help deletion?',
-    generate(rng) {
-      const n = rng.int(1, 9);
-      const w = randList(rng, 'sll', values(rng, n), { scatter: false });
-      const ask = rng.pick(['delTail', 'delTail', 'delNoTail', 'insTail']);
-      let tr;
-      let q;
-      let explain;
-      if (ask === 'delTail') {
-        tr = SLL.deleteEndTail(w);
-        q = `delete the LAST node of a ${n}-node list that keeps both start and tail`;
-        explain = `Even with tail, we must find the node BEFORE tail to set its next to NULL and to move tail there. Singly linked nodes have no backward link, so we walk from start: ${Math.max(0, n - 2)} moves → still Θ(n). (A doubly linked list with tail does it in Θ(1).)`;
-      } else if (ask === 'delNoTail') {
-        tr = SLL.deleteEnd(w);
-        q = `delete the LAST node of a ${n}-node list with only start (Lec 09 p.2)`;
-        explain = `temp walks to the last node: ${Math.max(0, n - 1)} moves → Θ(n).`;
-      } else {
-        tr = SLL.insertEndTail(w, 0);
-        q = `INSERT at the end of a ${n}-node list that keeps a tail pointer`;
-        explain = 'tail->next = newnode; tail = newnode — no walking: Θ(1). The tail pointer helps insertion at the end, but not deletion at the end.';
-      }
-      return {
-        prompt: `Counting model: count every execution of \`temp = temp->next\`.\n\nHow many moves are needed to ${q}?`,
-        visual: { type: 'list', world: w },
-        edge: n <= 2,
-        ...numeric(tr.counters.moves || 0, { explain }),
-        hints: ['Which node’s next field has to change?', { text: 'Can you reach that node directly from tail?' }, 'Count the steps from start to that node.'],
-      };
-    },
-  },
 ];

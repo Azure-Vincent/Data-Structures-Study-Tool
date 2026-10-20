@@ -65,7 +65,7 @@ export const l14 = [
         visual: { type: 'tree', tree: t, clickable: true, mark: [x] },
         edge: x === t.root || T.children(t, x).length === 0,
         ...nodePick(stack, {
-          explain: `Active calls = the path from the root to ${x}: ${stack.join(' → ')}. ${order === 'postorder' ? 'In postorder a node is output just before its call returns.' : order === 'preorder' ? 'In preorder a node is output right after it is entered.' : 'In inorder a node is output between its two recursive calls.'} The recursion stack never holds more than height + 1 frames → Θ(h) auxiliary space.`,
+          explain: `Active calls = the path from the root to ${x}: ${stack.join(' → ')}. ${order === 'postorder' ? 'In postorder a node is output just before its call returns.' : order === 'preorder' ? 'In preorder a node is output right after it is entered.' : 'In inorder a node is output between its two recursive calls.'} The recursion stack never holds more than height + 1 frames.`,
         }),
         hints: ['Recursive calls nest along a path from the root.', { text: `Which nodes lie on the path from ${t.root} to ${x}?`, hl: { nodes: T.pathFromRoot(t, x) } }, 'Exactly the ancestors of the node, plus the node itself.'],
         solutionTrace: { struct: 'tree', op: order, tree: t },
@@ -161,7 +161,7 @@ export const l14 = [
         prompt: `${kind === 'bfs' ? `BFS from ${s}` : `Recursive DFS from ${s}`} (ascending neighbour order). ${kind === 'bfs' ? `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} dequeued vertex has had ALL its neighbours examined, what is in the queue (front → rear)?` : `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} vertex is visited, what is on the stack of active calls (bottom → top)?`} Type “empty” if nothing.`,
         visual: { type: 'graph', graph: g, mark: [s] },
         edge: items.length === 0,
-        ...sequenceText(items, { explain: `Output so far: ${st.state.output.join(' ')}. Discovered: ${st.state.discovered.join(' ')}. Processed: ${st.state.processed.join(' ') || 'none'}. ${kind === 'bfs' ? 'Queue space can reach Θ(V) in the worst case.' : 'Stack depth can reach Θ(V) (a long path).'}` }),
+        ...sequenceText(items, { explain: `Output so far: ${st.state.output.join(' ')}. Discovered: ${st.state.discovered.join(' ')}. Processed: ${st.state.processed.join(' ') || 'none'}.` }),
         hints: [kind === 'bfs' ? 'Discovered-but-not-yet-dequeued vertices wait in the queue.' : 'The stack holds the current path from the start vertex.', { text: 'Simulate step by step and write the frontier down.' }, `The output so far is ${st.state.output.join(' ')}.`],
         solutionTrace: { struct: 'graph', op: kind, graph: g, start: s },
         params: { kind },
@@ -252,33 +252,6 @@ export const l14 = [
         edge: !lighter,
         ...mcq(o, { explain: 'For minimum total weight use Dijkstra’s algorithm (supplementary — not in Lec 14).' }),
         hints: ['BFS discovers vertices in rings: 1 edge away, 2 edges away, …', { text: 'Ignore the numbers on the edges while running BFS.' }, 'Compare the BFS path’s total weight with other paths.'],
-      };
-    },
-  },
-  {
-    id: 'l14-cost',
-    lecture: 14,
-    concept: 'l14.traversal-cost',
-    type: 'complexity',
-    title: 'Traversal cost: list vs matrix',
-    generate(rng) {
-      const directed = rng.bool();
-      const g = G.randomGraph(rng, { n: rng.int(4, 7), directed, density: 0.4, selfLoop: rng.bool(0.25) });
-      const rep = rng.pick(['list', 'matrix']);
-      const s = G.sortedVertices(g)[0];
-      const tr = G.traceBFS(g, s, { rep, all: true });
-      const ans = tr.counters.neighborChecks;
-      const V = g.vertices.length;
-      const E = g.edges.length;
-      return {
-        prompt: `Counting model: one “neighbour check” per entry examined while finding a vertex's neighbours. A full BFS (all components) processes every vertex once.\n\nThe ${directed ? 'directed' : 'undirected'} graph has V = ${V}, E = ${E}. Stored as an **adjacency ${rep}**, how many neighbour checks happen in total?`,
-        visual: { type: 'graph', graph: g },
-        edge: g.edges.some((e) => e.u === e.v),
-        ...numeric(ans, {
-          explain: rep === 'matrix' ? `Each vertex scans its whole row of V entries: V × V = ${V * V}. Total Θ(V²) — independent of E.` : `Each vertex scans only its own list. Sum of list lengths = ${directed ? 'E' : '2E (each undirected edge is stored in both lists; a self-loop once)'} = ${ans}. Total time Θ(V + E). Auxiliary space: the visited marks Θ(V) plus the queue, up to Θ(V).`,
-          wrong: { [V * V]: { msg: 'That is the matrix cost.', tag: 'list-vs-matrix' }, [2 * E]: { msg: directed ? 'Directed edges appear in only ONE list.' : 'Check self-loops: a loop appears once in its vertex’s list.', tag: 'list-vs-matrix' }, [E]: { msg: directed ? '' : 'An undirected edge appears in BOTH endpoints’ lists.', tag: 'list-vs-matrix' } },
-        }),
-        hints: ['What does finding the neighbours of ONE vertex cost in this representation?', { text: rep === 'matrix' ? 'A matrix row always has V entries.' : 'A list holds only real neighbours.' }, rep === 'matrix' ? 'Multiply V by V.' : 'Add up the lengths of all lists.'],
       };
     },
   },

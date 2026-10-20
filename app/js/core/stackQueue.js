@@ -1,5 +1,5 @@
 // Stacks and queues (Lecture 12): array and linked implementations.
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 import { createWorld, addVar, fmtPtr, walk } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
@@ -25,6 +25,8 @@ export const ASTACK_CODE = {
     peek: { title: 'peek()  — array, top = index of top item', ref: 'Supplementary', lines: ['if (top == -1) { printf("empty"); return; }', 'return stack[top];'] },
   },
 };
+keyCodes(ASTACK_CODE, 'sq.astack');
+
 
 export function astackPush(s, x) {
   const code = ASTACK_CODE[s.conv].push;
@@ -115,6 +117,8 @@ export const AQUEUE_CODE = {
     dequeue: { title: 'dequeue()  — circular array', ref: 'Supplementary', lines: ['if (count == 0) { printf("queue empty"); return; }', 'x = queue[F];', 'F = (F + 1) % MAX;', 'count--;'] },
   },
 };
+keyCodes(AQUEUE_CODE, 'sq.aqueue');
+
 
 export function aqueueEnqueue(q, x) {
   const t = new Tracer(q, AQUEUE_CODE[q.mode].enqueue);
@@ -205,13 +209,15 @@ export const LINKED_CODE = {
   enqueue: { title: 'enqueue(x)  — linked queue', ref: 'Lec 12 p.6', lines: ['newnode = getnode();', 'if (rear == NULL)              // empty queue', '    front = rear = newnode;', 'else {', '    rear->next = newnode;', '    rear = newnode;', '}'] },
   dequeue: { title: 'dequeue()  — linked queue', ref: 'Lec 12 p.6', lines: ['if (front == NULL) { printf("underflow"); return; }', 'temp = front;', 'front = front->next;', 'if (front == NULL)             // removed the final item', '    rear = NULL;', 'x = temp->data;  free(temp);'] },
 };
+keyCodes(LINKED_CODE, 'sq.linked');
+
 
 export function lstackPushHead(w0, x, opts) {
   const t = new Tracer(w0, LINKED_CODE.pushHead);
   const w = t.state;
   const a = getnodeSteps(t, 0, x, opts);
   setLink(t, 1, a, 'next', w.vars.top, `newnode->next = top (${fmtPtr(w.vars.top)}): the new node sits on top of the old top.`);
-  setVar(t, 2, 'top', a, `top = newnode (${a}). O(1): no walking.`);
+  setVar(t, 2, 'top', a, `top = newnode (${a}). The new node is the top now — nothing had to be walked.`);
   return endScope(t, ['newnode']);
 }
 
@@ -229,7 +235,7 @@ export function lstackPopHead(w0) {
   setVar(t, 2, 'top', w.nodes[w.vars.temp].next, `top = top->next → ${fmtPtr(w.nodes[w.vars.temp].next)}.`);
   const x = w.nodes[w.vars.temp].data;
   t.output.push(x);
-  freeStep(t, 3, 'temp', `x = ${x}; free(temp). O(1).`);
+  freeStep(t, 3, 'temp', `x = ${x}; free(temp). The node below is the new top.`);
   const tr = endScope(t, ['temp']);
   tr.result = { ok: true, value: x };
   return tr;
@@ -246,7 +252,7 @@ export function lstackPushTail(w0, x, opts) {
     t.step(2, 'var', `start = top = newnode (${a}).`, { vars: ['start', 'top'] });
   } else {
     setLink(t, 4, w.vars.top, 'next', a, `top->next = newnode: append after the current top (${w.vars.top}).`);
-    setVar(t, 5, 'top', a, `top = newnode (${a}). With the top pointer, push at the end is O(1).`);
+    setVar(t, 5, 'top', a, `top = newnode (${a}). Because top always points at the last node, push never has to walk.`);
   }
   return endScope(t, ['newnode']);
 }

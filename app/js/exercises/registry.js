@@ -8,8 +8,9 @@ import { l11 } from './l11.js';
 import { l12 } from './l12.js';
 import { l13 } from './l13.js';
 import { l14 } from './l14.js';
+import { IMPL_TEMPLATES } from './impl.js';
 
-export const TEMPLATES = [...l07, ...l08, ...l09, ...l10, ...l11, ...l12, ...l13, ...l14];
+export const TEMPLATES = [...l07, ...l08, ...l09, ...l10, ...l11, ...l12, ...l13, ...l14, ...IMPL_TEMPLATES];
 export const TEMPLATE_BY_ID = Object.fromEntries(TEMPLATES.map((t) => [t.id, t]));
 
 export const TYPE_LABELS = {
@@ -21,10 +22,9 @@ export const TYPE_LABELS = {
   traverse: 'Click the traversal',
   convert: 'Convert representations',
   choose: 'Choose a structure',
-  complexity: 'Count the work',
   classify: 'Classify',
   build: 'Build',
-  lab: 'Pseudocode Lab',
+  lab: 'Write the code',
 };
 
 /**

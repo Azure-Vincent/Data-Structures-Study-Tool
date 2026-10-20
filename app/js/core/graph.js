@@ -1,5 +1,5 @@
 // Graphs (Lectures 13 and 14): representation, BFS and DFS traces.
-import { Tracer } from './trace.js';
+import { Tracer, keyCodes } from './trace.js';
 
 export function createGraph({ directed = false, weighted = false } = {}) {
   return { type: 'graph', directed, weighted, vertices: [], edges: [], pos: {} };
@@ -240,6 +240,8 @@ export const GRAPH_CODE = {
     lines: ['for each vertex s (in order) {', '    if (s is not discovered)', '        BFS(s)  or  DFS(s);   // one call per component', '}'],
   },
 };
+keyCodes(GRAPH_CODE, 'graph');
+
 
 function gstate(g, kind, opts) {
   return {

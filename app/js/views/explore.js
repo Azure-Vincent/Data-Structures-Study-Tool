@@ -13,6 +13,8 @@ import * as SQ from '../core/stackQueue.js';
 import * as T from '../core/tree.js';
 import * as G from '../core/graph.js';
 import { problems } from '../core/invariants.js';
+import { createWalkthrough } from '../ui/walkthrough.js';
+import { IMPLEMENTATIONS, IMPL_BY_ID } from '../content/impl/index.js';
 
 const STRUCTS = [
   { id: 'sll', label: 'Singly linked list', ref: 'Lec 08–09' },
@@ -25,6 +27,7 @@ const STRUCTS = [
   { id: 'lqueue', label: 'Linked queue', ref: 'Lec 12' },
   { id: 'tree', label: 'Binary tree', ref: 'Lec 13–14' },
   { id: 'graph', label: 'Graph', ref: 'Lec 13–14' },
+  { id: 'code', label: 'Programs (C++ / Python / pseudocode)', ref: 'Lec 07–14' },
 ];
 
 const LIST_OPS = {
@@ -32,12 +35,10 @@ const LIST_OPS = {
     ['insertBeg', 'insert at beginning', 'v'],
     ['insertMid', 'insert at position (middle)', 'vp'],
     ['insertEnd', 'insert at end', 'v'],
-    ['insertEndTail', 'insert at end using a tail pointer', 'v'],
     ['deleteBeg', 'delete at beginning', ''],
     ['deleteMid', 'delete at position (middle)', 'p'],
     ['deleteEnd', 'delete at end (corrected)', ''],
     ['deleteEndNotes', 'delete at end (exactly as in notes)', ''],
-    ['deleteEndTail', 'delete at end with tail pointer', ''],
     ['traverse', 'traverse / display', ''],
   ],
   dll: [
@@ -91,6 +92,7 @@ export function exploreView(ctx, which) {
     if (struct === 'sll' || struct === 'dll' || struct === 'csll') c = listExplorer(store, struct);
     else if (struct === 'tree') c = treeBuilder(store, { traverse: true });
     else if (struct === 'graph') c = graphEditor(store);
+    else if (struct === 'code') c = programExplorer(store);
     else c = seqExplorer(store, struct);
     destroy.push(c.destroy);
     area.append(h('p', { class: 'small muted' }, `Based on ${STRUCTS.find((s) => s.id === struct).ref}.`), c.el);
@@ -98,6 +100,41 @@ export function exploreView(ctx, which) {
   drawTabs();
   drawArea();
   return root;
+}
+
+// ------------------------------------------------------------------ "Build it in code" programs
+// Every walkthrough program of the lessons, chosen freely: run it step by step in any language.
+function programExplorer(store) {
+  const last = store.data.settings.exploreProgram;
+  let id = IMPL_BY_ID[last] ? last : IMPLEMENTATIONS[0].id;
+  let wt = null;
+  const el = h('div');
+  const host = h('div');
+  const groups = {};
+  for (const ex of IMPLEMENTATIONS) (groups[ex.lecture] ||= []).push(ex);
+  const sel = h(
+    'select',
+    { 'aria-label': 'program', onchange: (e) => { id = e.target.value; store.setSetting('exploreProgram', id); draw(); } },
+    Object.entries(groups).map(([lec, list]) => h('optgroup', { label: `Lecture ${String(lec).padStart(2, '0')}` }, list.map((ex) => h('option', { value: ex.id, selected: ex.id === id }, ex.title)))),
+  );
+  const draw = () => {
+    if (wt) wt.destroy();
+    const ex = IMPL_BY_ID[id];
+    wt = createWalkthrough(ex, {
+      onOpenLab: (code, setup) => {
+        store.setLabDraft(`free:${setup.structure}`, code);
+        const lab = store.labData();
+        lab.freeValues ||= {};
+        lab.freeValues[setup.structure] = setup.graph ? { graph: setup.graph, s: setup.vars?.s } : { values: setup.values || [] };
+        store.save();
+        location.hash = `#/lab/free/${setup.structure}`;
+      },
+    });
+    clear(host).append(h('p', { class: 'small muted' }, ex.intro.replace(/`/g, '')), wt.el);
+  };
+  el.append(h('div', { class: 'panel' }, h('div', { class: 'row' }, h('label', { class: 'inline' }, 'Program', sel), h('span', { class: 'small muted' }, 'The same program in C++, Python and pseudocode; the pseudocode runs, and the matching C++ / Python line is highlighted at every step.'))), host);
+  draw();
+  return { el, destroy: () => wt && wt.destroy() };
 }
 
 // ------------------------------------------------------------------ lists
@@ -417,21 +454,20 @@ export function graphEditor(store) {
     );
     clear(canvas).append(renderGraph(g, { onNode: (v) => { if (!first) first = v; else { toggleEdge(first, v); first = null; } draw(); }, picked: first ? [first] : [] }));
     const m = G.matrix(g);
-    clear(reps).append(h('h3', {}, 'Adjacency matrix (rows = from)'), m.labels.length ? renderMatrixRO(m) : h('p', { class: 'muted small' }, 'No vertices.'), h('h3', { style: { marginTop: '10px' } }, 'Adjacency list (ascending order)'), renderAdjList({ list: G.adjList(g) }), h('p', { class: 'small muted' }, `V = ${g.vertices.length}, E = ${g.edges.length}. Matrix space Θ(V²) = ${g.vertices.length ** 2} cells; list space Θ(V + E).`));
+    clear(reps).append(h('h3', {}, 'Adjacency matrix (rows = from)'), m.labels.length ? renderMatrixRO(m) : h('p', { class: 'muted small' }, 'No vertices.'), h('h3', { style: { marginTop: '10px' } }, 'Adjacency list (ascending order)'), renderAdjList({ list: G.adjList(g) }), h('p', { class: 'small muted' }, `V = ${g.vertices.length} vertices, E = ${g.edges.length} edges. The matrix has a cell for every pair of vertices; the list stores only the edges that exist.`));
     const startSel = h('select', { 'aria-label': 'start vertex' }, G.sortedVertices(g).map((v) => h('option', { value: v }, v)));
     const orderSel = h('select', { 'aria-label': 'neighbour order' }, h('option', { value: 'alpha' }, 'ascending'), h('option', { value: 'insertion' }, 'edge insertion order'));
-    const repSel = h('select', { 'aria-label': 'representation' }, h('option', { value: 'list' }, 'adjacency list'), h('option', { value: 'matrix' }, 'adjacency matrix'));
     const all = h('input', { type: 'checkbox' });
     const run = (kind) => {
       if (!g.vertices.length) return;
       if (ws) ws.destroy();
-      const o = { order: orderSel.value, rep: repSel.value, all: all.checked };
+      const o = { order: orderSel.value, all: all.checked };
       const tr = kind === 'bfs' ? G.traceBFS(g, startSel.value, o) : G.traceDFS(g, startSel.value, o);
       ws = createWorkspace(tr, { predictKinds: ['discover', 'output'], predictOn: false, settings: store.data.settings });
       clear(stage).append(ws.el);
     };
     clear(runP).append(
-      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'start', startSel), h('label', { class: 'inline' }, 'neighbour order', orderSel), h('label', { class: 'inline' }, 'stored as', repSel), h('label', { class: 'inline small' }, all, 'whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
+      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'start', startSel), h('label', { class: 'inline' }, 'neighbour order', orderSel), h('label', { class: 'inline small' }, all, 'whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
       g.weighted ? h('p', { class: 'small muted' }, 'BFS and DFS ignore weights: BFS finds paths with the fewest EDGES, not the smallest total weight.') : null,
     );
   }

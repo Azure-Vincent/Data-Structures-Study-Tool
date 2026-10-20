@@ -2,13 +2,17 @@
 
 Every lesson section shows its source (for example “Lec 08 p.6–7”). Material that is not in the notes is labelled **Supplementary** in the app.
 
+The lectures decide what is taught and how deep. Every operation they cover has a **“Build it in code”** program (C++, Python and runnable pseudocode, in `app/js/content/impl/`), listed per lecture below. Prerequisite notes (reading the three languages, memory management, node types, recursion, do-while) explain only what those programs use. Topics outside the notes — binary search trees, the circular array queue, the index-style array stack, Dijkstra — appear only in clearly labelled supplementary notes or in Explore/Lab, never in the main lesson path. Running-time analysis is not part of the app.
+
 ## Lecture 07 — Introduction (4 pages)
 | Page | Content in the notes | Where it is in the app |
 |---|---|---|
 | p.1 | Primitive vs non-primitive structures; linear (stacks, queues) vs non-linear (graphs, trees); contiguous vs non-contiguous | Lesson 07 §1–2, template `l07-classify`, `l07-address` |
 | p.2 | Array disadvantages; `malloc`, `free`, `(int *) malloc(100 * sizeof(int))` | Lesson 07 code section (C, C++, pseudocode), `l07-malloc`, `l07-membug` |
-| p.3 | Advantages / disadvantages of linked lists | Lesson 07 trade-off table, `l07-choose`, `l07-reach` |
+| p.3 | Advantages / disadvantages of linked lists | Lesson 07 trade-off table, `l07-choose` |
 | p.4 | Array vs linked list table | Trade-off table, `l07-shifts`, `l07-storage` |
+
+**Programs:** `array-shift` (insert and delete by shifting). **Lab:** `array-insert`, `array-delete`.
 
 **Clarifications:** “deleting from an array is not possible” → deleting is possible by shifting; *resizing* is not. “Array: stack / list: heap” → storage location depends on how memory is obtained (local, global, malloc), not on the structure type.
 
@@ -17,12 +21,14 @@ Every lesson section shows its source (for example “Lec 08 p.6–7”). Materi
 |---|---|---|
 | p.1 | Applications; node = data + next; `start`; NULL drawn as X; `struct slinklist`; empty list | Anatomy section, terminology note |
 | p.2 | `getnode()`; creation steps | Code section; creation note |
-| p.3 | `creatlist(n)` (appends by walking) | Worked example; `l08-cost` (creatlist moves = (n−1)(n−2)/2) |
+| p.3 | `creatlist(n)` (appends by walking) | Worked example; program `sll-create` |
 | p.4 | Insert at beginning (1) newnode→next = start, (2) start = newnode | Simulation with predictions; rewire exercise |
 | p.5 | Insert at end | Simulation; `l08-fill` |
 | p.6–7 | Insert in the middle with `temp`/`prev`, `pos`, `nodectr` | Required example 10→20→30 insert 15; lost-access bug demo |
 
-**Clarifications:** the prose on p.2 prepends while the code on p.3 appends; `insert_at_mid` allocates before validating (leak on bad `pos`) and uses `pos < nodectr`, which wrongly rejects inserting just before the last node (`pos <= nodectr` is correct for insertion).
+**Clarifications:** the prose on p.2 prepends while the code on p.3 appends; `insert_at_mid` allocates before validating (leak on bad `pos`) and uses `pos < nodectr`, which wrongly rejects inserting just before the last node (`pos <= nodectr` is correct for insertion). The insert-at-the-beginning code also works for an empty list, so its separate empty-list case is not needed.
+
+**Programs:** `sll-create`, `sll-insert-beg`, `sll-insert-end`, `sll-insert-pos` (validates first, accepts pos = n + 1). **Lab:** `sll-traverse`, `sll-insert-front`, `sll-insert-end`, `sll-insert-after`, `sll-insert-pos`.
 
 ## Lecture 09 — Singly linked lists 2 (5 pages)
 | Page | Content | App |
@@ -34,27 +40,39 @@ Every lesson section shows its source (for example “Lec 08 p.6–7”). Materi
 
 **Clarification:** `delete_at_last` on a one-node list frees the node but leaves `start` dangling — add `start = NULL`.
 
+**Programs:** `sll-delete-beg`, `sll-delete-end`, `sll-delete-pos`. **Lab:** `sll-delete-first`, `sll-delete-last`, `sll-delete-pos`.
+
 ## Lecture 10 — Doubly linked lists (7 pages)
 p.1 node `left | data | right` (left = prev, right = next) · p.2 creation · p.3 insert at beginning (3 steps) and end · p.4 insert in the middle (4 links) · p.5 delete at beginning / end · p.6 delete in the middle · p.7 traversal and recursive `countnode`.
 
 **Clarifications:** delete-at-beginning and delete-at-end crash on a one-node list (`start->left` / `temp->left->right` dereference NULL). Backward traversal is supplementary but uses only the lecture’s left links.
+
+**Programs:** `dll-create`, `dll-insert-beg`, `dll-insert-end`, `dll-insert-pos`, `dll-delete-beg`, `dll-delete-end`, `dll-delete-pos`, `dll-countnode`. **Lab:** `dll-insert-front`, `dll-insert-end`, `dll-delete-first`, `dll-delete-value`, `sll-count`.
 
 ## Lecture 11 — Circular singly linked lists (4 pages)
 p.1 circle, creation · p.2 insert at beginning (find `last`) and end · p.3 delete at beginning and end · p.4 do-while traversal.
 
 **Clarifications:** the creation loop `while (temp->next != NULL)` never ends once the circle is closed; delete-at-beginning never calls `free(temp)`; delete-at-end leaves `start` dangling for a one-node list.
 
+**Programs:** `csll-create`, `csll-insert-beg`, `csll-insert-end`, `csll-delete-beg`, `csll-delete-end` (Python has no do-while: `while True` … `break`). **Lab:** `csll-traverse`, `csll-insert-front`, `csll-insert-end`, `csll-delete-first`.
+
 ## Lecture 12 — Stacks and queues (6 pages)
 p.1 LIFO, push/pop, Top pictures · p.2–4 array stack code (`top = 0`, `stack[top] = data; ++top`, `stack[--top]`), menu/main, linked stack pushing/popping at the END · p.5 queue, FIFO, F and R pictures · p.6 InsertQ/DeletQ, linked queue with front and rear.
 
 **Exact meanings used by the app:** notes’ array `top` = next free index = number of items; index-style `top` = index of the top item (supplementary); linked `top` = pointer to the top node; array `R` = next free slot; linked `rear` = pointer to the last node.
 
+**Programs:** `stack-array`, `stack-linked-end` (the notes’ push/pop at the end), `stack-linked` (the simplification with the top at the first node — same behaviour, no walking), `queue-array`, `queue-linked`. **Lab:** `astack-push-pop`, `aqueue-enqueue-dequeue`, `stack-push`, `stack-pop`, `queue-enqueue`, `queue-dequeue`.
+
 ## Lecture 13 — Trees and graphs (6 pages)
 p.1 linear vs non-linear; tree definition · p.2 binary tree, leaf/internal, path, siblings, ancestor/descendant, subtree · p.3 level, height, depth, properties ①–④ · p.4 strictly binary, full, complete (numbering) · p.5 array (0-based picture) and linked representation · p.6 directed graph + matrix, weighted undirected graph + matrix with ∞, self-loop, matrix → adjacency list.
 
-**Clarifications:** notes’ depth counts nodes (= level + 1; most books count edges); notes’ “full” = most books’ “perfect”, notes’ “strictly binary” = most books’ “full/proper”; n − 1 edges holds for every tree. The directed graph’s edges were read from the handwritten drawing (1→2, 1→3, 1→5, 2→3, 2→4, 2→5, 3→4, 5→3, 5→4); row 1 of its matrix matches the notes exactly.
+**Clarifications:** notes’ depth counts nodes (= level + 1; most books count edges); notes’ “full” = most books’ “perfect”, notes’ “strictly binary” = most books’ “full/proper”; n − 1 edges holds for every tree. The directed graph’s edges were read from the handwritten drawing (1→2, 1→3, 1→5, 2→3, 2→4, 2→5, 3→4, 5→3, 5→4); row 1 of its matrix matches the notes exactly. The array picture on p.5 numbers positions from 0 (children 2i + 1 and 2i + 2, parent (i − 1) / 2 rounded down); the 1-based formulas are shown alongside.
+
+**Programs:** `tree-create`, `tree-array`, `graph-matrix`, `graph-adjlist` (one linked list per vertex, built with Lec 08’s insert at the end). **Lab:** `tree-build`, `tree-count`, `graph-matrix-build` (`bst-insert` is supplementary).
 
 ## Lecture 14 — Traversals (4 pages)
 p.1 preorder (A B D E C F G), inorder (D B E A F C G) with stack pictures · p.2 postorder (D E B F G C A), DFS with backtracking arrows · p.3 BFS; DFS and BFS trees · p.4 graph a–i: DFS a b c g d e f i h, BFS a b e f c d g i h.
 
 **Clarifications:** both orders on p.4 are reproduced with ascending neighbour order, which the app always states before grading; the numbers on the p.3 trees are edge-discovery order, not distances (e is 1 edge from a).
+
+**Programs:** `tree-traversals` (preorder, inorder, postorder), `tree-inorder-stack` (the stack pictures, with Lec 12’s array stack), `graph-bfs` (Lec 12’s array queue), `graph-dfs` (recursion). In C++ and Python the graph is an adjacency matrix and “discovered” is an array of true/false; all three languages print a b e f c d g i h (BFS) and a b c g d e f i h (DFS) from a. **Lab:** `tree-preorder`, `tree-inorder`, `tree-postorder`, `graph-bfs`, `graph-dfs`.

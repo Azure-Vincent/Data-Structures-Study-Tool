@@ -4,6 +4,7 @@ import { renderList } from './list.js';
 import { renderTree, renderGraph } from './treegraph.js';
 import { renderArrayStack, renderArrayQueue, renderArray, renderMatrixRO, renderAdjList, renderCompareMemory, renderArrayTree, renderCode } from './arrays.js';
 import { worldFromSetup, treeFrom, graphFrom } from '../../sim/specs.js';
+import { langCode } from '../langs.js';
 
 export function box(el, cls = '') {
   return h('div', { class: `diagram-box ${cls}` }, el);
@@ -51,6 +52,9 @@ export function renderVisual(v, opts = {}) {
       return box(renderArrayTree(v));
     case 'code':
       return renderCode(v);
+    case 'langcode':
+      // one program in C++ / Python / pseudocode; the tabs follow the app-wide language
+      return h('div', { class: 'langcode-visual' }, langCode(v.variants));
     default:
       return null;
   }

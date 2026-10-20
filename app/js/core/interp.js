@@ -402,8 +402,8 @@ export function diffWorlds(a, b) {
  * Run one statement per line and record a step after each line —
  * used to animate correct and buggy code side by side.
  */
-export function runLines(world, lines, { title = 'code', newValue, ref = '' } = {}) {
-  const t = new Tracer(world, { title, ref, lines });
+export function runLines(world, lines, { title = 'code', newValue, ref = '', langs } = {}) {
+  const t = new Tracer(world, { title, ref, lines, langs });
   let w = clone(world);
   for (let i = 0; i < lines.length; i++) {
     const src = lines[i];

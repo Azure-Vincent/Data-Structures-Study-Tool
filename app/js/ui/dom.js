@@ -47,6 +47,31 @@ function append(el, kids) {
   }
 }
 
+/**
+ * Pin `el` while the page scrolls (class "fits", styled position: sticky) only while all
+ * of it fits in the window; otherwise it scrolls with the page, so it never needs a
+ * scrollbar of its own. Re-checked when the window or the element's content changes.
+ */
+export function stickyWhenFits(el, margin = 0) {
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => update()) : null;
+  const stop = () => {
+    window.removeEventListener('resize', update);
+    if (ro) ro.disconnect();
+  };
+  function update() {
+    if (!el.isConnected) return stop();
+    const last = el.lastElementChild;
+    if (!last) return;
+    const top = el.getBoundingClientRect().top;
+    const need = last.getBoundingClientRect().bottom - top + parseFloat(getComputedStyle(el).paddingBottom || 0);
+    el.classList.toggle('fits', need + 2 * margin <= window.innerHeight);
+  }
+  window.addEventListener('resize', update);
+  if (ro) ro.observe(el);
+  requestAnimationFrame(update);
+  return update;
+}
+
 export function clear(el) {
   while (el.firstChild) el.removeChild(el.firstChild);
   return el;

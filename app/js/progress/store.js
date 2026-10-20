@@ -1,6 +1,7 @@
 // Progress persistence and mastery model. Pure logic + a storage adapter
 // (localStorage in the browser, an in-memory map in tests).
 import { CONCEPTS, CONCEPT_BY_ID } from '../content/concepts.js';
+import { migrateProgress, CONTENT_VERSION } from './migrate.js';
 
 export const STORAGE_KEY = 'dslab.progress.v1';
 export const SCHEMA_VERSION = 1;
@@ -19,6 +20,7 @@ export function memoryStorage() {
 export function blankProgress(now = Date.now()) {
   return {
     version: SCHEMA_VERSION,
+    contentVersion: CONTENT_VERSION,
     createdAt: now,
     updatedAt: now,
     concepts: {},
@@ -29,7 +31,7 @@ export function blankProgress(now = Date.now()) {
     lessons: {},
     session: null,
     lab: { drafts: {}, solved: {}, last: null },
-    settings: { motion: 'system', speed: 1, timer: false, timerMinutes: 8, theme: 'system', predictMode: true },
+    settings: { motion: 'system', speed: 1, timer: false, timerMinutes: 8, theme: 'system', predictMode: true, codeLang: 'cpp' },
   };
 }
 
@@ -58,7 +60,7 @@ export class ProgressStore {
     try {
       const raw = this.storage.getItem(this.key);
       if (!raw) return blankProgress(this.now());
-      const obj = JSON.parse(raw);
+      const obj = migrateProgress(JSON.parse(raw));
       if (validate(obj).length) return blankProgress(this.now());
       const base = blankProgress(this.now());
       return { ...base, ...obj, settings: { ...base.settings, ...obj.settings } };
@@ -200,16 +202,24 @@ export class ProgressStore {
       .map(([tag, count]) => ({ tag, count }));
   }
 
-  // ---- lessons
+  // ---- lessons (steps are remembered by their stable section key)
   lesson(id) {
-    return (this.data.lessons[id] ||= { at: 0, done: [], completed: false });
+    return (this.data.lessons[id] ||= { at: null, done: [], completed: false });
   }
-  markLessonStep(id, idx, total) {
+  /** keys: every section key of the lesson, in order. */
+  markLessonStep(id, key, keys) {
     const l = this.lesson(id);
-    if (!l.done.includes(idx)) l.done.push(idx);
-    l.at = Math.max(l.at, Math.min(idx + 1, total - 1));
-    if (l.done.length >= total) l.completed = true;
+    if (!l.done.includes(key)) l.done.push(key);
+    const i = keys.indexOf(key);
+    const next = keys[Math.min(i + 1, keys.length - 1)];
+    if (l.at == null || keys.indexOf(next) > keys.indexOf(l.at)) l.at = next;
+    l.completed = keys.every((k) => l.done.includes(k));
     this.save();
+  }
+  /** How many of the given section keys are done. */
+  lessonDoneCount(id, keys) {
+    const l = this.data.lessons[id];
+    return l ? keys.filter((k) => l.done.includes(k)).length : 0;
   }
 
   // ---- pseudocode lab
@@ -273,6 +283,7 @@ export class ProgressStore {
     }
     delete obj.app;
     delete obj.exportedAt;
+    obj = migrateProgress(obj);
     const errs = validate(obj);
     if (errs.length) return { ok: false, error: 'This does not look like a DS Study Lab progress file: ' + errs.join(', ') };
     for (const id of Object.keys(obj.concepts)) if (!CONCEPT_BY_ID[id]) delete obj.concepts[id];

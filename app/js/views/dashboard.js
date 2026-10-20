@@ -48,7 +48,7 @@ export function dashboardView(ctx) {
     const lesson = LESSON_BY_LECTURE[L.n];
     const rec = store.data.lessons[L.id];
     stepsTotal += lesson.sections.length;
-    stepsDone += rec ? rec.done.length : 0;
+    stepsDone += store.lessonDoneCount(L.id, lesson.sections.map((s) => s.key));
     if (rec && rec.completed) lessonsDone++;
   }
   const attempts = Object.values(store.data.concepts).reduce((a, c) => a + (c.attempts || 0), 0);
@@ -80,7 +80,7 @@ export function dashboardView(ctx) {
           LECTURES.map((L) => {
             const lesson = LESSON_BY_LECTURE[L.n];
             const rec = store.data.lessons[L.id];
-            const nDone = rec ? rec.done.length : 0;
+            const nDone = store.lessonDoneCount(L.id, lesson.sections.map((s) => s.key));
             const pct = Math.round((nDone / lesson.sections.length) * 100);
             const cs = CONCEPTS.filter((c) => c.lecture === L.n);
             const m = cs.filter((c) => store.level(c.id) === 'mastered').length;

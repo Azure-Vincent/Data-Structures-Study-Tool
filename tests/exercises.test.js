@@ -24,6 +24,8 @@ function wrongResponse(ex) {
       return [];
     case 'fill':
       return 'start = NULL';
+    case 'lab':
+      return ex.starter;
     case 'fields':
       return Object.fromEntries(Object.keys(ex.answer).map((k) => [k, typeof ex.answer[k] === "number" ? String(ex.answer[k] + 1) : "zz " + ex.answer[k]]));
     default:
@@ -68,6 +70,7 @@ for (const t of TEMPLATES) {
       }
       seen.add(JSON.stringify({ p: ex.prompt, v: ex.visual, a: ex.answer, o: ex.options, i: ex.items, t: ex.template, c: ex.canvas }));
     }
-    assert.ok(seen.size >= Math.min(5, SEEDS.length / 8), `${t.id}: only ${seen.size} distinct variations`);
+    // a "write it yourself" task has a fixed goal; its variety is in the test cases it is run on
+    if (t.type !== 'lab') assert.ok(seen.size >= Math.min(5, SEEDS.length / 8), `${t.id}: only ${seen.size} distinct variations`);
   });
 }
