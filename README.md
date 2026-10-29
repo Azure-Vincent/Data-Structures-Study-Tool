@@ -232,19 +232,23 @@ npm run test:desktop -- --exe /usr/bin/ds-study-lab --mode package --arg --no-sa
 It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs it against every installer it builds.
 
 ### What was verified for this release
-- All 127 Node tests pass on Windows, macOS and Linux.
-- The **Build desktop apps** workflow built, installed and launched every download and ran the desktop smoke test against it:
+- All 159 Node tests pass on Windows, macOS and Linux.
+- On each of the three platforms `tests/langs/verify.mjs` compiled every C++ program and the complete C examples with that platform's compiler, ran every Python program, and found all 148 outputs identical to the pseudocode's.
+- The **Build desktop apps** workflow built, installed and launched every download and ran the desktop smoke test against it, including the check that a walkthrough highlights the same statement in C++ and Python:
 
   | Download | Installed / launched on | Smoke test |
   |---|---|---|
-  | Windows `setup.exe` | Windows (GitHub `windows-latest`): silent per-user install, Start-menu entry and Apps & features entry checked, then a clean uninstall | 18/18 |
-  | Windows `portable.exe` | Windows, run straight from the file | 14/14 (attached through DevTools, so the main-process and second-launch checks don't apply) |
-  | macOS `.dmg` (universal) | macOS on Apple Silicon (`macos-latest`): copied from the mounted dmg, signature verified, both architectures present | 19/19 natively, 19/19 as Intel under Rosetta |
-  | Linux `.deb` | Ubuntu 24.04: installed with apt, launched as `ds-study-lab`, then removed cleanly | 18/18 |
-  | Linux AppImage | Ubuntu 24.04, run directly (no `--no-sandbox`) | 18/18 |
+  | Windows `setup.exe` | Windows (GitHub `windows-latest`): silent per-user install, Start-menu entry and Apps & features entry checked, then a clean uninstall | 19/19 |
+  | Windows `portable.exe` | Windows, run straight from the file | 15/15 (attached through DevTools, so the main-process and second-launch checks don't apply) |
+  | macOS `.dmg` (universal) | macOS on Apple Silicon (`macos-latest`): copied from the mounted dmg, signature verified, both architectures present | 20/20 natively, 20/20 as Intel under Rosetta |
+  | Linux `.deb` | Ubuntu 24.04: installed with apt, launched as `ds-study-lab`, then removed cleanly | 19/19 |
+  | Linux AppImage | Ubuntu 24.04, run directly (no `--no-sandbox`) | 19/19 |
+
+  The first start of the Intel build under Rosetta takes about 105 s (Rosetta translates the whole binary), so that run allows 360 s to start (`--launch-timeout`).
 - In headless Chromium (browser mode):
-  - every route and all 158 lesson sections open with no console errors;
-  - all 65 templates (2 seeds each) were answered correctly through the UI;
+  - every route and all 228 lesson steps open with no console errors, and no panel inside the window has its own scrollbar at 1360×900, 1024×768 and 760×900;
+  - all 83 templates (2 seeds each) were answered correctly through the UI, including writing pseudocode in the exercise editor;
+  - every “Build it in code” program runs to the end in the walkthrough, in the lessons and in Explore;
   - the primary interactions work: predictions, click/drag/keyboard rewiring with undo, practice resume after reload, repair diagnosis, BFS/DFS, tree traversal.
 - Not verified: a physical Intel Mac, Windows on ARM, Linux distributions other than Ubuntu, and the self-update download itself (it needs a published Release newer than the installed copy).
 
