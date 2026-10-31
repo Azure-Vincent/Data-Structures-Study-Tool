@@ -103,6 +103,8 @@ The lesson outline (the list of steps) can be collapsed: on a wide window it shr
 
 **Workspace.** It shows the diagram, the code with the current line highlighted (in the language you chose), variables and pointers (address vs value), an explanation of the last step and the operation history. All of these come from one simulation state. Controls: Step forward, Step back, Play/Pause, Reset and Speed. Keyboard: → step, ← back, Space play/pause, Home reset.
 
+**Panels keep their size while you step.** Every step of a simulation or walkthrough is known in advance, so each panel (diagram, explanation or prediction, variables, output, history) is measured with every step's content and reserves the largest size from the start: stepping never pushes the rest of the page up or down. The Pseudocode Lab measures a quiet background run of your program after each edit, and its panels never shrink while you step back and forth. Buttons that change their label (▶ Play / ❚❚ Pause) keep their width, and history rows are one line each (the full text is in the explanation and on hover).
+
 **Exercises.** There are 83 templates (at least 5 per lecture), and values, positions, shapes and operation sequences are generated randomly. Types:
 - predict (a state, a traversal, or everything a complete program prints)
 - rewire pointers (click, drag, or keyboard panel)
@@ -213,6 +215,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `lessons.py` opens all 228 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
 - Set `CHROMIUM=/path/to/chrome` to use an already installed Chromium.
+- `steady.py` checks, at three window sizes, that no panel changes size or moves while stepping through simulations, walkthroughs and Explore, and that no Lab panel shrinks when stepping back.
 - `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the diagram and controls stay in view, and the Operation history shows the current step without a scrollbar of its own.
 
 `tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:

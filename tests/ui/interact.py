@@ -23,10 +23,10 @@ with sync_playwright() as p:
     pg.goto(BASE+lesson_route(pg, 's:predict-the-intermediate-states-insert-15-at-pos')); pg.wait_for_timeout(400)
     asked=0
     for i in range(80):
-        pb = pg.locator('.predict-box')
+        pb = pg.locator('.predicting')
         if pb.count():
             asked+=1
-            pb.locator('.row button').first.click()
+            pb.locator('.predict-options button').first.click()
             pg.locator('text=Show the step').click()
             continue
         fwd = pg.locator('button:has-text("Step ▶")')

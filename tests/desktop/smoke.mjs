@@ -140,8 +140,8 @@ async function coreChecks(page) {
   const step = page.locator('button:has-text("Step ▶")').first();
   const before = await page.locator('.stepnum').first().textContent();
   for (let k = 0; k < 4; k++) {
-    if (await page.locator('.predict-box').count()) {
-      await page.locator('.predict-box .row button').first().click();
+    if (await page.locator('.predicting').count()) {
+      await page.locator('.predict-options button').first().click();
       await page.locator('text=Show the step').click();
     } else await step.click();
     await page.waitForTimeout(150);
@@ -196,8 +196,8 @@ async function coreChecks(page) {
   const ws = page.locator('.ws-wrap');
   const s0 = await ws.locator('.stepnum').textContent();
   for (let k = 0; k < 3; k++) {
-    if (await ws.locator('.predict-box').count()) {
-      await ws.locator('.predict-box .row button').first().click();
+    if (await ws.locator('.predicting').count()) {
+      await ws.locator('.predict-options button').first().click();
       await ws.locator('text=Show the step').click();
     } else await ws.locator('button:has-text("Step ▶")').click();
     await page.waitForTimeout(150);

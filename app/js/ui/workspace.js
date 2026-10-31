@@ -1,11 +1,12 @@
 // The synchronized workspace: diagram, highlighted code, variables,
 // explanation and history — all driven by ONE Player over a trace.
-import { h, clear } from './dom.js';
+import { h, clear, steadyLabel } from './dom.js';
 import { Player } from '../core/trace.js';
 import { renderState } from './render/visual.js';
 import { wantsPrediction, makeQuestion } from '../sim/predict.js';
 import { fmtPtr, GARBAGE } from '../core/pointerWorld.js';
 import { langTabs, traceLangs, traceLines, pickLang, onCodeLang } from './langs.js';
+import { steadyPanel } from './steady.js';
 
 const SPEEDS = [0.5, 1, 2, 4];
 const RECENT_ROWS = 6; // history rows shown until "Show all" is pressed
@@ -36,19 +37,24 @@ export function createWorkspace(trace, opts = {}) {
   const langs = traceLangs(trace.code);
   const tabs = langs.length > 1 ? langTabs(langs) : null;
   const born = Date.now();
-  const offLang = onCodeLang(() => (!el.isConnected && Date.now() - born > 1000 ? offLang() : draw()));
+  const offLang = onCodeLang(() => {
+    if (!el.isConnected && Date.now() - born > 1000) return offLang();
+    draw();
+    steady.code.remeasure();
+  });
   player.speed = opts.settings?.speed || 1;
   player.gate = (step, idx) => predictOn && !answered.has(idx) && wantsPrediction(player.trace, idx, opts.predictKinds) && (pending = { idx, q: makeQuestion(player.trace, idx), picked: null }) && true;
 
   // ---- controls
   const bReset = h('button', { class: 'btn', onclick: () => { pending = null; player.reset(); }, title: 'Reset (Home)' }, '↺ Reset');
   const bBack = h('button', { class: 'btn', onclick: () => { pending = null; player.back(); }, title: 'Step back (←)' }, '◀ Back');
-  const bPlay = h('button', { class: 'btn', onclick: () => player.toggle(), title: 'Play / pause (Space)' }, '▶ Play');
+  const bPlay = h('button', { class: 'btn', onclick: () => player.toggle(), title: 'Play / pause (Space)' });
+  const playLabel = steadyLabel(bPlay, ['▶ Play', '❚❚ Pause']);
   const bFwd = h('button', { class: 'btn primary', onclick: () => tryForward(), title: 'Step forward (→)' }, 'Step ▶');
   const speedSel = h('select', { 'aria-label': 'Playback speed', onchange: (e) => (player.speed = Number(e.target.value)) }, SPEEDS.map((x) => h('option', { value: x, selected: x === player.speed }, `${x}×`)));
   const stepNum = h('span', { class: 'stepnum', 'aria-live': 'off' });
   const predBtn = opts.predictKinds
-    ? h('button', { class: 'btn small', 'aria-pressed': String(predictOn), onclick: () => { predictOn = !predictOn; predBtn.setAttribute('aria-pressed', String(predictOn)); if (!predictOn) pending = null; draw(); } }, 'Ask me to predict')
+    ? h('button', { class: 'btn small', 'aria-pressed': String(predictOn), onclick: () => { predictOn = !predictOn; predBtn.setAttribute('aria-pressed', String(predictOn)); if (!predictOn) pending = null; draw(); measureExplain(); } }, 'Ask me to predict')
     : null;
   controls.append(bReset, h('span', { class: 'divider' }), bBack, bPlay, bFwd, h('span', { class: 'divider' }), h('label', { class: 'inline small' }, 'Speed', speedSel), stepNum, h('span', { class: 'spacer' }), predBtn);
 
@@ -76,69 +82,109 @@ export function createWorkspace(trace, opts = {}) {
     }
   });
 
-  function draw() {
+  // ---- what each panel shows at step i (used to draw it, and to measure it so it never resizes)
+  function diagramContent(i) {
+    const st = player.trace.steps[i];
+    return [renderState(st.state, st.hl, { head: opts.head }), st.state.type === 'graph' ? frontierStrip(st.state) : null, st.state.type === 'tree' && (st.state.stack || st.state.callStack) ? treeStrip(st.state) : null];
+  }
+  function codeContent(i, measuring = false) {
     const tr = player.trace;
-    const i = player.index;
     const st = tr.steps[i];
-    const prev = tr.steps[i - 1];
-    // diagram
-    clear(diag).append(renderState(st.state, st.hl, { head: opts.head }));
-    if (st.state.type === 'graph') diag.append(frontierStrip(st.state));
-    if (st.state.type === 'tree' && (st.state.stack || st.state.callStack)) diag.append(treeStrip(st.state));
-    // code
     const code = st.code || tr.code;
     const lang = pickLang(traceLangs(code));
     const cur = (x) => x.lead && x.src === st.line;
-    clear(codeP).append(
+    return [
       h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code'), code.ref ? h('span', { class: 'pill' }, code.ref) : null),
-      tabs,
+      measuring && tabs ? tabs.cloneNode(true) : tabs,
       st.opLabel ? h('div', { class: 'small muted' }, `Operation: ${st.opLabel}`) : null,
       h('ol', { 'aria-label': `code (${lang === 'c' ? 'C, as in the notes' : lang === 'py' ? 'Python' : lang === 'cpp' ? 'C++' : 'pseudocode'})` }, traceLines(code, lang).map((x) => h('li', { class: cur(x) ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': cur(x) ? 'step' : null }, codeLine(x.text)))),
-    );
-    // variables
-    clear(varsP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Variables and pointers')), varsView(st.state, prev && prev.state));
-    // explanation / prediction
-    clear(explainP);
-    if (pending && pending.q) {
-      explainP.append(predictBox());
-    } else {
-      explainP.append(
-        h('div', { class: 'panel-title' }, h('h3', {}, i === 0 ? 'Start' : `What just happened (${st.kind})`)),
-        h('div', { class: `explain${st.kind === 'error' ? ' error' : ''}` }, st.explain),
-        st.predict ? null : null,
-      );
-      if (player.atEnd && tr.output && tr.output.length) explainP.append(h('p', { class: 'small' }, h('b', {}, 'Output: '), tr.output.join(' ')));
-    }
-    // history: the latest steps only (no scroll box inside the page); "Show all" lists every step
-    const first = allHistory ? 0 : Math.max(0, i + 1 - RECENT_ROWS);
-    clear(histP).append(
+    ];
+  }
+  function varsContent(i) {
+    const steps = player.trace.steps;
+    return [h('div', { class: 'panel-title' }, h('h3', {}, 'Variables and pointers')), varsView(steps[i].state, steps[i - 1] && steps[i - 1].state)];
+  }
+  function explainContent(i) {
+    const tr = player.trace;
+    const st = tr.steps[i];
+    return [
+      h('div', { class: 'panel-title' }, h('h3', {}, i === 0 ? 'Start' : `What just happened (${st.kind})`)),
+      h('div', { class: `explain${st.kind === 'error' ? ' error' : ''}` }, st.explain),
+      i === tr.steps.length - 1 && tr.output && tr.output.length ? h('p', { class: 'small' }, h('b', {}, 'Output: '), tr.output.join(' ')) : null,
+    ];
+  }
+  // the latest steps only (no scroll box inside the page); "Show all" lists every step
+  function historyContent(i, all = allHistory) {
+    const tr = player.trace;
+    const first = all ? 0 : Math.max(0, i + 1 - RECENT_ROWS);
+    return [
       h('div', { class: 'panel-title' }, h('h3', {}, 'Operation history')),
       i + 1 > RECENT_ROWS
-        ? h('div', { class: 'history-more small muted' }, first > 0 ? `… ${first} earlier step${first === 1 ? '' : 's'}` : `All ${i + 1} steps`, h('button', { class: 'btn ghost small', 'aria-pressed': String(allHistory), onclick: () => { allHistory = !allHistory; draw(); } }, allHistory ? 'Show recent only' : 'Show all'))
+        ? h('div', { class: 'history-more small muted' }, first > 0 ? `… ${first} earlier step${first === 1 ? '' : 's'}` : `All ${i + 1} steps`, h('button', { class: 'btn ghost small', 'aria-pressed': String(all), onclick: () => { allHistory = !allHistory; draw(); } }, all ? 'Show recent only' : 'Show all'))
         : null,
       h(
         'ol',
-        { class: 'history' },
+        { class: 'history log' },
         tr.steps.slice(first, i + 1).map((s2, j) => {
           const k = first + j;
-          return h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain.length > 110 ? s2.explain.slice(0, 108) + '…' : s2.explain);
+          return h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : ''].join(' '), title: s2.explain, onclick: () => { pending = null; player.goto(k); } }, h('span', { class: 'k' }, s2.kind), s2.explain);
         }),
       ),
-    );
+    ];
+  }
+
+  // ---- panels keep the largest size any step of this run needs
+  const steady = { diagram: steadyPanel(diag), code: steadyPanel(codeP), vars: steadyPanel(varsP), explain: steadyPanel(explainP), history: steadyPanel(histP) };
+  function measureAll() {
+    const tr = player.trace;
+    const n = tr.steps.length;
+    steady.diagram.measure(n, diagramContent);
+    steady.code.measure(n, (i) => codeContent(i, true));
+    steady.vars.measure(n, varsContent);
+    measureExplain();
+    steady.history.measure(n, (i) => historyContent(i, false));
+  }
+  // the explanation panel also has to fit every prediction question (answered, with its feedback)
+  function measureExplain() {
+    const tr = player.trace;
+    const n = tr.steps.length;
+    steady.explain.measure(n * 2, (k) => {
+      if (k < n) return explainContent(k);
+      const idx = k - n;
+      if (!predictOn || idx === 0 || !wantsPrediction(tr, idx, opts.predictKinds)) return null;
+      const q = makeQuestion(tr, idx);
+      return predictBox({ idx, q, picked: q.options.find((o) => o !== q.answer) ?? q.answer });
+    });
+  }
+
+  function draw() {
+    const tr = player.trace;
+    const i = player.index;
+    clear(diag).append(...diagramContent(i).filter(Boolean));
+    clear(codeP).append(...codeContent(i).filter(Boolean));
+    clear(varsP).append(...varsContent(i));
+    explainP.classList.toggle('predicting', !!(pending && pending.q));
+    clear(explainP).append(...(pending && pending.q ? predictBox(pending) : explainContent(i).filter(Boolean)));
+    clear(histP).append(...historyContent(i).filter(Boolean));
     stepNum.textContent = `Step ${i} / ${tr.steps.length - 1}`;
+    stepNum.style.minWidth = `${`Step ${tr.steps.length - 1} / ${tr.steps.length - 1}`.length}ch`;
     bBack.disabled = player.atStart;
     bFwd.disabled = player.atEnd || !!pending;
-    bPlay.textContent = player.playing ? '❚❚ Pause' : '▶ Play';
+    playLabel(player.playing ? '❚❚ Pause' : '▶ Play');
     if (player.atEnd && opts.onEnd) opts.onEnd();
   }
 
-  function predictBox() {
-    const p = pending;
-    const box = h('div', { class: 'predict-box' });
-    box.append(h('h3', {}, 'Predict before you look'), h('p', {}, p.q.q.replace(/`/g, '')));
-    const opts2 = h('div', { class: 'row' });
-    for (const o of p.q.options) {
-      opts2.append(
+  // a prediction question takes the explanation panel's place (the panel turns blue)
+  function predictBox(p) {
+    const skip = () => {
+      answered.add(p.idx);
+      pending = null;
+      player.forward();
+    };
+    const choices = h(
+      'div',
+      { class: 'row predict-options' },
+      p.q.options.map((o) =>
         h(
           'button',
           {
@@ -153,22 +199,23 @@ export function createWorkspace(trace, opts = {}) {
           },
           o,
         ),
-      );
-    }
-    box.append(opts2);
-    if (p.picked != null) {
-      const ok = p.picked === p.q.answer;
-      box.append(
-        h('div', { class: `feedback ${ok ? 'ok' : 'bad'}` }, h('b', { class: 'verdict' }, ok ? 'Correct.' : `Not quite — it will be ${p.q.answer}.`), p.q.explain),
-        h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn primary', onclick: () => { answered.add(p.idx); pending = null; player.forward(); } }, 'Show the step')),
-      );
-    } else {
-      box.append(h('button', { class: 'btn ghost small', onclick: () => { answered.add(p.idx); pending = null; player.forward(); } }, 'Skip this prediction'));
-    }
-    return box;
+      ),
+      p.picked == null ? h('button', { class: 'btn ghost small', onclick: skip }, 'Skip') : null,
+    );
+    const ok = p.picked === p.q.answer;
+    return [
+      h('div', { class: 'panel-title' }, h('h3', {}, 'Predict before you look')),
+      h('p', { class: 'predict-q' }, p.q.q.replace(/`/g, '')),
+      choices,
+      p.picked != null
+        ? h('div', { class: `feedback ${ok ? 'ok' : 'bad'} predict-feedback` }, h('div', {}, h('b', { class: 'verdict' }, ok ? 'Correct.' : `Not quite — it will be ${p.q.answer}.`), ' ', p.q.explain), h('button', { class: 'btn primary', onclick: skip }, 'Show the step'))
+        : null,
+    ].filter(Boolean);
   }
 
   draw();
+  // measured once the workspace is in the page (it needs the real widths)
+  requestAnimationFrame(() => (el.isConnected ? measureAll() : setTimeout(() => el.isConnected && measureAll(), 50)));
   return {
     el,
     player,
@@ -176,10 +223,12 @@ export function createWorkspace(trace, opts = {}) {
       answered.clear();
       pending = null;
       player.setTrace(t);
+      measureAll();
     },
     destroy() {
       player.pause();
       offLang();
+      Object.values(steady).forEach((x) => x.destroy());
     },
   };
 }

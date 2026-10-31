@@ -55,8 +55,8 @@ def hist_state(pg):
 
 def step_through(pg, ws, n):
     for _ in range(n):
-        if ws.locator('.predict-box').count():
-            press(ws.locator('.predict-box .row button').first)
+        if ws.locator('.predicting').count():
+            press(ws.locator('.predict-options button').first)
             press(ws.locator('text=Show the step'))
         else:
             btn = ws.locator('button:has-text("Step ▶")')

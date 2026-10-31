@@ -1,7 +1,8 @@
 // Pseudocode Lab: write pseudocode, run it step by step on a simulated heap and
 // watch the structure change. Guided exercises are graded on test cases; free
 // mode lets you pick or build any starting structure.
-import { h, clear, md, pill } from '../ui/dom.js';
+import { h, clear, md, pill, steadyLabel } from '../ui/dom.js';
+import { steadyPanel } from '../ui/steady.js';
 import { icon } from '../ui/icons.js';
 import { createCodeEditor } from '../ui/codeEditor.js';
 import { renderLabDiagram, renderVariables, renderCollections } from '../ui/render/labState.js';
@@ -183,6 +184,7 @@ export function labView(ctx, a, b) {
                   onclick: () => {
                     testIdx = k;
                     setup = { structure, ...t.setup };
+                    resetSteady();
                     drawContext();
                     rebuild('Showing a different test case.');
                   },
@@ -230,6 +232,7 @@ export function labView(ctx, a, b) {
 
   function build(newSetup) {
     setup = newSetup;
+    resetSteady();
     lab.freeValues ||= {};
     lab.freeValues[structure] = S.render === 'graph' ? { graph: setup.graph, s: setup.vars.s } : { values: setup.values };
     store.saveQuiet();
@@ -278,6 +281,7 @@ export function labView(ctx, a, b) {
 
   // ---------------------------------------------------------------- run column
   const bRun = h('button', { class: 'btn primary', onclick: () => (playing ? pause() : play()), title: 'Run / pause (Space)' });
+  const runLabel = steadyLabel(bRun, ['▶ Run', '▶ Continue', '▶ Run again', '❚❚ Pause']);
   const bBack = h('button', { class: 'btn', onclick: () => stepBack(), title: 'Step back (←)' }, '◀ Back');
   const bStep = h('button', { class: 'btn', onclick: () => stepForward(), title: 'Step forward (→)' }, 'Step ▶');
   const bEnd = h('button', { class: 'btn', onclick: () => runToEnd(), title: 'Run every remaining step at once' }, 'Run to end');
@@ -295,6 +299,11 @@ export function labView(ctx, a, b) {
   const problemsP = h('section', { class: 'panel lab-problems', 'aria-label': 'Problems' });
   const historyP = h('section', { class: 'panel lab-history', 'aria-label': 'Execution history' });
   root.append(h('div', { class: 'lab-grid' }, codeCol, runCol), h('div', { class: 'lab-bottom' }, problemsP, historyP));
+  // panels keep the largest size they have had in this view, so stepping back and
+  // forth (or re-running after an edit) never makes them shrink and grow again
+  const steady = { status: steadyPanel(status), explain: steadyPanel(explain), diagram: steadyPanel(diagram), vars: steadyPanel(varsP), out: steadyPanel(outP), problems: steadyPanel(problemsP), history: steadyPanel(historyP) };
+  const growAll = () => Object.values(steady).forEach((x) => x.grow());
+  const resetSteady = () => Object.values(steady).forEach((x) => x.reset());
 
   // ---------------------------------------------------------------- guided: check, hints, solution
   const checkP = h('section', { class: 'panel lab-check', 'aria-label': 'Check your solution' });
@@ -330,7 +339,7 @@ export function labView(ctx, a, b) {
               h(
                 'li',
                 { class: t.pass ? 'pass' : 'fail' },
-                h('div', { class: 'row' }, h('b', {}, `${t.pass ? '✓' : '✗'} ${t.name}`), h('span', { class: 'small muted' }, t.setupText), h('span', { class: 'spacer' }), h('button', { class: 'btn small', onclick: () => { testIdx = k; setup = t.setup; drawContext(); rebuild(`Showing test “${t.name}”.`); diagram.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 'Show this test')),
+                h('div', { class: 'row' }, h('b', {}, `${t.pass ? '✓' : '✗'} ${t.name}`), h('span', { class: 'small muted' }, t.setupText), h('span', { class: 'spacer' }), h('button', { class: 'btn small', onclick: () => { testIdx = k; setup = t.setup; resetSteady(); drawContext(); rebuild(`Showing test “${t.name}”.`); diagram.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 'Show this test')),
                 t.pass ? h('div', { class: 'small muted' }, `Result: ${t.got}${t.output.length ? ` · output: ${t.output.join(' ')}` : ''}`) : h('ul', { class: 'small' }, t.problems.map((p) => h('li', {}, p.text)), t.why ? h('li', {}, h('b', {}, 'Why: '), t.why) : null),
               ),
             ),
@@ -365,6 +374,7 @@ export function labView(ctx, a, b) {
     notice = msg || '';
     openIssue = null;
     draw();
+    scheduleMeasure();
   }
   function play() {
     if (!exe || exe.syntax) return;
@@ -411,11 +421,61 @@ export function labView(ctx, a, b) {
     draw();
   }
 
+  // ---- what each panel shows at step i of a run x (used to draw it, and to measure it)
+  function explainContent(x, i, note = '') {
+    const step = x.steps[i];
+    return [
+      h('div', { class: 'row', style: { marginBottom: '4px' } }, h('span', { class: `kind-badge k-${step.kind}` }, KIND_LABEL[step.kind] || step.kind), step.line ? h('span', { class: 'small muted' }, `line ${step.line}`) : null),
+      h('div', { class: `explain${step.kind === 'error' ? ' error' : ''}` }, x.syntax && i === 0 ? `Syntax error on line ${x.syntax.line}: ${x.syntax.message}` : step.text),
+      step.hint || (x.syntax && i === 0 && x.syntax.hint) ? h('div', { class: 'hint' }, h('b', {}, 'How to fix it'), step.hint || x.syntax.hint) : null,
+      note ? h('p', { class: 'small muted', style: { margin: '6px 0 0' } }, note) : null,
+    ];
+  }
+  function diagramContent(x, i) {
+    return renderLabDiagram(x.steps[i].state, x.graph, x.steps[i].hl);
+  }
+  function varsContent(x, i) {
+    const prev = x.steps[i - 1];
+    return [h('div', { class: 'panel-title' }, h('h3', {}, 'Variables & call stack')), renderVariables(x.steps[i].state, prev && prev.state)];
+  }
+  function outContent(x, i) {
+    const st = x.steps[i].state;
+    const colls = renderCollections(st);
+    const out = st.output;
+    const shownOut = allOutput ? out : out.slice(-OUTPUT_LINES);
+    return [
+      colls ? [h('div', { class: 'panel-title' }, h('h3', {}, 'Queues, stacks, sets, arrays')), colls] : null,
+      h('div', { class: 'panel-title', style: colls ? { marginTop: '12px' } : null }, h('h3', {}, 'Output'), out.length > OUTPUT_LINES ? h('button', { class: 'btn ghost small', 'aria-pressed': String(allOutput), onclick: () => { allOutput = !allOutput; steady.out.reset(); draw(); } }, allOutput ? 'Show the last lines' : `Show all ${out.length} lines`) : null),
+      shownOut.length < out.length ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${out.length - shownOut.length} earlier lines`) : null,
+      out.length ? h('pre', { class: 'lab-output' }, shownOut.join('\n')) : h('p', { class: 'small muted', style: { margin: 0 } }, 'Nothing printed yet.'),
+    ];
+  }
+
+  // A quiet background run of the same program (a short one, or the first steps of a
+  // long one) is measured so the panels already have the size the run will need.
+  const MEASURE_STEPS = 800;
+  let measureTimer = null;
+  function scheduleMeasure() {
+    clearTimeout(measureTimer);
+    measureTimer = setTimeout(() => {
+      if (!root.isConnected || exe.syntax) return;
+      const x = new Execution(code, setup, { limit: Math.min(limit, MEASURE_STEPS) });
+      x.runToEnd();
+      const n = x.steps.length;
+      const keep = { keep: true };
+      steady.explain.measure(n, (i) => explainContent(x, i).filter(Boolean), keep);
+      steady.diagram.measure(n, (i) => diagramContent(x, i), keep);
+      steady.vars.measure(n, (i) => varsContent(x, i), keep);
+      steady.out.measure(n, (i) => outContent(x, i).flat().filter(Boolean), keep);
+      steady.problems.measure(n, (i) => problemsContent(x, i), keep);
+      steady.history.measure(n, (i) => historyContent(x, i), keep);
+    }, 150);
+  }
+
   function draw() {
     const step = exe.current;
-    const prev = exe.steps[exe.index - 1];
     // controls
-    bRun.textContent = playing ? '❚❚ Pause' : exe.atEnd ? '▶ Run again' : exe.index > 0 ? '▶ Continue' : '▶ Run';
+    runLabel(playing ? '❚❚ Pause' : exe.atEnd ? '▶ Run again' : exe.index > 0 ? '▶ Continue' : '▶ Run');
     bRun.disabled = !!exe.syntax;
     bBack.disabled = exe.atStart;
     bStep.disabled = !!exe.syntax || exe.atEnd;
@@ -423,20 +483,12 @@ export function labView(ctx, a, b) {
     bStop.disabled = exe.done;
     bReset.disabled = exe.atStart && !exe.done && exe.steps.length === 1;
     counter.textContent = `Step ${exe.index} of ${exe.steps.length - 1}${exe.done ? '' : '+'} · ${exe.executed.toLocaleString()}/${limit.toLocaleString()} instructions`;
-    // explanation
-    clear(explain).append(
-      h('div', { class: 'row', style: { marginBottom: '4px' } }, h('span', { class: `kind-badge k-${step.kind}` }, KIND_LABEL[step.kind] || step.kind), step.line ? h('span', { class: 'small muted' }, `line ${step.line}`) : null),
-      h('div', { class: `explain${step.kind === 'error' ? ' error' : ''}` }, exe.syntax && exe.index === 0 ? `Syntax error on line ${exe.syntax.line}: ${exe.syntax.message}` : step.text),
-      step.hint || (exe.syntax && exe.index === 0 && exe.syntax.hint) ? h('div', { class: 'hint' }, h('b', {}, 'How to fix it'), step.hint || exe.syntax.hint) : null,
-      notice ? h('p', { class: 'small muted', style: { margin: '6px 0 0' } }, notice) : null,
-    );
-    // diagram + panels
-    clear(diagram).append(renderLabDiagram(step.state, exe.graph, step.hl));
-    clear(varsP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Variables & call stack')), renderVariables(step.state, prev && prev.state));
-    const colls = renderCollections(step.state);
-    const out = step.state.output;
-    const shownOut = allOutput ? out : out.slice(-OUTPUT_LINES);
-    clear(outP).append(colls ? [h('div', { class: 'panel-title' }, h('h3', {}, 'Queues, stacks, sets, arrays')), colls] : null, h('div', { class: 'panel-title', style: colls ? { marginTop: '12px' } : null }, h('h3', {}, 'Output'), out.length > OUTPUT_LINES ? h('button', { class: 'btn ghost small', 'aria-pressed': String(allOutput), onclick: () => { allOutput = !allOutput; draw(); } }, allOutput ? 'Show the last lines' : `Show all ${out.length} lines`) : null), shownOut.length < out.length ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${out.length - shownOut.length} earlier lines`) : null, out.length ? h('pre', { class: 'lab-output' }, shownOut.join('\n')) : h('p', { class: 'small muted', style: { margin: 0 } }, 'Nothing printed yet.'));
+    // room for the largest numbers this limit allows, so the controls next to it never move
+    counter.style.minWidth = `${`Step ${limit.toLocaleString()} of ${limit.toLocaleString()}+ · ${limit.toLocaleString()}/${limit.toLocaleString()} instructions`.length}ch`;
+    clear(explain).append(...explainContent(exe, exe.index, notice).filter(Boolean));
+    clear(diagram).append(diagramContent(exe, exe.index));
+    clear(varsP).append(...varsContent(exe, exe.index));
+    clear(outP).append(...outContent(exe, exe.index).flat().filter(Boolean));
     drawProblems();
     drawHistory();
     // editor marks
@@ -448,12 +500,13 @@ export function labView(ctx, a, b) {
     clear(status);
     if (exe.syntax) status.append(h('span', { class: 'lab-status-bad' }, `✕ Syntax error on line ${exe.syntax.line}${exe.syntax.col ? `, column ${exe.syntax.col}` : ''}: ${exe.syntax.message}`), exe.syntax.hint ? h('span', { class: 'muted' }, ` ${exe.syntax.hint}`) : null);
     else status.append(h('span', { class: 'lab-status-ok' }, '✓ No syntax errors'), h('span', { class: 'muted' }, exe.index === 0 ? ' — press Run or Step to execute it.' : ''));
+    growAll();
   }
 
-  function issueEl(is) {
+  function issueEl(is, x = exe) {
     const [cls, label] = is.category === 'syntax' ? SEVERITY.syntax : is.category === 'runtime' ? SEVERITY.runtime : SEVERITY[is.severity] || SEVERITY.note;
-    const st = exe.steps[is.step];
-    const canCompare = is.step > 0 && exe.steps[is.step - 1]?.state && st?.state && is.category !== 'syntax';
+    const st = x.steps[is.step];
+    const canCompare = is.step > 0 && x.steps[is.step - 1]?.state && st?.state && is.category !== 'syntax';
     const key = `${is.step}:${is.title}`;
     const open = openIssue === key;
     const item = h(
@@ -467,47 +520,55 @@ export function labView(ctx, a, b) {
         { class: 'row', style: { marginTop: '6px' } },
         is.step > 0 ? h('button', { class: 'btn small', onclick: () => gotoStep(is.step) }, 'Go to this step') : null,
         is.step > 0 && is.category !== 'syntax' ? h('button', { class: 'btn small', onclick: () => { gotoStep(is.step - 1); editor.focus(); } }, 'Undo this step') : null,
-        canCompare ? h('button', { class: 'btn small ghost', 'aria-expanded': String(open), onclick: () => { openIssue = open ? null : key; drawProblems(); } }, open ? 'Hide before / after' : 'Show before / after') : null,
+        canCompare ? h('button', { class: 'btn small ghost', 'aria-expanded': String(open), onclick: () => { openIssue = open ? null : key; steady.problems.reset(); drawProblems(); steady.problems.grow(); } }, open ? 'Hide before / after' : 'Show before / after') : null,
       ),
     );
     if (open && canCompare) {
-      const before = exe.steps[is.step - 1];
+      const before = x.steps[is.step - 1];
       item.append(
         h(
           'div',
           { class: 'lab-ba' },
-          h('figure', {}, h('figcaption', { class: 'small' }, h('b', {}, 'Before'), ` line ${st.line ?? ''}`), h('div', { class: 'diagram-box' }, renderLabDiagram(before.state, exe.graph, {}))),
-          h('figure', {}, h('figcaption', { class: 'small' }, h('b', {}, st.kind === 'error' ? 'When the error happened' : 'After'), ` line ${st.line ?? ''}: ${st.kind === 'error' ? 'the instruction could not run, so nothing changed' : st.text}`), h('div', { class: 'diagram-box' }, renderLabDiagram(st.state, exe.graph, st.hl))),
+          h('figure', {}, h('figcaption', { class: 'small' }, h('b', {}, 'Before'), ` line ${st.line ?? ''}`), h('div', { class: 'diagram-box' }, renderLabDiagram(before.state, x.graph, {}))),
+          h('figure', {}, h('figcaption', { class: 'small' }, h('b', {}, st.kind === 'error' ? 'When the error happened' : 'After'), ` line ${st.line ?? ''}: ${st.kind === 'error' ? 'the instruction could not run, so nothing changed' : st.text}`), h('div', { class: 'diagram-box' }, renderLabDiagram(st.state, x.graph, st.hl))),
         ),
       );
     }
     return item;
   }
 
-  function drawProblems() {
-    const list = exe.issuesUpTo();
+  function problemsContent(x, i) {
+    const list = x.issuesUpTo(i);
     const order = { error: 0, warning: 1, note: 2 };
-    const sorted = [...list].sort((x, y) => (order[x.severity] - order[y.severity]) || x.step - y.step);
-    clear(problemsP).append(h('div', { class: 'panel-title' }, h('h3', {}, `Problems${list.length ? ` (${list.length})` : ''}`), h('span', { class: 'small muted' }, 'syntax · runtime · logic')));
-    if (sorted.length) problemsP.append(h('ul', { class: 'issues' }, sorted.map(issueEl)));
-    if (exe.atEnd && !exe.error && !exe.stopped) {
-      const warnings = list.filter((x) => x.severity !== 'note').length;
-      if (mode === 'free') problemsP.append(h('div', { class: 'feedback info small' }, warnings ? 'The run finished with the problems above.' : 'The run finished with no errors and no structural problems.', ' Without a stated goal the lab can’t tell whether this is the result you meant — compare it with what you expected.'));
-      else problemsP.append(h('div', { class: 'feedback info small' }, 'The run finished on this test case. Use “Check my solution” to test every case against the goal.'));
-    } else if (!sorted.length) problemsP.append(h('p', { class: 'small muted', style: { margin: 0 } }, exe.index === 0 ? 'Problems appear here as the program runs: syntax and runtime errors stop it; logic warnings (lost nodes, cycles, broken links) and notes about temporary states don’t.' : 'No problems so far.'));
+    const sorted = [...list].sort((a, b) => (order[a.severity] - order[b.severity]) || a.step - b.step);
+    const atEnd = x.done && i === x.steps.length - 1;
+    const out = [h('div', { class: 'panel-title' }, h('h3', {}, `Problems${list.length ? ` (${list.length})` : ''}`), h('span', { class: 'small muted' }, 'syntax · runtime · logic'))];
+    if (sorted.length) out.push(h('ul', { class: 'issues' }, sorted.map((is) => issueEl(is, x))));
+    if (atEnd && !x.error && !x.stopped) {
+      const warnings = list.filter((y) => y.severity !== 'note').length;
+      if (mode === 'free') out.push(h('div', { class: 'feedback info small' }, warnings ? 'The run finished with the problems above.' : 'The run finished with no errors and no structural problems.', ' Without a stated goal the lab can’t tell whether this is the result you meant — compare it with what you expected.'));
+      else out.push(h('div', { class: 'feedback info small' }, 'The run finished on this test case. Use “Check my solution” to test every case against the goal.'));
+    } else if (!sorted.length) out.push(h('p', { class: 'small muted', style: { margin: 0 } }, i === 0 ? 'Problems appear here as the program runs: syntax and runtime errors stop it; logic warnings (lost nodes, cycles, broken links) and notes about temporary states don’t.' : 'No problems so far.'));
+    return out;
+  }
+  function drawProblems() {
+    clear(problemsP).append(...problemsContent(exe, exe.index));
   }
 
-  function drawHistory() {
-    // a few steps around the current one (no scroll box inside the page); "Show more" widens it
-    const from = Math.max(0, exe.index - (moreHistory ? 120 : 6));
-    const to = Math.min(exe.steps.length, exe.index + (moreHistory ? 40 : 3));
-    const ol = h('ol', { class: 'history', start: from });
+  // a few steps around the current one (no scroll box inside the page); "Show more" widens it
+  function historyContent(x, i) {
+    const from = Math.max(0, i - (moreHistory ? 120 : 6));
+    const to = Math.min(x.steps.length, i + (moreHistory ? 40 : 3));
+    const ol = h('ol', { class: 'history log', start: from });
     for (let k = from; k < to; k++) {
-      const s2 = exe.steps[k];
-      ol.append(h('li', { class: [k === exe.index ? 'cur' : '', s2.kind === 'error' ? 'bad' : '', s2.issues.some((x) => x.severity !== 'note') ? 'warn' : ''].join(' '), onclick: () => gotoStep(k) }, h('span', { class: 'k' }, `${k}${s2.line ? ` · L${s2.line}` : ''}`), h('span', { class: `kind-badge k-${s2.kind}` }, KIND_LABEL[s2.kind] || s2.kind), ' ', s2.text.length > 120 ? s2.text.slice(0, 118) + '…' : s2.text));
+      const s2 = x.steps[k];
+      ol.append(h('li', { class: [k === i ? 'cur' : '', s2.kind === 'error' ? 'bad' : '', s2.issues.some((y) => y.severity !== 'note') ? 'warn' : ''].join(' '), title: s2.text, onclick: () => gotoStep(k) }, h('span', { class: 'k' }, `${k}${s2.line ? ` · L${s2.line}` : ''}`), h('span', { class: `kind-badge k-${s2.kind}` }, KIND_LABEL[s2.kind] || s2.kind), ' ', s2.text));
     }
-    const more = exe.index > 6 || exe.steps.length > exe.index + 4 ? h('button', { class: 'btn ghost small', 'aria-pressed': String(moreHistory), onclick: () => { moreHistory = !moreHistory; drawHistory(); } }, moreHistory ? 'Show fewer' : 'Show more') : null;
-    clear(historyP).append(h('div', { class: 'panel-title' }, h('h3', {}, 'Execution history'), h('span', { class: 'small muted' }, 'click a step to jump to it'), more), from > 0 ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${from} earlier step${from === 1 ? '' : 's'}`) : null, ol);
+    const more = i > 6 || x.steps.length > i + 4 ? h('button', { class: 'btn ghost small', 'aria-pressed': String(moreHistory), onclick: () => { moreHistory = !moreHistory; steady.history.reset(); drawHistory(); steady.history.grow(); scheduleMeasure(); } }, moreHistory ? 'Show fewer' : 'Show more') : null;
+    return [h('div', { class: 'panel-title' }, h('h3', {}, 'Execution history'), h('span', { class: 'small muted' }, 'click a step to jump to it'), more), from > 0 ? h('p', { class: 'small muted', style: { margin: '0 0 4px' } }, `… ${from} earlier step${from === 1 ? '' : 's'}`) : null, ol].filter(Boolean);
+  }
+  function drawHistory() {
+    clear(historyP).append(...historyContent(exe, exe.index));
   }
 
   // keyboard: arrows/space/home when focus is not in a text field
@@ -531,6 +592,8 @@ export function labView(ctx, a, b) {
   ctx.setCleanup(() => {
     pause(true);
     clearTimeout(rebuildTimer);
+    clearTimeout(measureTimer);
+    Object.values(steady).forEach((x) => x.destroy());
     if (saveTimer) {
       clearTimeout(saveTimer);
       store.setLabDraft(draftKey, editor.getValue());
