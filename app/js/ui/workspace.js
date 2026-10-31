@@ -167,7 +167,7 @@ export function createWorkspace(trace, opts = {}) {
     clear(explainP).append(...(pending && pending.q ? predictBox(pending) : explainContent(i).filter(Boolean)));
     clear(histP).append(...historyContent(i).filter(Boolean));
     stepNum.textContent = `Step ${i} / ${tr.steps.length - 1}`;
-    stepNum.style.minWidth = `${`Step ${tr.steps.length - 1} / ${tr.steps.length - 1}`.length}ch`;
+    stepNum.style.minWidth = `min(${`Step ${tr.steps.length - 1} / ${tr.steps.length - 1}`.length}ch, 100%)`;
     bBack.disabled = player.atStart;
     bFwd.disabled = player.atEnd || !!pending;
     playLabel(player.playing ? '❚❚ Pause' : '▶ Play');

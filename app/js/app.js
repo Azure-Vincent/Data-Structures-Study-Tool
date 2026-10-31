@@ -11,6 +11,8 @@ import { repairView } from './views/repair.js';
 import { progressView } from './views/progress.js';
 import { settingsView } from './views/settings.js';
 import { labView } from './views/lab.js';
+import { drillsView } from './views/drills.js';
+import { dueCards } from './progress/drills.js';
 import { generateExercise } from './exercises/registry.js';
 import { renderExercise } from './ui/exercise.js';
 import { icon } from './ui/icons.js';
@@ -81,10 +83,16 @@ function setMenu(open) {
   if (open) side.querySelector('a[aria-current="page"], a')?.focus();
 }
 
+// cards due in the pseudocode drills (shown next to the menu entry)
+function drillBadge() {
+  const n = dueCards(store.drillData(), store.now()).length;
+  return n ? h('span', { class: 'nav-badge', title: `${n} drill card${n === 1 ? '' : 's'} due` }, String(n)) : null;
+}
+
 function drawNav() {
   clear(side).append(
     brand(),
-    h('div', { class: 'nav' }, navLink('#/', 'Dashboard', null, 'home'), navLink('#/practice', 'Practice', null, 'practice'), navLink('#/progress', 'Progress', null, 'progress')),
+    h('div', { class: 'nav' }, navLink('#/', 'Dashboard', null, 'home'), navLink('#/practice', 'Practice', null, 'practice'), navLink('#/drills', 'Pseudocode drills', drillBadge(), 'cards'), navLink('#/progress', 'Progress', null, 'progress')),
     h('div', { class: 'nav-group' }, 'Lectures'),
     h(
       'div',
@@ -136,6 +144,9 @@ function route() {
         break;
       case 'lab':
         view = labView(ctx, parts[1] || null, parts[2] || null);
+        break;
+      case 'drills':
+        view = drillsView(ctx, parts[1] || null);
         break;
       case 'complexity':
         // the Complexity lab was removed with the time-complexity material; old links land on the dashboard

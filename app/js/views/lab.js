@@ -65,7 +65,14 @@ function referencePanel(onTry) {
   );
 }
 
-export function labView(ctx, a, b) {
+/**
+ * labView(ctx, a, b, { drill })
+ * With `drill` (from the Pseudocode drills page) the exercise is one card of a
+ * spaced-repetition session: no exercise picker, a fresh draft per review, and
+ * the first passing check (or a revealed solution) grades the card:
+ * drill = { id, pos, total, card, review(outcome) → record, next(), end(), when(due) }.
+ */
+export function labView(ctx, a, b, { drill = null } = {}) {
   const { store } = ctx;
   const lab = store.labData();
   // ---------------------------------------------------------------- route
@@ -85,11 +92,13 @@ export function labView(ctx, a, b) {
     history.replaceState(null, '', last);
     return labView(ctx, m[0], m[1]);
   }
-  if (mode === 'guided') lab.lastExercise = ex.id;
-  else lab.lastFree = structure;
-  store.setLabLast(location.hash);
+  if (!drill) {
+    if (mode === 'guided') lab.lastExercise = ex.id;
+    else lab.lastFree = structure;
+    store.setLabLast(location.hash);
+  }
   const S = STRUCTURES[structure];
-  const draftKey = mode === 'guided' ? `ex:${ex.id}` : `free:${structure}`;
+  const draftKey = drill ? `drill:${ex.id}` : mode === 'guided' ? `ex:${ex.id}` : `free:${structure}`;
   const freeVals = () => (lab.freeValues && lab.freeValues[structure]) || null;
 
   let testIdx = 0;
@@ -110,6 +119,8 @@ export function labView(ctx, a, b) {
   let openIssue = null;
   let moreHistory = false;
   let allOutput = false;
+  let failedChecks = 0; // drills: checks that ran but did not pass
+  let reviewed = null; // drills: { outcome, rec } once the card has been graded
 
   function freeSetup() {
     const saved = freeVals();
@@ -122,14 +133,20 @@ export function labView(ctx, a, b) {
   const refBtn = h('button', { class: 'btn', 'aria-expanded': 'false', onclick: () => toggleRef() }, icon('book'), 'Syntax reference');
   const refHost = h('div');
   root.append(
-    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Tools'), h('h1', {}, 'Pseudocode Lab'), h('div', { class: 'subtitle' }, 'Write pseudocode, run it line by line, and watch every node, pointer and variable change.')), refBtn),
-    h(
+    ...[
+    drill
+      ? h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Pseudocode drills · card ${drill.pos + 1} of ${drill.total}`), h('h1', {}, ex.title), h('div', { class: 'subtitle' }, 'Write it from memory, run it on the diagram, then check it. The result decides when this card comes back.')), refBtn)
+      : h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Tools'), h('h1', {}, 'Pseudocode Lab'), h('div', { class: 'subtitle' }, 'Write pseudocode, run it line by line, and watch every node, pointer and variable change.')), refBtn),
+    drill
+      ? null
+      : h(
       'div',
       { class: 'seg lab-modes', role: 'group', 'aria-label': 'Lab mode' },
       h('button', { class: 'btn', 'aria-pressed': String(mode === 'guided'), onclick: () => ctx.go(`#/lab/${(lab.lastExercise && EXERCISE_BY_ID[lab.lastExercise] ? lab.lastExercise : EXERCISES[0].id)}`) }, 'Guided exercises'),
       h('button', { class: 'btn', 'aria-pressed': String(mode === 'free'), onclick: () => ctx.go(`#/lab/free/${lab.lastFree || structure}`) }, 'Free experiment'),
     ),
     refHost,
+    ].filter(Boolean),
   );
   function toggleRef(force) {
     const open = force ?? !refHost.firstChild;
@@ -151,6 +168,21 @@ export function labView(ctx, a, b) {
 
   function drawContext() {
     clear(ctxPanel);
+    if (drill) {
+      const rec = reviewed ? reviewed.rec : drill.card;
+      ctxPanel.append(
+        h(
+          'div',
+          { class: 'row lab-picker drill-bar' },
+          h('div', { class: 'drill-progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': drill.total, 'aria-valuenow': drill.pos + (reviewed ? 1 : 0), 'aria-label': 'Session progress' }, h('span', { style: { width: `${((drill.pos + (reviewed ? 1 : 0)) / drill.total) * 100}%` } })),
+          h('span', { class: 'small muted' }, rec ? `Box ${rec.box} of 6 · reviewed ${rec.reps} time${rec.reps === 1 ? '' : 's'}` : 'New card'),
+          h('span', { class: 'spacer' }),
+          reviewed ? null : h('button', { class: 'btn small ghost', title: 'Counts as forgotten: the card comes back in 10 minutes', onclick: () => { drill.review('again'); drill.next(); } }, 'Skip card'),
+          h('button', { class: 'btn small', onclick: () => drill.end() }, 'End session'),
+        ),
+        h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.render === 'none' ? 'Array' : S.label, 'type'), pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`)), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
+      );
+    }
     if (mode === 'guided') {
       const i = EXERCISES.indexOf(ex);
       const sel = h(
@@ -165,8 +197,9 @@ export function labView(ctx, a, b) {
         ),
       );
       ctxPanel.append(
-        h('div', { class: 'row lab-picker' }, h('label', { class: 'inline small' }, h('b', {}, 'Exercise'), sel), h('button', { class: 'btn small', disabled: i === 0, onclick: () => ctx.go(`#/lab/${EXERCISES[i - 1].id}`), 'aria-label': 'Previous exercise' }, '←'), h('button', { class: 'btn small', disabled: i === EXERCISES.length - 1, onclick: () => ctx.go(`#/lab/${EXERCISES[i + 1].id}`), 'aria-label': 'Next exercise' }, '→'), h('span', { class: 'small muted' }, `${i + 1} of ${EXERCISES.length} · ${Object.keys(lab.solved).length} solved`)),
-        h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.label, 'type'), pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`), ex.supplementary ? pill('Supplementary', 'supp') : null, lab.solved[ex.id] ? h('span', { class: 'lvl mastered' }, 'solved') : null), h('h2', {}, ex.title), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
+        ...[
+        drill ? null : h('div', { class: 'row lab-picker' }, h('label', { class: 'inline small' }, h('b', {}, 'Exercise'), sel), h('button', { class: 'btn small', disabled: i === 0, onclick: () => ctx.go(`#/lab/${EXERCISES[i - 1].id}`), 'aria-label': 'Previous exercise' }, '←'), h('button', { class: 'btn small', disabled: i === EXERCISES.length - 1, onclick: () => ctx.go(`#/lab/${EXERCISES[i + 1].id}`), 'aria-label': 'Next exercise' }, '→'), h('span', { class: 'small muted' }, `${i + 1} of ${EXERCISES.length} · ${Object.keys(lab.solved).length} solved`)),
+        drill ? null : h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.label, 'type'), pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`), ex.supplementary ? pill('Supplementary', 'supp') : null, lab.solved[ex.id] ? h('span', { class: 'lvl mastered' }, 'solved') : null), h('h2', {}, ex.title), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
         h(
           'div',
           { class: 'lab-tests' },
@@ -195,6 +228,7 @@ export function labView(ctx, a, b) {
           ),
           h('span', { class: 'small muted' }, describeSetup(setup)),
         ),
+        ].filter(Boolean),
       );
       return;
     }
@@ -298,7 +332,8 @@ export function labView(ctx, a, b) {
   const runCol = h('section', { class: 'lab-run', 'aria-label': 'Execution' }, controls, explain, diagram, h('div', { class: 'lab-panels' }, varsP, outP));
   const problemsP = h('section', { class: 'panel lab-problems', 'aria-label': 'Problems' });
   const historyP = h('section', { class: 'panel lab-history', 'aria-label': 'Execution history' });
-  root.append(h('div', { class: 'lab-grid' }, codeCol, runCol), h('div', { class: 'lab-bottom' }, problemsP, historyP));
+  const labBottom = h('div', { class: 'lab-bottom' }, problemsP, historyP);
+  root.append(h('div', { class: 'lab-grid' }, codeCol, runCol), labBottom);
   // panels keep the largest size they have had in this view, so stepping back and
   // forth (or re-running after an edit) never makes them shrink and grow again
   const steady = { status: steadyPanel(status), explain: steadyPanel(explain), diagram: steadyPanel(diagram), vars: steadyPanel(varsP), out: steadyPanel(outP), problems: steadyPanel(problemsP), history: steadyPanel(historyP) };
@@ -307,7 +342,9 @@ export function labView(ctx, a, b) {
 
   // ---------------------------------------------------------------- guided: check, hints, solution
   const checkP = h('section', { class: 'panel lab-check', 'aria-label': 'Check your solution' });
-  if (mode === 'guided') root.append(checkP);
+  // in drills checking is the main action, so it sits right under the editor and the run
+  if (drill) root.insertBefore(checkP, labBottom);
+  else if (mode === 'guided') root.append(checkP);
 
   function drawCheck(result) {
     if (mode !== 'guided') return;
@@ -315,11 +352,14 @@ export function labView(ctx, a, b) {
     const hintBtn = hintsShown < ex.hints.length ? h('button', { class: 'btn', onclick: () => { hintsShown++; drawCheck(result); } }, `Hint ${hintsShown + 1} of ${ex.hints.length}`) : null;
     const solBtn = !revealed
       ? h('button', { class: 'btn ghost', disabled: hintsShown < ex.hints.length, title: hintsShown < ex.hints.length ? 'Use the hints first' : '', onclick: () => {
-          if (!window.confirm('Show a corrected solution? Revealing it means this attempt won’t count as solved on your own.')) return;
+          if (!window.confirm(drill && !reviewed ? 'Show a corrected solution? The card then counts as forgotten and comes back in 10 minutes.' : 'Show a corrected solution? Revealing it means this attempt won’t count as solved on your own.')) return;
           revealed = true;
+          if (drill && !reviewed) reviewed = { outcome: 'again', rec: drill.review('again') };
           drawCheck(result);
+          drawContext();
         } }, 'Show solution')
       : null;
+    if (drill && reviewed) checkP.append(drillVerdict());
     checkP.append(
       h('div', { class: 'panel-title' }, h('h3', {}, 'Check against the goal')),
       h('p', { class: 'small muted', style: { marginTop: 0 } }, `Runs your code on all ${ex.tests.length} test cases — each with a fresh copy of its starting structure — and compares the real final result with the goal.`),
@@ -354,9 +394,26 @@ export function labView(ctx, a, b) {
     }
   }
 
+  // drills: what the review decided, and the way to the next card
+  function drillVerdict() {
+    const { outcome, rec } = reviewed;
+    const when = drill.when(rec.due);
+    const text = {
+      good: `Remembered — passed on the first check without hints. This card comes back ${when}.`,
+      hard: `Passed, with ${hintsShown ? 'hints' : 'more than one check'}. The card stays in its box and comes back ${when}.`,
+      again: `The solution was shown, so the card counts as forgotten. It comes back ${when}${drill.total > drill.pos + 1 ? ' and once more at the end of this session' : ''}. You can still finish it here for practice.`,
+    }[outcome];
+    const last = drill.pos + 1 >= drill.total;
+    return h('div', { class: `feedback ${outcome === 'again' ? 'info' : 'ok'} drill-verdict` }, h('div', {}, h('b', { class: 'verdict' }, outcome === 'good' ? 'Good.' : outcome === 'hard' ? 'Hard.' : 'Again.'), ' ', text), h('button', { class: 'btn primary', onclick: () => drill.next() }, last ? 'Finish the session' : 'Next card →'));
+  }
+
   function runCheck() {
     const src = editor.getValue();
     const result = checkExercise(ex, src);
+    if (drill && !reviewed && !result.syntax) {
+      if (result.passed) reviewed = { outcome: failedChecks === 0 && hintsShown === 0 && !revealed ? 'good' : 'hard', rec: drill.review(failedChecks === 0 && hintsShown === 0 && !revealed ? 'good' : 'hard') };
+      else failedChecks++;
+    }
     if (!result.syntax && src !== lastCheckedCode) {
       lastCheckedCode = src;
       const failed = result.tests.find((t) => !t.pass);
@@ -484,7 +541,7 @@ export function labView(ctx, a, b) {
     bReset.disabled = exe.atStart && !exe.done && exe.steps.length === 1;
     counter.textContent = `Step ${exe.index} of ${exe.steps.length - 1}${exe.done ? '' : '+'} · ${exe.executed.toLocaleString()}/${limit.toLocaleString()} instructions`;
     // room for the largest numbers this limit allows, so the controls next to it never move
-    counter.style.minWidth = `${`Step ${limit.toLocaleString()} of ${limit.toLocaleString()}+ · ${limit.toLocaleString()}/${limit.toLocaleString()} instructions`.length}ch`;
+    counter.style.minWidth = `min(${`Step ${limit.toLocaleString()} of ${limit.toLocaleString()}+ · ${limit.toLocaleString()}/${limit.toLocaleString()} instructions`.length}ch, 100%)`;
     clear(explain).append(...explainContent(exe, exe.index, notice).filter(Boolean));
     clear(diagram).append(diagramContent(exe, exe.index));
     clear(varsP).append(...varsContent(exe, exe.index));

@@ -3121,3 +3121,162 @@ button.linkish:hover {
 .langcode-visual .code {
   margin: 0;
 }
+
+/* ---------------------------------------------------------------- pseudocode drills */
+.nav .nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--pointer);
+  color: var(--on-pointer, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.drill-actions {
+  margin: 0 0 16px;
+  gap: 10px;
+}
+.drill-topics {
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.drill-forecast {
+  margin-bottom: 22px;
+}
+.drill-forecast-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  height: 104px;
+  align-items: end;
+}
+.drill-day {
+  display: grid;
+  grid-template-rows: 16px 1fr auto;
+  height: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.drill-day .n {
+  font-size: 12px;
+  font-weight: 600;
+}
+.drill-day .bar {
+  align-self: end;
+  justify-self: center;
+  width: 60%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--pointer-soft);
+  border: 1px solid var(--pointer);
+  border-bottom: 0;
+}
+.drill-topic h2 {
+  font-size: 16px;
+  margin: 18px 0 10px;
+}
+.drill-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+.drill-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  padding: 10px;
+  box-shadow: var(--shadow-s);
+  min-width: 0;
+}
+.drill-card.due {
+  border-color: var(--pointer);
+}
+.drill-card h3 {
+  font-size: 14px;
+  margin: 6px 0 4px;
+}
+.drill-card .btn {
+  justify-self: start;
+}
+/* the starting structure, drawn small (it shrinks to fit the card) */
+.drill-thumb {
+  height: 110px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 4px;
+  box-shadow: none;
+}
+.drill-thumb svg {
+  max-height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+.drill-thumb .lab-colls {
+  transform: scale(0.8);
+}
+.drill-status {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: var(--panel-2);
+  color: var(--ink-2);
+}
+.drill-status.new {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+.drill-status.due {
+  background: var(--pointer-soft);
+  color: var(--pointer);
+}
+.drill-status.learning {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.drill-status.remembered {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.drill-how {
+  margin-top: 22px;
+}
+.drill-how summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+/* in the Lab's drill mode */
+.drill-bar {
+  gap: 10px;
+}
+.drill-progress {
+  flex: 0 1 220px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+.drill-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.drill-verdict {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.drill-verdict > div {
+  flex: 1;
+  min-width: 0;
+}
+.drills > .feedback {
+  margin-bottom: 14px;
+}

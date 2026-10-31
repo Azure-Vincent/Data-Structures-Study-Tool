@@ -86,7 +86,7 @@ export function createWalkthrough(ex, opts = {}) {
         ex.cases.map((c, k) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(k === i), onclick: () => load(k) }, c.label)),
       );
     }
-    counter.style.minWidth = `${`Step ${exe.steps.length - 1} of ${exe.steps.length - 1}`.length}ch`;
+    counter.style.minWidth = `min(${`Step ${exe.steps.length - 1} of ${exe.steps.length - 1}`.length}ch, 100%)`;
     draw();
     measureAll();
   }

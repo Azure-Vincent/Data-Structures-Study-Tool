@@ -123,7 +123,7 @@ async function coreChecks(page) {
   check('window opens on the dashboard', (await page.locator('h1').first().textContent()).includes('Your study desk'));
   check('window title', (await page.title()).includes('DS Study Lab'), await page.title());
 
-  const routes = ['#/', '#/lesson/8', '#/practice', '#/explore', '#/repair', '#/progress', '#/settings', '#/lab'];
+  const routes = ['#/', '#/lesson/8', '#/practice', '#/drills', '#/explore', '#/repair', '#/progress', '#/settings', '#/lab'];
   const blank = [];
   for (const r of routes) {
     await go(page, r);
