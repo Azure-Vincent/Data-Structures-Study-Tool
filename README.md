@@ -93,6 +93,8 @@ Opening `app/index.html` by double-clicking does **not** work: browsers block Ja
 - **common mistakes and edge cases**: empty structures, one node, invalid positions, full and empty arrays;
 - exercises that progress from **predicting** behaviour to **completing** missing steps to **writing** the operation yourself, followed by mixed practice later.
 
+The lesson outline (the list of steps) can be collapsed: on a wide window it shrinks to a slim rail at the side and the lesson uses the freed width. The app remembers the choice.
+
 “Correction / clarification” callouts flag where the notes miss an edge case or use non-standard names. These include one-node deletions, the circular `NULL` loop, allocating before validating a position, the depth convention, and “full” vs “perfect”. See `docs/LECTURE_MAP.md`.
 
 **Code in C++, Python and pseudocode.** Every code panel offers C++, Python and pseudocode (plus the notes’ original C where it exists). The choice applies to the whole app — pick a language on any panel or under **Settings & data** — so the same example can be compared language by language. The pseudocode is the Pseudocode Lab’s syntax, so it always runs.

@@ -60,7 +60,8 @@ export function stickyWhenFits(el, margin = 0) {
   };
   function update() {
     if (!el.isConnected) return stop();
-    const last = el.lastElementChild;
+    // a closed <details> shows only its summary (its hidden content can still have a layout box)
+    const last = el.tagName === 'DETAILS' && !el.open ? el.querySelector('summary') : el.lastElementChild;
     if (!last) return;
     const top = el.getBoundingClientRect().top;
     const need = last.getBoundingClientRect().bottom - top + parseFloat(getComputedStyle(el).paddingBottom || 0);

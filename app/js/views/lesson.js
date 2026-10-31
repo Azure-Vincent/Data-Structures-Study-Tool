@@ -34,11 +34,26 @@ export function lessonView(ctx, n, at) {
   let cleanupWs = [];
   ctx.setCleanup(() => cleanupWs.forEach((f) => f()));
 
-  const outlineBox = h('details', { class: 'panel outline', open: window.innerWidth >= 1240 }, h('summary', {}, `Lesson outline · ${lesson.sections.length} steps`), outline);
+  // The outline can be collapsed. On wide windows it then shrinks to a slim rail
+  // and the lesson takes the freed width. The choice is remembered; without one
+  // it starts open on wide windows and closed on narrow ones.
+  const saved = store.data.settings.lessonOutline;
+  const summary = h('summary', {}, h('span', { class: 'outline-label' }, `Lesson outline · ${lesson.sections.length} steps`));
+  const outlineBox = h('details', { class: 'panel outline', open: saved ? saved === 'open' : window.innerWidth >= 1240 }, summary, outline);
+  const grid = h('div', { class: 'lesson-grid' }, outlineBox, body);
+  const syncOutline = () => {
+    grid.classList.toggle('outline-collapsed', !outlineBox.open);
+    summary.title = outlineBox.open ? 'Hide the lesson outline' : 'Show the lesson outline';
+  };
+  outlineBox.addEventListener('toggle', () => {
+    syncOutline();
+    store.setSetting('lessonOutline', outlineBox.open ? 'open' : 'closed');
+  });
+  syncOutline();
   root.append(
     h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Lecture ${String(n).padStart(2, '0')}`), h('h1', {}, lesson.title), h('div', { class: 'subtitle' }, `Source: ${L.file} (${L.pages} pages)`)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, 'Practise this lecture'))),
     h('div', { class: 'lesson-progress' }, h('div', { class: 'bar' }, progBar), progTxt),
-    h('div', { class: 'lesson-grid' }, outlineBox, body),
+    grid,
   );
   stickyWhenFits(outlineBox, 16);
 

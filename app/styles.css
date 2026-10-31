@@ -2119,6 +2119,31 @@ a.dot:hover {
 @media (min-width: 1240px) {
   .lesson-grid {
     grid-template-columns: 264px minmax(0, 1fr);
+    transition: grid-template-columns calc(var(--dur) * 0.5) ease;
+  }
+  /* collapsed outline: a slim rail with a vertical label; the lesson gets the width */
+  .lesson-grid.outline-collapsed {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .lesson-grid.outline-collapsed .outline {
+    padding: 4px;
+  }
+  .lesson-grid.outline-collapsed .outline summary {
+    writing-mode: vertical-rl;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 6px;
+    white-space: nowrap;
+  }
+  .lesson-grid.outline-collapsed .outline summary::after {
+    order: -1;
+  }
+  /* the arrow points the way the panel will move: left to hide, right to show */
+  .outline summary::after {
+    transform: rotate(-45deg);
+  }
+  .outline[open] summary::after {
+    transform: rotate(135deg);
   }
   /* pinned only while the whole outline fits in the window (see stickyWhenFits) */
   .lesson-grid .outline.fits {
