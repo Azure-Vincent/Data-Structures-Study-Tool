@@ -1168,6 +1168,17 @@ pre.code {
   border-bottom: 1px solid var(--rule);
   vertical-align: top;
 }
+/* values wrap rather than widening the panel (a wider panel would change every panel next to it) */
+.vars-table td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+.vars-table td:nth-child(3) {
+  white-space: nowrap;
+}
+.ws-side > *,
+.lab-panels > * {
+  min-width: 0;
+}
 .vars-table tr:last-child td {
   border-bottom: 0;
 }
@@ -1200,6 +1211,19 @@ pre.code {
 .ws-controls {
   padding: 10px 12px;
   background: var(--panel);
+}
+/* a button whose label changes keeps the width of its longest label */
+.btn.btn-steady {
+  display: inline-grid;
+  place-items: center;
+}
+.btn-steady > span {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  white-space: nowrap;
+}
+.btn-steady > span.on {
+  visibility: visible;
 }
 .controls .stepnum {
   font-variant-numeric: tabular-nums;
@@ -1237,6 +1261,13 @@ pre.code {
 .history li.bad {
   color: var(--bad);
 }
+/* execution logs: one line per step (full text on hover and in the explanation),
+   so the panel has the same height at every step */
+.history.log li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .history-more {
   display: flex;
   align-items: center;
@@ -1250,14 +1281,29 @@ pre.code {
   font-size: 11.5px;
   font-family: var(--mono);
 }
-.predict-box {
-  border: 1.5px solid var(--pointer);
-  border-radius: var(--radius-m);
-  padding: 14px 16px;
+/* the explanation panel while it asks for a prediction */
+.ws-explain.predicting {
+  border-left-color: var(--pointer);
   background: var(--pointer-softer);
 }
-.predict-box h3 {
+.ws-explain.predicting .panel-title h3 {
   color: var(--pointer);
+}
+.predict-q {
+  margin: 0 0 8px;
+}
+.predict-options {
+  gap: 6px;
+}
+.predict-feedback {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+.predict-feedback > div {
+  flex: 1;
+  min-width: 0;
 }
 .frontier {
   display: flex;
@@ -2119,6 +2165,31 @@ a.dot:hover {
 @media (min-width: 1240px) {
   .lesson-grid {
     grid-template-columns: 264px minmax(0, 1fr);
+    transition: grid-template-columns calc(var(--dur) * 0.5) ease;
+  }
+  /* collapsed outline: a slim rail with a vertical label; the lesson gets the width */
+  .lesson-grid.outline-collapsed {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .lesson-grid.outline-collapsed .outline {
+    padding: 4px;
+  }
+  .lesson-grid.outline-collapsed .outline summary {
+    writing-mode: vertical-rl;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 6px;
+    white-space: nowrap;
+  }
+  .lesson-grid.outline-collapsed .outline summary::after {
+    order: -1;
+  }
+  /* the arrow points the way the panel will move: left to hide, right to show */
+  .outline summary::after {
+    transform: rotate(-45deg);
+  }
+  .outline[open] summary::after {
+    transform: rotate(135deg);
   }
   /* pinned only while the whole outline fits in the window (see stickyWhenFits) */
   .lesson-grid .outline.fits {
@@ -2897,18 +2968,32 @@ button.linkish:hover {
 .walk:focus {
   outline: none;
 }
+.walk-intro {
+  margin: 0 0 12px;
+  color: var(--ink-2);
+}
 .walk-cases {
   margin-bottom: 10px;
 }
-/* narrow: diagram, code, explanation stacked. medium: the diagram beside the
-   explanation, the code across the full width below. wide: code beside the diagram. */
+/* narrow: diagram, explanation, variables, collections/output and code stacked.
+   medium: the diagram with the explanation under it and the variables beside
+   them; collections/output and then the code across the full width. wide: the
+   code at the left of all of that. The explanation row takes any spare height,
+   so the columns end together. */
 .walk-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'diagram' 'code' 'side';
+  grid-template-areas: 'diagram' 'explain' 'vars' 'out' 'code';
   gap: 12px;
   margin-top: 12px;
   align-items: start;
+}
+.walk-grid > * {
+  min-width: 0;
+}
+/* the grid gap spaces the panels; the usual margin between stacked panels would offset them */
+.walk-grid > .panel + .panel {
+  margin-top: 0;
 }
 .walk-diagram {
   grid-area: diagram;
@@ -2917,11 +3002,14 @@ button.linkish:hover {
 .walk-code {
   grid-area: code;
 }
-.walk-side {
-  grid-area: side;
-  display: grid;
-  gap: 12px;
-  min-width: 0;
+.walk-explain {
+  grid-area: explain;
+}
+.walk-vars {
+  grid-area: vars;
+}
+.walk-out {
+  grid-area: out;
 }
 /* folded setup lines: keep the real line numbers (messages refer to them) */
 .walk-code li::before {
@@ -2950,13 +3038,18 @@ button.linkish:hover {
 @container (min-width: 620px) {
   .walk-grid {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    grid-template-areas: 'diagram side' 'code code';
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'diagram vars' 'explain vars' 'out out' 'code code';
+  }
+  .walk-explain {
+    align-self: stretch;
   }
 }
 @container (min-width: 1100px) {
   .walk-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'code diagram' 'code side';
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.8fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'code diagram vars' 'code explain vars' 'code out out';
   }
 }
 
@@ -3027,4 +3120,163 @@ button.linkish:hover {
 }
 .langcode-visual .code {
   margin: 0;
+}
+
+/* ---------------------------------------------------------------- pseudocode drills */
+.nav .nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--pointer);
+  color: var(--on-pointer, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.drill-actions {
+  margin: 0 0 16px;
+  gap: 10px;
+}
+.drill-topics {
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.drill-forecast {
+  margin-bottom: 22px;
+}
+.drill-forecast-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  height: 104px;
+  align-items: end;
+}
+.drill-day {
+  display: grid;
+  grid-template-rows: 16px 1fr auto;
+  height: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.drill-day .n {
+  font-size: 12px;
+  font-weight: 600;
+}
+.drill-day .bar {
+  align-self: end;
+  justify-self: center;
+  width: 60%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--pointer-soft);
+  border: 1px solid var(--pointer);
+  border-bottom: 0;
+}
+.drill-topic h2 {
+  font-size: 16px;
+  margin: 18px 0 10px;
+}
+.drill-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+.drill-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  padding: 10px;
+  box-shadow: var(--shadow-s);
+  min-width: 0;
+}
+.drill-card.due {
+  border-color: var(--pointer);
+}
+.drill-card h3 {
+  font-size: 14px;
+  margin: 6px 0 4px;
+}
+.drill-card .btn {
+  justify-self: start;
+}
+/* the starting structure, drawn small (it shrinks to fit the card) */
+.drill-thumb {
+  height: 110px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 4px;
+  box-shadow: none;
+}
+.drill-thumb svg {
+  max-height: 100%;
+  width: auto;
+  max-width: 100%;
+}
+.drill-thumb .lab-colls {
+  transform: scale(0.8);
+}
+.drill-status {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: var(--panel-2);
+  color: var(--ink-2);
+}
+.drill-status.new {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+.drill-status.due {
+  background: var(--pointer-soft);
+  color: var(--pointer);
+}
+.drill-status.learning {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.drill-status.remembered {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.drill-how {
+  margin-top: 22px;
+}
+.drill-how summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+/* in the Lab's drill mode */
+.drill-bar {
+  gap: 10px;
+}
+.drill-progress {
+  flex: 0 1 220px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+.drill-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+.drill-verdict {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.drill-verdict > div {
+  flex: 1;
+  min-width: 0;
+}
+.drills > .feedback {
+  margin-bottom: 14px;
 }

@@ -3,6 +3,7 @@ import { LECTURES, CONCEPTS, CONCEPT_BY_ID, MISTAKE_LABELS } from '../content/co
 import { LESSON_BY_LECTURE } from '../content/lessons.js';
 import { nextActivity } from '../progress/scheduler.js';
 import { icon } from '../ui/icons.js';
+import { dueCards } from '../progress/drills.js';
 
 export function levelBadge(store, id) {
   const l = store.level(id);
@@ -38,6 +39,7 @@ export function dashboardView(ctx) {
     else ctx.go('#/practice/new/mixed');
   };
   const due = store.dueConcepts();
+  const drillsDue = dueCards(store.drillData(), store.now()).length;
   const mistakes = store.recentMistakes(4);
   const recurring = store.recurringMistakes(4);
   const mastered = CONCEPTS.filter((c) => store.level(c.id) === 'mastered').length;
@@ -63,6 +65,7 @@ export function dashboardView(ctx) {
       { class: 'quick' },
       quick('shuffle', 'Mixed practice', 'Eight short tasks, weakest topics first', () => ctx.go('#/practice/new/mixed')),
       quick('target', 'Review missed concepts', due.length ? `${due.length} topic${due.length > 1 ? 's' : ''} due now` : 'Revisit what you got wrong', () => ctx.go('#/practice/new/review')),
+      quick('cards', 'Pseudocode drills', drillsDue ? `${drillsDue} card${drillsDue > 1 ? 's' : ''} due — write them from memory` : 'Spaced repetition for writing pseudocode', () => ctx.go('#/drills')),
       quick('code', 'Pseudocode Lab', 'Write pseudocode and watch it run', () => ctx.go('#/lab')),
       quick('explore', 'Free exploration', 'Build structures and run operations', () => ctx.go('#/explore')),
     ),

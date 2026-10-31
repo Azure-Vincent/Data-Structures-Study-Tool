@@ -130,7 +130,7 @@ function programExplorer(store) {
         location.hash = `#/lab/free/${setup.structure}`;
       },
     });
-    clear(host).append(h('p', { class: 'small muted' }, ex.intro.replace(/`/g, '')), wt.el);
+    clear(host).append(wt.el);
   };
   el.append(h('div', { class: 'panel' }, h('div', { class: 'row' }, h('label', { class: 'inline' }, 'Program', sel), h('span', { class: 'small muted' }, 'The same program in C++, Python and pseudocode; the pseudocode runs, and the matching C++ / Python line is highlighted at every step.'))), host);
   draw();

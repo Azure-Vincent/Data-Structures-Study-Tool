@@ -93,6 +93,8 @@ Opening `app/index.html` by double-clicking does **not** work: browsers block Ja
 - **common mistakes and edge cases**: empty structures, one node, invalid positions, full and empty arrays;
 - exercises that progress from **predicting** behaviour to **completing** missing steps to **writing** the operation yourself, followed by mixed practice later.
 
+The lesson outline (the list of steps) can be collapsed: on a wide window it shrinks to a slim rail at the side and the lesson uses the freed width. The app remembers the choice.
+
 “Correction / clarification” callouts flag where the notes miss an edge case or use non-standard names. These include one-node deletions, the circular `NULL` loop, allocating before validating a position, the depth convention, and “full” vs “perfect”. See `docs/LECTURE_MAP.md`.
 
 **Code in C++, Python and pseudocode.** Every code panel offers C++, Python and pseudocode (plus the notes’ original C where it exists). The choice applies to the whole app — pick a language on any panel or under **Settings & data** — so the same example can be compared language by language. The pseudocode is the Pseudocode Lab’s syntax, so it always runs.
@@ -100,6 +102,8 @@ Opening `app/index.html` by double-clicking does **not** work: browsers block Ja
 **“Build it in code” walkthroughs.** 34 complete programs, from an array with shifting to BFS, written once in C++, once in Python and once in pseudocode. Node-based structures are built explicitly from nodes (no library containers), and C++ gives every node back with `delete`. The pseudocode runs in the Lab interpreter step by step; the matching C++ and Python statements are highlighted at every step, next to the diagram, the variables, the output and an explanation of what that statement changed. Each program has several starting situations (for example a normal list, one node, an empty list, an invalid position). The C++ and Python versions are compiled and run by `tests/langs/verify.mjs`, which checks that they print exactly what the pseudocode prints.
 
 **Workspace.** It shows the diagram, the code with the current line highlighted (in the language you chose), variables and pointers (address vs value), an explanation of the last step and the operation history. All of these come from one simulation state. Controls: Step forward, Step back, Play/Pause, Reset and Speed. Keyboard: → step, ← back, Space play/pause, Home reset.
+
+**Panels keep their size while you step.** Every step of a simulation or walkthrough is known in advance, so each panel (diagram, explanation or prediction, variables, output, history) is measured with every step's content and reserves the largest size from the start: stepping never pushes the rest of the page up or down. The Pseudocode Lab measures a quiet background run of your program after each edit, and its panels never shrink while you step back and forth. Buttons that change their label (▶ Play / ❚❚ Pause) keep their width, and history rows are one line each (the full text is in the explanation and on hover).
 
 **Exercises.** There are 83 templates (at least 5 per lecture), and values, positions, shapes and operation sequences are generated randomly. Types:
 - predict (a state, a traversal, or everything a complete program prints)
@@ -114,6 +118,13 @@ Opening `app/index.html` by double-clicking does **not** work: browsers block Ja
 - choose a structure
 
 Answers are computed by the simulator. Ordering and fill-in answers are *executed* on several test lists, so any equivalent correct solution is accepted. Each exercise offers three hints: a concept, a highlight on the diagram, and the next concrete step. You can reveal the full solution, which replays its reasoning step by step. After a mistake you get an explanation of what your action changed and why it broke things, plus a similar exercise.
+
+**Pseudocode drills (spaced repetition).** A study section that is only about writing pseudocode from memory. Every graded Pseudocode Lab exercise of the course (33 cards: linked lists, stacks and queues, trees, graphs and arrays) is a card. A review opens the card in the Lab: the goal, the starting structure drawn as a diagram (list, stack, queue, tree or graph), an editor with the exercise’s starting code, step-by-step runs on the diagram, and a check on every test case. The check grades the card and sets when it comes back:
+- **good** — passed on the first check without hints: the card moves up a box (1 → 3 → 7 → 16 → 35 → 90 days);
+- **hard** — passed after a failed check or with hints: same box, half the interval;
+- **again** — the solution was shown or the card skipped: back to box 1, due in 10 minutes and once more at the end of the session.
+
+A session holds every due card plus up to 5 new cards a day, in lecture order, and can be resumed. The overview shows what is due, a 7-day forecast, topic filters and every card with its starting structure; the menu shows how many cards are due. The schedule is part of the saved progress (export, import and reset include it).
 
 **Repair mode.** Six broken scenarios:
 - a broken link
@@ -161,7 +172,8 @@ app/                    the web app (no build step, plain ES modules)
       interp.js         tiny interpreter for pointer statements (grades order/fill answers)
   js/sim/               specs → traces, prediction questions
   js/exercises/         83 templates (l07.js … l14.js, impl.js), checkers (kit.js), solver, repair scenarios
-  js/progress/          storage, mastery, spaced review, session builder, migration of old saves
+  js/progress/          storage, mastery, spaced review, session builder, migration of old saves,
+                        drills.js (the spaced-repetition schedule of the pseudocode drills)
   js/content/           lessons (with page references), concept list,
                         translations.js (traced code in C++/Python/pseudocode),
                         impl/ (the "Build it in code" programs, one file per structure)
@@ -179,7 +191,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 ```
 
 ## Testing
-`npm test` runs 159 automated tests, covering:
+`npm test` runs 165 automated tests, covering:
 - every pointer operation on empty, one-node and longer lists
 - invalid positions and repeated operations
 - doubly linked consistency in both directions
@@ -201,6 +213,7 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
   - every lab exercise: its solution passes, its starter fails, and each common mistake gets the right diagnosis
 - progress persistence across reload, mastery rules, import/export/reset, corrupted storage, session rebuilding, and migrating saves from the previous version
 - every “Build it in code” program and starting situation: it runs in the Lab, all three languages carry the same statement labels, every executed line can be highlighted in C++ and Python, and the outputs match the lecture answers
+- the drills schedule: good / hard / again intervals, due and new cards per day, topic filters, the forecast, requeueing a forgotten card once per session, and loading older saves without drills
 - every lesson’s pseudocode is valid Lab syntax, every program is taught in a lesson, each lesson has the predict → complete → write progression, and no running-time material is left
 
 `node tests/langs/verify.mjs` compiles every C++ program (`-std=c++17 -Wall -Wextra -Werror`), runs every Python program, and requires the output of every starting situation to equal the pseudocode’s output (148 comparisons). Lesson code sections marked as complete programs are compared the same way, including the notes-style C. It needs a C/C++ compiler and Python 3 and works on Windows, macOS and Linux; CI runs it on all three.
@@ -211,6 +224,8 @@ docs/LECTURE_MAP.md     page-by-page mapping and corrections
 - `lessons.py` opens all 228 lesson sections.
 - `lab.py` drives the Pseudocode Lab: a wrong pointer order, before/after, hints and solution, Run/Pause/Stop/Reset, the limit, edits resetting the run, syntax errors, drafts after reload, and free-mode trees and graphs.
 - Set `CHROMIUM=/path/to/chrome` to use an already installed Chromium.
+- `drills.py` runs a drill session: the overview shows every card with its starting structure, cards open in the Lab's drill mode, and good / hard / again set the schedule, the due badge and the next session.
+- `steady.py` checks, at three window sizes, that no panel changes size or moves while stepping through simulations, walkthroughs and Explore, and that no Lab panel shrinks when stepping back.
 - `scroll.py` checks, at three window sizes, that Step, Play and the arrow keys never scroll the page: the diagram and controls stay in view, and the Operation history shows the current step without a scrollbar of its own.
 
 `tests/desktop/smoke.mjs` tests the desktop app itself. It launches a built or installed copy with a fresh profile and checks that:

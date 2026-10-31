@@ -60,7 +60,8 @@ export function stickyWhenFits(el, margin = 0) {
   };
   function update() {
     if (!el.isConnected) return stop();
-    const last = el.lastElementChild;
+    // a closed <details> shows only its summary (its hidden content can still have a layout box)
+    const last = el.tagName === 'DETAILS' && !el.open ? el.querySelector('summary') : el.lastElementChild;
     if (!last) return;
     const top = el.getBoundingClientRect().top;
     const need = last.getBoundingClientRect().bottom - top + parseFloat(getComputedStyle(el).paddingBottom || 0);
@@ -70,6 +71,24 @@ export function stickyWhenFits(el, margin = 0) {
   if (ro) ro.observe(el);
   requestAnimationFrame(update);
   return update;
+}
+
+/**
+ * A button that switches between labels (▶ Play / ❚❚ Pause …) without changing
+ * width: every label is stacked in the same grid cell and only one is visible,
+ * so the button is always as wide as its longest label. Returns set(label).
+ */
+export function steadyLabel(btn, labels) {
+  btn.classList.add('btn-steady');
+  const spans = labels.map((l) => h('span', {}, l));
+  clear(btn).append(...spans);
+  return (label) => {
+    spans.forEach((sp, i) => {
+      const on = labels[i] === label;
+      sp.classList.toggle('on', on);
+      sp.setAttribute('aria-hidden', String(!on));
+    });
+  };
 }
 
 export function clear(el) {

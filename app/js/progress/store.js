@@ -2,6 +2,7 @@
 // (localStorage in the browser, an in-memory map in tests).
 import { CONCEPTS, CONCEPT_BY_ID } from '../content/concepts.js';
 import { migrateProgress, CONTENT_VERSION } from './migrate.js';
+import { blankDrills, applyReview, DRILL_BY_ID } from './drills.js';
 
 export const STORAGE_KEY = 'dslab.progress.v1';
 export const SCHEMA_VERSION = 1;
@@ -31,6 +32,7 @@ export function blankProgress(now = Date.now()) {
     lessons: {},
     session: null,
     lab: { drafts: {}, solved: {}, last: null },
+    drills: blankDrills(),
     settings: { motion: 'system', speed: 1, timer: false, timerMinutes: 8, theme: 'system', predictMode: true, codeLang: 'cpp' },
   };
 }
@@ -252,6 +254,40 @@ export class ProgressStore {
     } catch (e) {
       console.warn('Could not save progress', e);
     }
+  }
+
+  // ---- pseudocode drills (spaced repetition; see drills.js)
+  drillData() {
+    const base = blankDrills();
+    const d = (this.data.drills ||= base);
+    d.cards ||= {};
+    if (!Array.isArray(d.topics)) d.topics = base.topics;
+    if (typeof d.newPerDay !== 'number') d.newPerDay = base.newPerDay;
+    return d;
+  }
+  /** Record one review of a card; outcome is 'good' | 'hard' | 'again'. Returns the card's new record. */
+  reviewDrill(id, outcome) {
+    if (!DRILL_BY_ID[id]) return null;
+    const d = this.drillData();
+    const now = this.now();
+    d.cards[id] = applyReview(d.cards[id], outcome, now);
+    // a forgotten card comes back once more at the end of the running session
+    const s = d.session;
+    if (outcome === 'again' && s && Array.isArray(s.ids) && !s.ids.slice(s.index + 1).includes(id) && (s.requeued || []).filter((x) => x === id).length < 1) {
+      s.ids.push(id);
+      (s.requeued ||= []).push(id);
+    }
+    if (s && s.results) s.results[id] = outcome;
+    this.save();
+    return d.cards[id];
+  }
+  setDrillSession(ids) {
+    this.drillData().session = ids && ids.length ? { ids: [...ids], index: 0, results: {}, requeued: [], startedAt: this.now() } : null;
+    this.save();
+  }
+  setDrillTopics(topics) {
+    this.drillData().topics = topics;
+    this.save();
   }
 
   // ---- sessions
