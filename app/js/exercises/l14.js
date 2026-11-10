@@ -7,23 +7,22 @@ const ORDER_NAME = { preorder: 'Preorder (Root, Left, Right)', inorder: 'Inorder
 
 function travGraph(rng, { allowDisc = false } = {}) {
   const pick = rng.int(0, 9);
-  if (pick === 0) return { g: G.lec14Graph(), lecture: true };
-  if (pick === 1) return { g: G.lec13Directed(), lecture: true };
+  if (pick === 0) return { g: G.exampleGraph(), example: true };
+  if (pick === 1) return { g: G.directedGraph(), example: true };
   const directed = rng.bool(0.35);
   const g = G.randomGraph(rng, { n: rng.int(5, 7), directed, density: 0.45, selfLoop: rng.bool(0.3), isolated: allowDisc && rng.bool(0.4) });
-  return { g, lecture: false };
+  return { g, example: false };
 }
 
 export const l14 = [
   {
     id: 'l14-tree-order',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'traverse',
     title: 'Click the tree traversal',
     generate(rng, { guidance = 'less', params = {} } = {}) {
       const order = params.order || rng.pick(['preorder', 'inorder', 'postorder']);
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(params.small ? 1 : 3, 9), rng.pick(['any', 'any', 'complete', 'skewed']));
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(params.small ? 1 : 3, 9), rng.pick(['any', 'any', 'complete', 'skewed']));
       const ans = T.ORDER_FNS[order](t);
       const others = ['preorder', 'inorder', 'postorder'].filter((o) => o !== order);
       return {
@@ -48,13 +47,12 @@ export const l14 = [
   },
   {
     id: 'l14-entered-output',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'predict',
     title: 'Entered vs output',
     generate(rng, { params = {} } = {}) {
       const order = params.order || rng.pick(['preorder', 'inorder', 'postorder']);
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(4, 9), 'any');
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(4, 9), 'any');
       const tr = T.traceTraversal(t, order);
       const outs = tr.steps.filter((s) => s.kind === 'output');
       const st = rng.pick(outs);
@@ -75,12 +73,11 @@ export const l14 = [
   },
   {
     id: 'l14-bfs-click',
-    lecture: 14,
     concept: 'l14.bfs',
     type: 'traverse',
     title: 'Click the BFS order',
     generate(rng, { guidance = 'less', params = {} } = {}) {
-      const { g } = params.lecture ? { g: G.lec14Graph() } : travGraph(rng);
+      const { g } = params.example ? { g: G.exampleGraph() } : travGraph(rng);
       const s = params.start || rng.pick(G.sortedVertices(g).filter((v) => G.neighbors(g, v).length));
       const tr = G.traceBFS(g, s);
       const ans = tr.result;
@@ -108,12 +105,11 @@ export const l14 = [
   },
   {
     id: 'l14-dfs-click',
-    lecture: 14,
     concept: 'l14.dfs',
     type: 'traverse',
     title: 'Click the DFS order',
     generate(rng, { guidance = 'less', params = {} } = {}) {
-      const { g } = params.lecture ? { g: G.lec14Graph() } : travGraph(rng);
+      const { g } = params.example ? { g: G.exampleGraph() } : travGraph(rng);
       const s = params.start || rng.pick(G.sortedVertices(g).filter((v) => G.neighbors(g, v).length));
       const tr = G.traceDFS(g, s);
       const ans = tr.result;
@@ -141,7 +137,6 @@ export const l14 = [
   },
   {
     id: 'l14-frontier',
-    lecture: 14,
     concept: 'l14.bfs',
     conceptBy: (p) => (p.kind === 'dfs' ? 'l14.dfs' : 'l14.bfs'),
     type: 'predict',
@@ -170,7 +165,6 @@ export const l14 = [
   },
   {
     id: 'l14-components',
-    lecture: 14,
     concept: 'l14.components',
     type: 'predict',
     title: 'One component or the whole graph?',
@@ -218,7 +212,6 @@ export const l14 = [
   },
   {
     id: 'l14-bfs-weight',
-    lecture: 14,
     concept: 'l14.bfs',
     type: 'choose',
     title: 'BFS paths on a weighted graph',
@@ -229,7 +222,7 @@ export const l14 = [
       let bp;
       let best;
       if (rng.bool(0.35)) {
-        g = G.lec13Weighted();
+        g = G.weightedGraph();
         s = 'A';
         t = rng.pick(['D', 'E', 'G']);
       } else {
@@ -257,12 +250,11 @@ export const l14 = [
   },
   {
     id: 'l14-inorder-stack',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'predict',
     title: 'Inorder with an explicit stack',
     generate(rng, { params = {} } = {}) {
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(3, 8), 'any');
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(3, 8), 'any');
       const tr = T.traceInorderStack(t);
       const pops = tr.steps.map((s, i) => [s, i]).filter(([s]) => s.kind === 'pop');
       const k = rng.int(1, pops.length);

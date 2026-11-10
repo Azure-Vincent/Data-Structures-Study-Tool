@@ -27,8 +27,9 @@ export const REFERENCE = [
   {
     title: 'Fields of each structure',
     rows: [
-      ['data, next', 'Singly linked list (start), circular list (start), linked stack (top), linked queue (front, rear).'],
-      ['data, left, right', 'Doubly linked list (start) — prev means left and next means right. Binary tree (root).'],
+      ['data, next', 'Singly linked list (head), circular list (head), linked stack (top), linked queue (front, rear).'],
+      ['data, prev, next', 'Doubly linked list (head); left and right are accepted as other names for prev and next.'],
+      ['data, left, right', 'Binary tree (root).'],
       ['G, s', 'Graph: G is the graph (read-only), s the start vertex. Use the graph functions below.'],
     ],
   },
@@ -39,8 +40,8 @@ export const REFERENCE = [
       ['while cur != NULL do\n  …\nend', 'Repeat while the condition is true. do is required.'],
       ['for i = 1 to 5 do\n  …\nend', 'Count from 1 to 5 inclusive. Add step 2 for other steps.'],
       ['for each w in neighbors(G, v) do\n  …\nend', 'Loop over the items of an array, queue, stack or set.'],
-      ['repeat\n  …\nuntil p == start', 'Body first, then test; stops when the condition is true. Same as C’s do { … } while (p != start).'],
-      ['do\n  …\nwhile p != start', 'Body first, then repeat while the condition is true (C’s do-while).'],
+      ['repeat\n  …\nuntil p == head', 'Body first, then test; stops when the condition is true. Same as C’s do { … } while (p != head).'],
+      ['do\n  …\nwhile p != head', 'Body first, then repeat while the condition is true (C’s do-while).'],
       ['a and b   a or b   not a', 'Logic (&&, ||, ! also work). and/or stop early: p != NULL and p.data > 3 is safe.'],
       ['break   continue', 'Leave the loop / skip to its next round.'],
     ],
@@ -49,8 +50,8 @@ export const REFERENCE = [
     title: 'Functions',
     rows: [
       ['function count(p)\n  if p == NULL then\n    return 0\n  end\n  return 1 + count(p.next)\nend', 'Defined at the top level, anywhere in the program. Recursion is allowed (up to 100 nested calls).'],
-      ['n = count(start)', 'Call a function and use its result. A call on its own line ignores the result.'],
-      ['start = insertFront(start, 5)', 'Parameters are copies (like C). To change the caller’s pointer, return the new value and assign it. A function may also assign directly to a global variable such as start.'],
+      ['n = count(head)', 'Call a function and use its result. A call on its own line ignores the result.'],
+      ['head = insertFront(head, 5)', 'Parameters are copies (like C). To change the caller’s pointer, return the new value and assign it. A function may also assign directly to a global variable such as head.'],
     ],
   },
   {

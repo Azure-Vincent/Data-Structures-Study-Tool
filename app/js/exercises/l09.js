@@ -13,7 +13,6 @@ function delOp(kind, pos) {
 export const l09 = [
   {
     id: 'l09-rewire-delete',
-    lecture: 9,
     concept: 'l09.delete-mid',
     conceptBy: (p) => `l09.delete-${p.kind}`,
     variants: { 'l09.delete-beg': { kind: 'beg' }, 'l09.delete-mid': { kind: 'mid' }, 'l09.delete-end': { kind: 'end' }, 'l09.preserve-access': { kind: 'mid' } },
@@ -30,8 +29,8 @@ export const l09 = [
       const target = kind === 'beg' ? vs[0] : kind === 'end' ? vs[n - 1] : vs[pos - 1];
       const edge = n === 1;
       const steps = {
-        beg: 'temp = start → start = temp->next → free(temp).',
-        end: n === 1 ? 'Only one node: keep it in temp, set start = NULL, free(temp).' : 'Put prev on the second-to-last node and temp on the last; prev->next = NULL; free(temp).',
+        beg: 'temp = head → head = temp->next → free(temp).',
+        end: n === 1 ? 'Only one node: keep it in temp, set head = NULL, free(temp).' : 'Put prev on the second-to-last node and temp on the last; prev->next = NULL; free(temp).',
         mid: `prev on node ${pos - 1}, temp on node ${pos}; prev->next = temp->next; free(temp).`,
       }[kind];
       return {
@@ -40,8 +39,8 @@ export const l09 = [
         ...rewire(spec, { explain: 'The node was unlinked first and freed afterwards, and no other node lost its pointer.' }),
         hints: [
           'Before changing any link, make sure some pointer variable still holds the node you will free.',
-          { text: kind === 'beg' ? 'start and the first node.' : kind === 'end' ? 'the last two nodes.' : `nodes ${pos - 1} and ${pos}.`, hl: { pos: kind === 'beg' ? [1] : kind === 'end' ? [Math.max(1, n - 1), n] : [pos - 1, pos] } },
-          kind === 'beg' ? 'Set temp to the first node, move start to the second node, then free temp.' : kind === 'end' ? (n === 1 ? 'Set temp = start, start = NULL, then free.' : `Set temp to node ${n}, set node ${n - 1}'s next to NULL, then free temp.`) : `Set temp to node ${pos}, make node ${pos - 1}'s next skip to node ${pos + 1}, then free temp.`,
+          { text: kind === 'beg' ? 'head and the first node.' : kind === 'end' ? 'the last two nodes.' : `nodes ${pos - 1} and ${pos}.`, hl: { pos: kind === 'beg' ? [1] : kind === 'end' ? [Math.max(1, n - 1), n] : [pos - 1, pos] } },
+          kind === 'beg' ? 'Set temp to the first node, move head to the second node, then free temp.' : kind === 'end' ? (n === 1 ? 'Set temp = head, head = NULL, then free.' : `Set temp to node ${n}, set node ${n - 1}'s next to NULL, then free temp.`) : `Set temp to node ${pos}, make node ${pos - 1}'s next skip to node ${pos + 1}, then free temp.`,
         ],
         solutionTrace: { struct: 'sll', op: kind === 'beg' ? 'deleteBeg' : kind === 'end' ? 'deleteEnd' : 'deleteMid', world: w, args: kind === 'mid' ? [pos] : [] },
         params: { kind },
@@ -50,7 +49,6 @@ export const l09 = [
   },
   {
     id: 'l09-order-delete',
-    lecture: 9,
     concept: 'l09.delete-beg',
     conceptBy: (p) => `l09.delete-${p.kind}`,
     variants: { 'l09.delete-beg': { kind: 'beg' }, 'l09.delete-mid': { kind: 'mid' }, 'l09.delete-end': { kind: 'end' } },
@@ -63,8 +61,8 @@ export const l09 = [
       let mk;
       if (kind === 'beg') {
         items = [
-          { id: 'a', code: 'temp = start;' },
-          { id: 'b', code: 'start = temp->next;' },
+          { id: 'a', code: 'temp = head;' },
+          { id: 'b', code: 'head = temp->next;' },
           { id: 'c', code: 'free(temp);' },
         ];
         mk = (w) => ({ world: w, goal: SLL.deleteBeg(w).final, opts: { locals: ['temp'] } });
@@ -77,7 +75,7 @@ export const l09 = [
         mk = (w) => ({ world: withPointers(w, { prev: 1 }), goal: SLL.deleteMid(w, 2).final, opts: { locals: ['temp', 'prev'] } });
       } else {
         items = [
-          { id: 'a', code: 'temp = prev = start;' },
+          { id: 'a', code: 'temp = prev = head;' },
           { id: 'b', code: 'while (temp->next != NULL) { prev = temp; temp = temp->next; }', label: 'while (temp->next != NULL) {\n    prev = temp;\n    temp = temp->next;\n}' },
           { id: 'c', code: 'prev->next = NULL;' },
           { id: 'd', code: 'free(temp);' },
@@ -98,7 +96,6 @@ export const l09 = [
   },
   {
     id: 'l09-bug',
-    lecture: 9,
     concept: 'l09.preserve-access',
     type: 'bug',
     title: 'Find the deletion bug',
@@ -106,8 +103,8 @@ export const l09 = [
       const vs = values(rng, 4);
       const w = randList(rng, 'sll', vs, { scatter: false });
       const bugs = [
-        { lines: ['temp = start;', 'free(temp);', 'start = temp->next;'], bad: 1, world: w, goal: 'delete the first node', why: 'free(temp) releases the node while start still points to it and BEFORE its next field is read. Line 3 then reads freed memory (use after free). Relink first, then free.', tag: 'free-before-unlink' },
-        { lines: ['start = start->next;', 'free(start);'], bad: 0, world: w, goal: 'delete the first node', why: 'Line 1 overwrites the only pointer to the first node — it is lost forever (leak). Line 2 then frees the NEW first node, which is still in the list. Keep the old first node in temp.', tag: 'lost-access' },
+        { lines: ['temp = head;', 'free(temp);', 'head = temp->next;'], bad: 1, world: w, goal: 'delete the first node', why: 'free(temp) releases the node while head still points to it and BEFORE its next field is read. Line 3 then reads freed memory (use after free). Relink first, then free.', tag: 'free-before-unlink' },
+        { lines: ['head = head->next;', 'free(head);'], bad: 0, world: w, goal: 'delete the first node', why: 'Line 1 overwrites the only pointer to the first node — it is lost forever (leak). Line 2 then frees the NEW first node, which is still in the list. Keep the old first node in temp.', tag: 'lost-access' },
         { lines: ['free(temp);', 'prev->next = temp->next;'], bad: 0, world: withPointers(w, { prev: 1, temp: 2 }), goal: 'delete the node temp (prev is the node before it)', why: 'The node is freed while prev->next still points to it, and line 2 reads temp->next from freed memory.', tag: 'free-before-unlink' },
         { lines: ['prev->next = NULL;', 'free(temp);'], bad: 0, world: withPointers(w, { prev: 1, temp: 2 }), goal: 'delete the node temp (prev is the node before it)', why: 'prev->next = NULL cuts the list after prev: every node after temp becomes unreachable. Use prev->next = temp->next.', tag: 'lost-access' },
       ];
@@ -125,7 +122,6 @@ export const l09 = [
   },
   {
     id: 'l09-singleton',
-    lecture: 9,
     concept: 'l09.delete-end',
     type: 'predict',
     title: 'Delete the last node of a one-node list',
@@ -137,37 +133,36 @@ export const l09 = [
       const ask = rng.pick(['state', 'fix']);
       if (ask === 'state') {
         const o = opts(rng, [
-          { text: `start still holds ${fs.vars.start}, which is freed memory (dangling)`, correct: true, why: 'Nothing in the notes’ code changes start, and the only node was freed.' },
-          { text: 'start becomes NULL automatically', correct: false, why: 'free() never changes any pointer variable; it only releases memory.', tag: 'free-semantics' },
-          { text: 'The program crashes at prev->next = NULL', correct: false, why: 'prev == start == the only node, which is still valid at that moment, so the write succeeds.', tag: 'singleton' },
+          { text: `head still holds ${fs.vars.head}, which is freed memory (dangling)`, correct: true, why: 'Nothing in the notes’ code changes head, and the only node was freed.' },
+          { text: 'head becomes NULL automatically', correct: false, why: 'free() never changes any pointer variable; it only releases memory.', tag: 'free-semantics' },
+          { text: 'The program crashes at prev->next = NULL', correct: false, why: 'prev == head == the only node, which is still valid at that moment, so the write succeeds.', tag: 'singleton' },
           { text: 'The while loop never ends', correct: false, why: 'temp->next is NULL right away, so the loop body never runs.', tag: 'singleton' },
         ]);
         return {
-          prompt: `The list has ONE node (${v}). Run \`delete_at_last()\` exactly as written in Lec 09 p.2:\n\nWhat is true afterwards?`,
-          visual: { type: 'code', lines: ['temp = prev = start;', 'while (temp->next != NULL) {', '    prev = temp;  temp = temp->next;', '}', 'prev->next = NULL;', 'free(temp);'] },
+          prompt: `The list has ONE node (${v}). Run \`delete_at_end()\` exactly as written in Lec 09 p.2:\n\nWhat is true afterwards?`,
+          visual: { type: 'code', lines: ['temp = prev = head;', 'while (temp->next != NULL) {', '    prev = temp;  temp = temp->next;', '}', 'prev->next = NULL;', 'free(temp);'] },
           edge: true,
-          ...mcq(o, { explain: 'Correction: add “if (temp == start) start = NULL; else prev->next = NULL;”.' }),
-          hints: ['With one node, temp, prev and start all hold the same address.', { text: 'Which variables does the code assign after the loop?' }, 'Does any line assign start?'],
+          ...mcq(o, { explain: 'Correction: add “if (temp == head) head = NULL; else prev->next = NULL;”.' }),
+          hints: ['With one node, temp, prev and head all hold the same address.', { text: 'Which variables does the code assign after the loop?' }, 'Does any line assign head?'],
         };
       }
       const o = opts(rng, [
-        { text: 'if (temp == start) start = NULL; else prev->next = NULL;', correct: true, why: 'When the only node is removed the list must become empty.' },
-        { text: 'free(start);', correct: false, why: 'That would free the same block twice (double free).', tag: 'double-free' },
-        { text: 'prev = NULL;', correct: false, why: 'prev is a local variable; start (global) would still dangle.', tag: 'singleton' },
-        { text: 'temp->next = start;', correct: false, why: 'That creates a self-loop and still leaves start pointing at freed memory.', tag: 'singleton' },
+        { text: 'if (temp == head) head = NULL; else prev->next = NULL;', correct: true, why: 'When the only node is removed the list must become empty.' },
+        { text: 'free(head);', correct: false, why: 'That would free the same block twice (double free).', tag: 'double-free' },
+        { text: 'prev = NULL;', correct: false, why: 'prev is a local variable; head (global) would still dangle.', tag: 'singleton' },
+        { text: 'temp->next = head;', correct: false, why: 'That creates a self-loop and still leaves head pointing at freed memory.', tag: 'singleton' },
       ]);
       return {
-        prompt: `\`delete_at_last()\` from Lec 09 p.2 breaks on a one-node list (${v}). Which change fixes it?`,
+        prompt: `\`delete_at_end()\` from Lec 09 p.2 breaks on a one-node list (${v}). Which change fixes it?`,
         edge: true,
         visual: { type: 'list', world: w },
         ...mcq(o),
-        hints: ['After deleting the only node, what should start be?', { text: 'start must not point at freed memory.' }, 'Detect the one-node case: temp == start after the loop.'],
+        hints: ['After deleting the only node, what should head be?', { text: 'head must not point at freed memory.' }, 'Detect the one-node case: temp == head after the loop.'],
       };
     },
   },
   {
     id: 'l09-traverse-predict',
-    lecture: 9,
     concept: 'l09.traverse',
     type: 'predict',
     title: 'Predict the output of traverse()',
@@ -181,7 +176,7 @@ export const l09 = [
         const len = vals(w).length;
         const kind = rng.pick(['beg', 'end', 'mid', 'mid']);
         const pos = kind === 'mid' ? rng.int(1, len + 1) : null;
-        ops.push(kind === 'beg' ? 'delete_at_beg()' : kind === 'end' ? 'delete_at_last()' : `delete_at_mid(pos = ${pos})`);
+        ops.push(kind === 'beg' ? 'delete_at_beginning()' : kind === 'end' ? 'delete_at_end()' : `delete_at_position(pos = ${pos})`);
         w = delOp(kind, pos)(w).final;
       }
       const out = SLL.traverse(w).output.filter((x) => x !== 'Empty list');
@@ -190,14 +185,13 @@ export const l09 = [
         prompt: `Starting from the list shown, these run in order (invalid positions just print an error and change nothing):\n\n${ops.map((o, i) => `${i + 1}. \`${o}\``).join('\n')}\n\nWhat does \`traverse()\` print? ${empty ? '' : ''}(Type the numbers; type “empty” if nothing is left.)`,
         visual: { type: 'list', world: w0 },
         edge: empty || ops.some((o) => /pos = (1|0)\)/.test(o)),
-        ...sequenceText(out, { explain: `delete_at_mid only accepts 1 < pos < nodectr (Lec 09 p.3). Final list: ${listText(vals(w))}.` }),
-        hints: ['Apply the operations one at a time, re-numbering positions after each.', { text: 'Positions are 1-based and change after every deletion.' }, 'Check each delete_at_mid position against 1 < pos < nodectr first.'],
+        ...sequenceText(out, { explain: `delete_at_position only accepts 1 < pos < node_count (Lec 09 p.3). Final list: ${listText(vals(w))}.` }),
+        hints: ['Apply the operations one at a time, re-numbering positions after each.', { text: 'Positions are 1-based and change after every deletion.' }, 'Check each delete_at_position position against 1 < pos < node_count first.'],
       };
     },
   },
   {
     id: 'l09-valid-pos',
-    lecture: 9,
     concept: 'l09.delete-mid',
     type: 'predict',
     title: 'Which positions are accepted?',
@@ -209,19 +203,18 @@ export const l09 = [
       const ok = cands.filter((p) => !(op === 'delete' ? SLL.deleteMid(w, p) : SLL.insertMid(w, 0, p)).error);
       const o = cands.map((p) => ({ text: `pos = ${p}`, correct: ok.includes(p), why: ok.includes(p) ? 'a middle position' : p <= 1 ? 'use the "at the beginning" function' : 'beyond the middle range', tag: 'position-range' }));
       return {
-        prompt: `The list has **${n}** node(s). Which positions does \`${op === 'delete' ? 'delete_at_mid' : 'insert_at_mid'}(pos)\` accept? ${op === 'delete' ? '(condition: pos > 1 && pos < nodectr)' : '(corrected condition: pos > 1 && pos <= nodectr — the new node becomes node pos)'}`,
+        prompt: `The list has **${n}** node(s). Which positions does \`${op === 'delete' ? 'delete_at_position' : 'insert_at_position'}(pos)\` accept? ${op === 'delete' ? '(condition: pos > 1 && pos < node_count)' : '(corrected condition: pos > 1 && pos <= node_count — the new node becomes node pos)'}`,
         visual: { type: 'list', world: w },
         edge: n <= 2,
         ...multi(keep(o), {
-          explain: `Valid: ${ok.length ? ok.join(', ') : 'none'} for nodectr = ${n}. ${op === 'insert' ? 'Lec 08 p.7 writes pos < nodectr for insertion, which wrongly rejects pos = nodectr (inserting just before the last node is still a middle insertion).' : 'Deleting position 1 or n needs delete_at_beg / delete_at_last instead.'}`,
+          explain: `Valid: ${ok.length ? ok.join(', ') : 'none'} for node_count = ${n}. ${op === 'insert' ? 'Lec 08 p.7 writes pos < node_count for insertion, which wrongly rejects pos = node_count (inserting just before the last node is still a middle insertion).' : 'Deleting position 1 or n needs delete_at_beginning / delete_at_end instead.'}`,
         }),
-        hints: ['Substitute each position into the condition.', { text: `nodectr = ${n}.` }, op === 'delete' ? `Valid positions satisfy 1 < pos < ${n}.` : `Valid positions satisfy 1 < pos ≤ ${n}.`],
+        hints: ['Substitute each position into the condition.', { text: `node_count = ${n}.` }, op === 'delete' ? `Valid positions satisfy 1 < pos < ${n}.` : `Valid positions satisfy 1 < pos ≤ ${n}.`],
       };
     },
   },
   {
     id: 'l09-fill',
-    lecture: 9,
     concept: 'l09.delete-mid',
     conceptBy: (p) => `l09.delete-${p.kind}`,
     type: 'fill',
@@ -235,7 +228,7 @@ export const l09 = [
           return { world: withPointers(w, { prev: 1, temp: 2 }), goal: SLL.deleteMid(w, 2).final, opts: { locals: ['temp', 'prev'] }, label: listText(vs) };
         });
         return {
-          prompt: 'prev is on node 1 and temp on node 2 (the node to delete). Complete the main line of `delete_at_mid` (Lec 09 p.4).',
+          prompt: 'prev is on node 1 and temp on node 2 (the node to delete). Complete the main line of `delete_at_position` (Lec 09 p.4).',
           visual: { type: 'list', world: cases[0].world },
           ...fillCode('____;\nfree(temp);', cases, 'prev->next = temp->next', { explain: 'prev must skip over temp to the node after it — and temp->next must be read BEFORE temp is freed.' }),
           hints: ['After deletion, node 1 should be followed by node 3.', { text: 'Which field holds the address of node 3?' }, 'Assign prev->next.'],
@@ -248,10 +241,10 @@ export const l09 = [
           return { world: w, goal: SLL.deleteBeg(w).final, opts: { locals: ['temp'] }, label: listText(vs) };
         });
         return {
-          prompt: 'Complete `delete_at_beg` (Lec 09 p.1).',
+          prompt: 'Complete `delete_at_beginning` (Lec 09 p.1).',
           visual: { type: 'list', world: cases[0].world },
-          ...fillCode('temp = start;\n____;\nfree(temp);', cases, 'start = temp->next', { explain: 'start moves to the second node; temp keeps the old first node so it can be freed.' }),
-          hints: ['start must end up on the second node.', { text: 'temp holds the first node.' }, 'Use temp->next.'],
+          ...fillCode('temp = head;\n____;\nfree(temp);', cases, 'head = temp->next', { explain: 'head moves to the second node; temp keeps the old first node so it can be freed.' }),
+          hints: ['head must end up on the second node.', { text: 'temp holds the first node.' }, 'Use temp->next.'],
           params: { kind },
         };
       }
@@ -260,9 +253,9 @@ export const l09 = [
         return { world: w, goal: SLL.deleteEnd(w).final, opts: { locals: ['temp', 'prev'] }, label: listText(vs) };
       });
       return {
-        prompt: 'Complete the loop condition in `delete_at_last` (list has at least 2 nodes).',
+        prompt: 'Complete the loop condition in `delete_at_end` (list has at least 2 nodes).',
         visual: { type: 'list', world: cases[0].world },
-        ...fillCode('temp = prev = start;\nwhile (____) {\n    prev = temp;\n    temp = temp->next;\n}\nprev->next = NULL;\nfree(temp);', cases, 'temp->next != NULL', { explain: 'temp must stop ON the last node and prev one behind it.' }),
+        ...fillCode('temp = prev = head;\nwhile (____) {\n    prev = temp;\n    temp = temp->next;\n}\nprev->next = NULL;\nfree(temp);', cases, 'temp->next != NULL', { explain: 'temp must stop ON the last node and prev one behind it.' }),
         hints: ['When the loop ends, temp should be on the last node.', { text: 'The last node is the one with next == NULL.' }, 'Keep looping while temp has a next node.'],
         params: { kind },
       };

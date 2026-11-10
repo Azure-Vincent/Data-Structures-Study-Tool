@@ -1,6 +1,6 @@
 // Checking pointer worlds: what is wrong, and which action caused it.
 // Used by rewire exercises, repair mode and the free-exploration sandbox.
-import { clone, walk, fieldsOf, forwardField, lostNodes, liveNodes, getnode, free, fmtPtr, GARBAGE, reachableFrom } from './pointerWorld.js';
+import { clone, walk, fieldsOf, forwardField, lostNodes, liveNodes, create_node, free, fmtPtr, GARBAGE, reachableFrom } from './pointerWorld.js';
 
 const L = (w, a) => (w.nodes[a] ? `${a} (data ${w.nodes[a].data})` : String(a));
 
@@ -19,7 +19,7 @@ export function applyAction(w, act) {
       w.vars[act.name] = act.value;
       return { ok: true };
     case 'alloc': {
-      const a = getnode(w, act.data, act.addr != null ? { addr: act.addr } : undefined);
+      const a = create_node(w, act.data, act.addr != null ? { addr: act.addr } : undefined);
       if (act.var) w.vars[act.var] = a;
       return { ok: true, addr: a };
     }
@@ -42,7 +42,7 @@ export function describeAction(w, act) {
     case 'setVar':
       return `${act.name} = ${fmtPtr(act.value)}`;
     case 'alloc':
-      return `${act.var || 'newnode'} = getnode()  (data ${act.data})`;
+      return `${act.var || 'new_node'} = create_node()  (data ${act.data})`;
     case 'free':
       return `free(${act.addr})`;
     default:
@@ -52,11 +52,11 @@ export function describeAction(w, act) {
 
 /**
  * Structural problems in a world.
- * opts: { head:'start', lastVar:'tail'|'rear'|null, ignoreVars:[...locals that may dangle] }
+ * opts: { head:'head', lastVar:'tail'|'rear'|null, ignoreVars:[...locals that may dangle] }
  * Returns [{code, message, nodes:[], field?}] — most important first.
  */
 export function problems(w, opts = {}) {
-  const head = opts.head || 'start';
+  const head = opts.head || 'head';
   const ignore = new Set(opts.ignoreVars || []);
   const out = [];
   const kind = w.kind;
@@ -95,14 +95,14 @@ export function problems(w, opts = {}) {
   // 5. doubly linked consistency
   if (kind === 'dll' && r.addrs.length) {
     const first = r.addrs[0];
-    if (w.nodes[first].left !== null) out.push({ code: 'back-first', message: `The first node ${L(w, first)} has left = ${fmtPtr(w.nodes[first].left)}; it should be NULL because nothing comes before it.`, nodes: [first], field: { addr: first, f: 'left' } });
+    if (w.nodes[first].prev !== null) out.push({ code: 'back-first', message: `The first node ${L(w, first)} has prev = ${fmtPtr(w.nodes[first].prev)}; it should be NULL because nothing comes before it.`, nodes: [first], field: { addr: first, f: 'prev' } });
     for (let i = 1; i < r.addrs.length; i++) {
       const a = r.addrs[i - 1];
       const b = r.addrs[i];
-      if (w.nodes[b].left !== a) {
-        const was = w.nodes[b].left;
+      if (w.nodes[b].prev !== a) {
+        const was = w.nodes[b].prev;
         const why = typeof was === 'number' && w.nodes[was] && w.nodes[was].freed ? ` — that is the removed (freed) node` : was === null ? '' : ` — but going forward, ${L(w, a)} comes before it`;
-        out.push({ code: 'back-link', message: `Forward links look fine, but ${L(w, b)}->left = ${fmtPtr(was)}${why}. It should be ${a}. A backward traversal would go wrong here.`, nodes: [b, a], field: { addr: b, f: 'left' } });
+        out.push({ code: 'back-link', message: `Forward links look fine, but ${L(w, b)}->prev = ${fmtPtr(was)}${why}. It should be ${a}. A backward traversal would go wrong here.`, nodes: [b, a], field: { addr: b, f: 'prev' } });
       }
     }
   }
@@ -120,7 +120,7 @@ export function problems(w, opts = {}) {
  * Returns {correct, issues:[string], problems:[...]}.
  */
 export function compareToGoal(w, goal, opts = {}) {
-  const head = opts.head || 'start';
+  const head = opts.head || 'head';
   const ff = forwardField(w.kind);
   const issues = [];
   const probs = problems(w, { ...opts, ignoreVars: opts.locals || [] });
@@ -130,7 +130,7 @@ export function compareToGoal(w, goal, opts = {}) {
   if (!sameAddrs) {
     const gv = got.values.join(' → ') || '(empty)';
     const wv = want.values.join(' → ') || '(empty)';
-    if (gv === wv) issues.push(`The values read ${gv}, which looks right, but the nodes are not the expected ones (check which node addresses are linked; e.g. a new node must be the one getnode() returned).`);
+    if (gv === wv) issues.push(`The values read ${gv}, which looks right, but the nodes are not the expected ones (check which node addresses are linked; e.g. a new node must be the one create_node() returned).`);
     else issues.push(`Following ${head} gives ${gv}; expected ${wv}.`);
   }
   // globals that must match (tail/rear/top/front)
@@ -164,7 +164,7 @@ export function diagnoseHistory(initial, actions, opts = {}) {
   const w = clone(initial);
   const lostAt = {};
   const lastWrite = {};
-  const head = opts.head || 'start';
+  const head = opts.head || 'head';
   for (let i = 0; i < actions.length; i++) {
     const act = actions[i];
     // using a lost node?
@@ -180,7 +180,7 @@ export function diagnoseHistory(initial, actions, opts = {}) {
       const inList = walk(w, w.vars[head], forwardField(w.kind)).addrs.includes(act.addr);
       if (inList || holders.length) {
         const r = applyAction(w, act);
-        const back = holders.find((h) => h.endsWith('->left'));
+        const back = holders.find((h) => h.endsWith('->prev'));
         const msg = !inList && back
           ? `Action ${i + 1} frees ${act.addr}, but ${back} still points at it. You updated the forward link but left the backward link pointing at the removed node — it now dangles. Update ${back} before freeing.`
           : `Action ${i + 1} frees ${act.addr} while it is still linked (${inList ? `reachable from ${head}` : holders.join(', ')}). Those links now dangle. Unlink the node first, then free it.`;

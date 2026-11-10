@@ -3,7 +3,7 @@
 import os; os.makedirs('shots', exist_ok=True)
 from playwright.sync_api import sync_playwright
 BASE = 'http://localhost:5173/'
-WRONG = 'newnode = new Node(15)\nstart.next = newnode\nnewnode.next = start.next'
+WRONG = 'new_node = new Node(15)\nstart.next = new_node\nnew_node.next = start.next'
 
 def set_code(pg, code):
     pg.evaluate("c => { const t = document.querySelector('textarea.ce-input'); t.value = c; t.dispatchEvent(new Event('input')); }", code)
@@ -27,7 +27,7 @@ with sync_playwright() as p:
     set_code(pg, WRONG)
     step = pg.locator('button:has-text("Step ▶")')
     for _ in range(3): step.click()
-    ok(pg.locator('.ce-line.cur').inner_text().strip() == 'start.next = newnode', 'current line is highlighted in the editor')
+    ok(pg.locator('.ce-line.cur').inner_text().strip() == 'start.next = new_node', 'current line is highlighted in the editor')
     ok('Lost reference' in pg.locator('.lab-problems').inner_text(), 'lost reference reported at the step it happens')
     ok(pg.locator('[data-addr="200"].lost, [data-addr="200"] .tag').count() > 0, 'unreachable node marked in the diagram')
     pg.locator('button:has-text("Show before / after")').first.click()

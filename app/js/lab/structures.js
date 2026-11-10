@@ -8,23 +8,23 @@ import * as G from '../core/graph.js';
  * roots:   the pointer variables that hold the structure
  */
 export const STRUCTURES = {
-  sll: { id: 'sll', label: 'Singly linked list', fields: ['next'], aliases: {}, roots: ['start'], forward: 'next', render: 'list', listKind: 'sll', lecture: 8, valuesHelp: 'Values from the first node, e.g. 10 20 30 (leave empty for an empty list).' },
-  dll: { id: 'dll', label: 'Doubly linked list', fields: ['left', 'right'], aliases: { prev: 'left', next: 'right' }, roots: ['start'], forward: 'right', back: 'left', render: 'list', listKind: 'dll', lecture: 10, valuesHelp: 'Values from the first node, e.g. 10 20 30.' },
-  csll: { id: 'csll', label: 'Circular linked list', fields: ['next'], aliases: {}, roots: ['start'], forward: 'next', circular: true, render: 'list', listKind: 'csll', lecture: 11, valuesHelp: 'Values from start, e.g. 10 20 30 — the last node links back to start.' },
-  stack: { id: 'stack', label: 'Stack (linked)', fields: ['next'], aliases: {}, roots: ['top'], forward: 'next', render: 'list', listKind: 'sll', lecture: 12, valuesHelp: 'Values from the top down, e.g. 30 20 10 (30 is on top).' },
-  queue: { id: 'queue', label: 'Queue (linked)', fields: ['next'], aliases: {}, roots: ['front', 'rear'], forward: 'next', render: 'list', listKind: 'sll', lecture: 12, valuesHelp: 'Values from front to rear, e.g. 10 20 30 (10 leaves first).' },
-  tree: { id: 'tree', label: 'Binary tree', fields: ['left', 'right'], aliases: {}, roots: ['root'], render: 'tree', lecture: 13, valuesHelp: 'Level order with - for an empty spot, e.g. A B C D E - G or 50 30 70 20 40 60 80.' },
-  graph: { id: 'graph', label: 'Graph', fields: ['next'], aliases: {}, roots: [], render: 'graph', lecture: 14, valuesHelp: 'Choose one of the lecture graphs. G is the graph, s the start vertex.' },
+  sll: { id: 'sll', label: 'Singly linked list', fields: ['next'], aliases: {}, roots: ['head'], forward: 'next', render: 'list', listKind: 'sll', valuesHelp: 'Values from the first node, e.g. 10 20 30 (leave empty for an empty list).' },
+  dll: { id: 'dll', label: 'Doubly linked list', fields: ['prev', 'next'], aliases: { left: 'prev', right: 'next' }, roots: ['head'], forward: 'next', back: 'prev', render: 'list', listKind: 'dll', valuesHelp: 'Values from the first node, e.g. 10 20 30.' },
+  csll: { id: 'csll', label: 'Circular linked list', fields: ['next'], aliases: {}, roots: ['head'], forward: 'next', circular: true, render: 'list', listKind: 'csll', valuesHelp: 'Values from head, e.g. 10 20 30 — the last node links back to head.' },
+  stack: { id: 'stack', label: 'Stack (linked)', fields: ['next'], aliases: {}, roots: ['top'], forward: 'next', render: 'list', listKind: 'sll', valuesHelp: 'Values from the top down, e.g. 30 20 10 (30 is on top).' },
+  queue: { id: 'queue', label: 'Queue (linked)', fields: ['next'], aliases: {}, roots: ['front', 'rear'], forward: 'next', render: 'list', listKind: 'sll', valuesHelp: 'Values from front to rear, e.g. 10 20 30 (10 leaves first).' },
+  tree: { id: 'tree', label: 'Binary tree', fields: ['left', 'right'], aliases: {}, roots: ['root'], render: 'tree', valuesHelp: 'Level order with - for an empty spot, e.g. A B C D E - G or 50 30 70 20 40 60 80.' },
+  graph: { id: 'graph', label: 'Graph', fields: ['next'], aliases: {}, roots: [], render: 'graph', valuesHelp: 'Choose one of the lecture graphs. G is the graph, s the start vertex.' },
   // no starting nodes: for programs that work with arrays (Lec 07, the array stack and queue of Lec 12)
-  arrays: { id: 'arrays', label: 'Arrays only (no nodes)', fields: ['next'], aliases: {}, roots: [], render: 'none', lecture: 7, valuesHelp: 'Nothing is set up: the program creates its own arrays with new Array(n).' },
+  arrays: { id: 'arrays', label: 'Arrays only (no nodes)', fields: ['next'], aliases: {}, roots: [], render: 'none', valuesHelp: 'Nothing is set up: the program creates its own arrays with new Array(n).' },
 };
 
 export const STRUCTURE_ORDER = ['sll', 'dll', 'csll', 'stack', 'queue', 'tree', 'graph', 'arrays'];
 
 export const GRAPH_EXAMPLES = {
-  lec14: { label: 'Lecture 14 graph (a–i)', make: G.lec14Graph, start: 'a' },
-  weighted: { label: 'Lecture 13 weighted graph (A–G)', make: G.lec13Weighted, start: 'A' },
-  directed: { label: 'Lecture 13 directed graph (1–5)', make: G.lec13Directed, start: '1' },
+  example: { label: 'Undirected graph (a–i)', make: G.exampleGraph, start: 'a' },
+  weighted: { label: 'Weighted graph (A–G)', make: G.weightedGraph, start: 'A' },
+  directed: { label: 'Directed graph (1–5)', make: G.directedGraph, start: '1' },
   disconnected: {
     label: 'Two components (A–G)',
     make: () => {
@@ -113,7 +113,7 @@ export function buildInitial(setup) {
     });
     setGlobal(st, 'root', ref(addrs[0] ?? null));
   } else if (S.render === 'graph') {
-    const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.lec14;
+    const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.example;
     graph = G.ensureLayout(ex.make());
     setGlobal(st, 'G', { graph: true });
     setGlobal(st, 's', setup.vars && 's' in setup.vars ? setup.vars.s : ex.start);
@@ -132,7 +132,7 @@ function parentMissing(values, i) {
   return false;
 }
 
-/** Short human description of a setup, e.g. "start → 10 → 20 → 30" (plus any given variables). */
+/** Short human description of a setup, e.g. "head → 10 → 20 → 30" (plus any given variables). */
 export function describeSetup(setup) {
   const S = STRUCTURES[setup.structure] || STRUCTURES.sll;
   const given = Object.entries(setup.vars || {})
@@ -147,12 +147,12 @@ export function describeSetup(setup) {
 function baseSetupText(S, setup) {
   const vals = (setup.values || []).filter((v) => v !== null);
   if (S.render === 'graph') {
-    const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.lec14;
+    const ex = GRAPH_EXAMPLES[setup.graph] || GRAPH_EXAMPLES.example;
     return `${ex.label}, s = ${setup.vars?.s ?? ex.start}`;
   }
   if (S.render === 'none') return 'no nodes — only the arrays and variables the program creates';
   if (S.render === 'tree') return vals.length ? `tree (level order) ${setup.values.map((v) => (v === null ? '–' : v)).join(' ')}` : 'empty tree (root = NULL)';
   const root = S.roots[0];
   if (!vals.length) return S.id === 'queue' ? 'empty queue (front = rear = NULL)' : `empty (${root} = NULL)`;
-  return `${root} → ${vals.join(' → ')}${S.circular ? ' → (back to start)' : ''}`;
+  return `${root} → ${vals.join(' → ')}${S.circular ? ' → (back to head)' : ''}`;
 }

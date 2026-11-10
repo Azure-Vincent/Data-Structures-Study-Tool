@@ -1,92 +1,86 @@
 // Singly linked list algorithms (Lectures 08 and 09), traced step by step.
 // Code lines follow the notes' C style; corrections are marked in comments.
 import { Tracer, keyCodes } from './trace.js';
-import { addVar, fmtPtr, walk, buildList, getnode as rawGetnode } from './pointerWorld.js';
+import { addVar, fmtPtr, walk, buildList, create_node as rawGetnode } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
 export const SLL_CODE = {
   insertBeg: {
-    title: 'insert_at_beg()',
-    ref: 'Lec 08 p.4',
+    title: 'insert_at_beginning()',
     lines: [
-      'newnode = getnode();          // malloc, data, next = NULL',
-      'if (start == NULL)',
-      '    start = newnode;',
+      'new_node = create_node();          // malloc, data, next = NULL',
+      'if (head == NULL)',
+      '    head = new_node;',
       'else {',
-      '    newnode->next = start;    // (1) new node -> old first node',
-      '    start = newnode;          // (2) start -> new node',
+      '    new_node->next = head;    // (1) new node -> old first node',
+      '    head = new_node;          // (2) head -> new node',
       '}',
     ],
   },
   insertEnd: {
     title: 'insert_at_end()',
-    ref: 'Lec 08 p.5',
     lines: [
-      'newnode = getnode();',
-      'if (start == NULL)',
-      '    start = newnode;',
+      'new_node = create_node();',
+      'if (head == NULL)',
+      '    head = new_node;',
       'else {',
-      '    temp = start;',
+      '    temp = head;',
       '    while (temp->next != NULL)',
       '        temp = temp->next;',
-      '    temp->next = newnode;',
+      '    temp->next = new_node;',
       '}',
     ],
   },
   insertMid: {
-    title: 'insert_at_mid(pos)',
-    ref: 'Lec 08 p.6–7',
+    title: 'insert_at_position(pos)',
     lines: [
-      'nodectr = countnode(start);',
-      'if (pos > 1 && pos <= nodectr) {   // corrected: notes use pos < nodectr',
-      '    newnode = getnode();           // corrected: allocate only after validating',
-      '    temp = prev = start;  ctr = 1;',
-      '    while (ctr < pos) {',
+      'node_count = count_nodes(head);',
+      'if (pos > 1 && pos <= node_count) {   // corrected: notes use pos < node_count',
+      '    new_node = create_node();           // corrected: allocate only after validating',
+      '    temp = prev = head;  i = 1;',
+      '    while (i < pos) {',
       '        prev = temp;',
       '        temp = temp->next;',
-      '        ctr++;',
+      '        i++;',
       '    }',
-      '    prev->next = newnode;          // (1)',
-      '    newnode->next = temp;          // (2) safe: temp saved the rest',
+      '    prev->next = new_node;          // (1)',
+      '    new_node->next = temp;          // (2) safe: temp saved the rest',
       '} else',
       '    printf("position %d is not a middle position", pos);',
     ],
   },
   deleteBeg: {
-    title: 'delete_at_beg()',
-    ref: 'Lec 09 p.1',
+    title: 'delete_at_beginning()',
     lines: [
-      'if (start == NULL) {',
+      'if (head == NULL) {',
       '    printf("No nodes exist"); return;',
       '}',
-      'temp = start;',
-      'start = temp->next;',
+      'temp = head;',
+      'head = temp->next;',
       'free(temp);',
     ],
   },
   deleteEnd: {
-    title: 'delete_at_last()',
-    ref: 'Lec 09 p.2 (with one-node correction)',
+    title: 'delete_at_end()',
     lines: [
-      'if (start == NULL) { printf("Empty list"); return; }',
-      'temp = prev = start;',
+      'if (head == NULL) { printf("Empty list"); return; }',
+      'temp = prev = head;',
       'while (temp->next != NULL) {',
       '    prev = temp;',
       '    temp = temp->next;',
       '}',
-      'if (temp == start)              // correction: only one node',
-      '    start = NULL;',
+      'if (temp == head)              // correction: only one node',
+      '    head = NULL;',
       'else',
       '    prev->next = NULL;',
       'free(temp);',
     ],
   },
   deleteEndNotes: {
-    title: 'delete_at_last() exactly as in the notes',
-    ref: 'Lec 09 p.2',
+    title: 'delete_at_end() exactly as in the notes',
     lines: [
-      'if (start == NULL) { printf("Empty list"); return; }',
-      'temp = prev = start;',
+      'if (head == NULL) { printf("Empty list"); return; }',
+      'temp = prev = head;',
       'while (temp->next != NULL) {',
       '    prev = temp;',
       '    temp = temp->next;',
@@ -96,17 +90,16 @@ export const SLL_CODE = {
     ],
   },
   deleteMid: {
-    title: 'delete_at_mid(pos)',
-    ref: 'Lec 09 p.3–4',
+    title: 'delete_at_position(pos)',
     lines: [
-      'if (start == NULL) { printf("Empty list"); return; }',
-      'nodectr = countnode(start);',
-      'if (pos > 1 && pos < nodectr) {',
-      '    temp = prev = start;  ctr = 1;',
-      '    while (ctr < pos) {',
+      'if (head == NULL) { printf("Empty list"); return; }',
+      'node_count = count_nodes(head);',
+      'if (pos > 1 && pos < node_count) {',
+      '    temp = prev = head;  i = 1;',
+      '    while (i < pos) {',
       '        prev = temp;',
       '        temp = temp->next;',
-      '        ctr++;',
+      '        i++;',
       '    }',
       '    prev->next = temp->next;     // bypass the node',
       '    free(temp);                  // then release it',
@@ -116,10 +109,9 @@ export const SLL_CODE = {
   },
   traverse: {
     title: 'traverse()',
-    ref: 'Lec 09 p.5',
     lines: [
-      'temp = start;',
-      'if (start == NULL) printf("Empty list");',
+      'temp = head;',
+      'if (head == NULL) printf("Empty list");',
       'while (temp != NULL) {',
       '    printf("%d ", temp->data);',
       '    temp = temp->next;',
@@ -127,18 +119,17 @@ export const SLL_CODE = {
     ],
   },
   createList: {
-    title: 'creatlist(n)',
-    ref: 'Lec 08 p.3',
+    title: 'create_list(n)',
     lines: [
       'for (i = 0; i < n; i++) {',
-      '    newnode = getnode();',
-      '    if (start == NULL)',
-      '        start = newnode;',
+      '    new_node = create_node();',
+      '    if (head == NULL)',
+      '        head = new_node;',
       '    else {',
-      '        temp = start;',
+      '        temp = head;',
       '        while (temp->next != NULL)',
       '            temp = temp->next;',
-      '        temp->next = newnode;',
+      '        temp->next = new_node;',
       '    }',
       '}',
     ],
@@ -147,10 +138,10 @@ export const SLL_CODE = {
 keyCodes(SLL_CODE, 'sll');
 
 
-/** Count nodes silently (countnode is a helper call, shown as one step). */
+/** Count nodes silently (count_nodes is a helper call, shown as one step). */
 function countSilently(t, line) {
   const w = t.state;
-  const r = walk(w, w.vars.start);
+  const r = walk(w, w.vars.head);
   t.count('calls');
   t.count('moves', r.addrs.length);
   t.count('visits', r.addrs.length);
@@ -161,24 +152,24 @@ export function insertBeg(world, value, opts = {}) {
   const t = new Tracer(world, SLL_CODE.insertBeg);
   const w = t.state;
   const a = getnodeSteps(t, 0, value, opts);
-  if (cond(t, 1, w.vars.start === null, `Is the list empty? start = ${fmtPtr(w.vars.start)}`, { vars: ['start'] })) {
-    setVar(t, 2, 'start', a, `start = newnode: start now holds ${a}, the address of the only node.`);
+  if (cond(t, 1, w.vars.head === null, `Is the list empty? head = ${fmtPtr(w.vars.head)}`, { vars: ['head'] })) {
+    setVar(t, 2, 'head', a, `head = new_node: head now holds ${a}, the address of the only node.`);
   } else {
-    const old = w.vars.start;
-    setLink(t, 4, a, 'next', old, `(1) newnode->next = start: the new node (${a}) now points to the old first node (${old}, data ${d(w, old)}). Do this FIRST, while start still remembers the old first node.`);
-    setVar(t, 5, 'start', a, `(2) start = newnode: start moves to ${a}. Nothing was lost because the new node already links to ${old}.`);
+    const old = w.vars.head;
+    setLink(t, 4, a, 'next', old, `(1) new_node->next = head: the new node (${a}) now points to the old first node (${old}, data ${d(w, old)}). Do this FIRST, while head still remembers the old first node.`);
+    setVar(t, 5, 'head', a, `(2) head = new_node: head moves to ${a}. Nothing was lost because the new node already links to ${old}.`);
   }
-  return endScope(t, ['newnode']);
+  return endScope(t, ['new_node']);
 }
 
 export function insertEnd(world, value, opts = {}) {
   const t = new Tracer(world, SLL_CODE.insertEnd);
   const w = t.state;
   const a = getnodeSteps(t, 0, value, opts);
-  if (cond(t, 1, w.vars.start === null, `Is the list empty? start = ${fmtPtr(w.vars.start)}`, { vars: ['start'] })) {
-    setVar(t, 2, 'start', a, `start = newnode (${a}).`);
+  if (cond(t, 1, w.vars.head === null, `Is the list empty? head = ${fmtPtr(w.vars.head)}`, { vars: ['head'] })) {
+    setVar(t, 2, 'head', a, `head = new_node (${a}).`);
   } else {
-    setVar(t, 4, 'temp', w.vars.start, `temp = start: temp and start now refer to the SAME address (${w.vars.start}). Moving temp will not move start.`);
+    setVar(t, 4, 'temp', w.vars.head, `temp = head: temp and head now refer to the SAME address (${w.vars.head}). Moving temp will not move head.`);
     while (true) {
       const tn = w.nodes[w.vars.temp];
       t.count('visits');
@@ -186,59 +177,59 @@ export function insertEnd(world, value, opts = {}) {
       t.count('moves');
       setVar(t, 6, 'temp', tn.next, `temp = temp->next: temp advances from ${tn.addr} to ${tn.next} (data ${d(w, tn.next)}).`);
     }
-    setLink(t, 7, w.vars.temp, 'next', a, `temp->next = newnode: the last node (${w.vars.temp}) used to hold NULL; now it holds ${a}.`);
+    setLink(t, 7, w.vars.temp, 'next', a, `temp->next = new_node: the last node (${w.vars.temp}) used to hold NULL; now it holds ${a}.`);
   }
-  return endScope(t, ['newnode', 'temp']);
+  return endScope(t, ['new_node', 'temp']);
 }
 
 
 export function insertMid(world, value, pos, opts = {}) {
   const t = new Tracer(world, SLL_CODE.insertMid);
   const w = t.state;
-  const nodectr = countSilently(t, 0);
-  t.step(0, 'call', `countnode(start) walks the list and returns ${nodectr}. nodectr = ${nodectr}.`, {});
-  t.state.locals = { nodectr, pos };
-  if (!cond(t, 1, pos > 1 && pos <= nodectr, `pos > 1 && pos <= nodectr with pos = ${pos}, nodectr = ${nodectr}`)) {
+  const node_count = countSilently(t, 0);
+  t.step(0, 'call', `count_nodes(head) walks the list and returns ${node_count}. node_count = ${node_count}.`, {});
+  t.state.locals = { node_count, pos };
+  if (!cond(t, 1, pos > 1 && pos <= node_count, `pos > 1 && pos <= node_count with pos = ${pos}, node_count = ${node_count}`)) {
     t.output.push(`position ${pos} is not a middle position`);
-    t.fail(12, `Position ${pos} is not a middle position (valid: 2..${nodectr}). Use insert at beginning (pos 1) or at end (pos ${nodectr + 1}).`);
+    t.fail(12, `Position ${pos} is not a middle position (valid: 2..${node_count}). Use insert at beginning (pos 1) or at end (pos ${node_count + 1}).`);
     delete t.state.locals;
-    return endScope(t, ['newnode', 'temp', 'prev']);
+    return endScope(t, ['new_node', 'temp', 'prev']);
   }
   const a = getnodeSteps(t, 2, value, opts);
-  addVar(w, 'temp', w.vars.start);
-  addVar(w, 'prev', w.vars.start);
-  let ctr = 1;
-  w.locals = { nodectr, pos, ctr };
+  addVar(w, 'temp', w.vars.head);
+  addVar(w, 'prev', w.vars.head);
+  let i = 1;
+  w.locals = { node_count, pos, i };
   t.count('varWrites', 2);
-  t.step(3, 'var', `temp = prev = start (${w.vars.start}); ctr = 1. Both helpers start at the first node.`, { vars: ['temp', 'prev'] });
-  while (cond(t, 4, ctr < pos, `ctr < pos? ${ctr} < ${pos}`)) {
+  t.step(3, 'var', `temp = prev = head (${w.vars.head}); i = 1. Both helpers head at the first node.`, { vars: ['temp', 'prev'] });
+  while (cond(t, 4, i < pos, `i < pos? ${i} < ${pos}`)) {
     setVar(t, 5, 'prev', w.vars.temp, `prev = temp (${w.vars.temp}). prev follows one node behind temp.`);
     const nx = w.nodes[w.vars.temp].next;
     t.count('moves');
     setVar(t, 6, 'temp', nx, `temp = temp->next → ${fmtPtr(nx)} (data ${d(w, nx)}).`);
-    ctr++;
-    w.locals.ctr = ctr;
-    t.step(7, 'var', `ctr++ → ${ctr}.`);
+    i++;
+    w.locals.i = i;
+    t.step(7, 'var', `i++ → ${i}.`);
   }
   const p = w.vars.prev;
   const tp = w.vars.temp;
-  setLink(t, 9, p, 'next', a, `(1) prev->next = newnode: node ${p} (data ${d(w, p)}) now points to the new node ${a}. Its old link to ${tp} is overwritten — but temp still remembers ${tp}, so nothing is lost.`);
-  setLink(t, 10, a, 'next', tp, `(2) newnode->next = temp: the new node points to ${tp} (data ${d(w, tp)}). The chain is whole again.`);
+  setLink(t, 9, p, 'next', a, `(1) prev->next = new_node: node ${p} (data ${d(w, p)}) now points to the new node ${a}. Its old link to ${tp} is overwritten — but temp still remembers ${tp}, so nothing is lost.`);
+  setLink(t, 10, a, 'next', tp, `(2) new_node->next = temp: the new node points to ${tp} (data ${d(w, tp)}). The chain is whole again.`);
   delete w.locals;
-  return endScope(t, ['newnode', 'temp', 'prev']);
+  return endScope(t, ['new_node', 'temp', 'prev']);
 }
 
 export function deleteBeg(world) {
   const t = new Tracer(world, SLL_CODE.deleteBeg);
   const w = t.state;
-  if (cond(t, 0, w.vars.start === null, `start == NULL? start = ${fmtPtr(w.vars.start)}`, { vars: ['start'] })) {
+  if (cond(t, 0, w.vars.head === null, `head == NULL? head = ${fmtPtr(w.vars.head)}`, { vars: ['head'] })) {
     t.output.push('No nodes exist');
     t.fail(1, 'Underflow: the list is empty, nothing to delete.');
     return endScope(t, []);
   }
-  setVar(t, 3, 'temp', w.vars.start, `temp = start (${w.vars.start}): save the first node so we can free it after unlinking.`);
+  setVar(t, 3, 'temp', w.vars.head, `temp = head (${w.vars.head}): save the first node so we can free it after unlinking.`);
   const nx = w.nodes[w.vars.temp].next;
-  setVar(t, 4, 'start', nx, nx === null ? `start = temp->next = NULL: the list becomes empty.` : `start = temp->next: start now points to ${nx} (data ${d(w, nx)}).`);
+  setVar(t, 4, 'head', nx, nx === null ? `head = temp->next = NULL: the list becomes empty.` : `head = temp->next: head now points to ${nx} (data ${d(w, nx)}).`);
   freeStep(t, 5, 'temp');
   return endScope(t, ['temp']);
 }
@@ -246,15 +237,15 @@ export function deleteBeg(world) {
 export function deleteEnd(world, { notesVersion = false } = {}) {
   const t = new Tracer(world, notesVersion ? SLL_CODE.deleteEndNotes : SLL_CODE.deleteEnd);
   const w = t.state;
-  if (cond(t, 0, w.vars.start === null, `start == NULL? start = ${fmtPtr(w.vars.start)}`, { vars: ['start'] })) {
+  if (cond(t, 0, w.vars.head === null, `head == NULL? head = ${fmtPtr(w.vars.head)}`, { vars: ['head'] })) {
     t.output.push('Empty list');
     t.fail(0, 'Underflow: the list is empty, nothing to delete.');
     return endScope(t, []);
   }
-  addVar(w, 'temp', w.vars.start);
-  addVar(w, 'prev', w.vars.start);
+  addVar(w, 'temp', w.vars.head);
+  addVar(w, 'prev', w.vars.head);
   t.count('varWrites', 2);
-  t.step(1, 'var', `temp = prev = start (${w.vars.start}).`, { vars: ['temp', 'prev'] });
+  t.step(1, 'var', `temp = prev = head (${w.vars.head}).`, { vars: ['temp', 'prev'] });
   while (true) {
     const tn = w.nodes[w.vars.temp];
     t.count('visits');
@@ -267,14 +258,14 @@ export function deleteEnd(world, { notesVersion = false } = {}) {
     setLink(t, 6, w.vars.prev, 'next', null, w.vars.prev === w.vars.temp
       ? `prev->next = NULL — but prev and temp are the SAME node (the only node), so this only changes the node we are about to free.`
       : `prev->next = NULL: node ${w.vars.prev} becomes the new last node.`);
-    const wasOnly = w.vars.start === w.vars.temp;
+    const wasOnly = w.vars.head === w.vars.temp;
     freeStep(t, 7, 'temp', wasOnly
-      ? `free(temp) releases ${w.vars.temp}. BUG: start still holds ${w.vars.start}, the address of freed memory — start is now a DANGLING pointer. The notes need "start = NULL" for a one-node list.`
+      ? `free(temp) releases ${w.vars.temp}. BUG: head still holds ${w.vars.head}, the address of freed memory — head is now a DANGLING pointer. The notes need "head = NULL" for a one-node list.`
       : undefined);
     return endScope(t, ['temp', 'prev']);
   }
-  if (cond(t, 6, w.vars.temp === w.vars.start, `temp == start? (was this the only node?)`, { vars: ['temp', 'start'] })) {
-    setVar(t, 7, 'start', null, `start = NULL: the list becomes empty. Without this line start would dangle.`);
+  if (cond(t, 6, w.vars.temp === w.vars.head, `temp == head? (was this the only node?)`, { vars: ['temp', 'head'] })) {
+    setVar(t, 7, 'head', null, `head = NULL: the list becomes empty. Without this line head would dangle.`);
   } else {
     setLink(t, 9, w.vars.prev, 'next', null, `prev->next = NULL: node ${w.vars.prev} (data ${d(w, w.vars.prev)}) is the new last node.`);
   }
@@ -285,34 +276,34 @@ export function deleteEnd(world, { notesVersion = false } = {}) {
 export function deleteMid(world, pos) {
   const t = new Tracer(world, SLL_CODE.deleteMid);
   const w = t.state;
-  if (cond(t, 0, w.vars.start === null, `start == NULL?`, { vars: ['start'] })) {
+  if (cond(t, 0, w.vars.head === null, `head == NULL?`, { vars: ['head'] })) {
     t.output.push('Empty list');
     t.fail(0, 'Underflow: the list is empty.');
     return endScope(t, []);
   }
-  const nodectr = countSilently(t, 1);
-  w.locals = { nodectr, pos };
-  t.step(1, 'call', `nodectr = countnode(start) = ${nodectr}.`);
-  if (!cond(t, 2, pos > 1 && pos < nodectr, `pos > 1 && pos < nodectr with pos = ${pos}, nodectr = ${nodectr}`)) {
+  const node_count = countSilently(t, 1);
+  w.locals = { node_count, pos };
+  t.step(1, 'call', `node_count = count_nodes(head) = ${node_count}.`);
+  if (!cond(t, 2, pos > 1 && pos < node_count, `pos > 1 && pos < node_count with pos = ${pos}, node_count = ${node_count}`)) {
     t.output.push('Invalid position');
     delete w.locals;
-    t.fail(12, `Position ${pos} is not an intermediate position (valid: 2..${nodectr - 1}). Use delete at beginning or delete at end instead.`);
+    t.fail(12, `Position ${pos} is not an intermediate position (valid: 2..${node_count - 1}). Use delete at beginning or delete at end instead.`);
     return endScope(t, []);
   }
-  addVar(w, 'temp', w.vars.start);
-  addVar(w, 'prev', w.vars.start);
-  let ctr = 1;
-  w.locals.ctr = ctr;
+  addVar(w, 'temp', w.vars.head);
+  addVar(w, 'prev', w.vars.head);
+  let i = 1;
+  w.locals.i = i;
   t.count('varWrites', 2);
-  t.step(3, 'var', `temp = prev = start (${w.vars.start}); ctr = 1.`, { vars: ['temp', 'prev'] });
-  while (cond(t, 4, ctr < pos, `ctr < pos? ${ctr} < ${pos}`)) {
+  t.step(3, 'var', `temp = prev = head (${w.vars.head}); i = 1.`, { vars: ['temp', 'prev'] });
+  while (cond(t, 4, i < pos, `i < pos? ${i} < ${pos}`)) {
     setVar(t, 5, 'prev', w.vars.temp, `prev = temp (${w.vars.temp}).`);
     const nx = w.nodes[w.vars.temp].next;
     t.count('moves');
     setVar(t, 6, 'temp', nx, `temp = temp->next → ${nx} (data ${d(w, nx)}).`);
-    ctr++;
-    w.locals.ctr = ctr;
-    t.step(7, 'var', `ctr++ → ${ctr}.`);
+    i++;
+    w.locals.i = i;
+    t.step(7, 'var', `i++ → ${i}.`);
   }
   const after = w.nodes[w.vars.temp].next;
   setLink(t, 9, w.vars.prev, 'next', after, `prev->next = temp->next: node ${w.vars.prev} (data ${d(w, w.vars.prev)}) now skips over ${w.vars.temp} and points to ${fmtPtr(after)}. temp still holds the removed node, so we can free it.`);
@@ -324,8 +315,8 @@ export function deleteMid(world, pos) {
 export function traverse(world) {
   const t = new Tracer(world, SLL_CODE.traverse);
   const w = t.state;
-  setVar(t, 0, 'temp', w.vars.start, `temp = start (${fmtPtr(w.vars.start)}).`);
-  if (cond(t, 1, w.vars.start === null, 'start == NULL?')) {
+  setVar(t, 0, 'temp', w.vars.head, `temp = head (${fmtPtr(w.vars.head)}).`);
+  if (cond(t, 1, w.vars.head === null, 'head == NULL?')) {
     t.output.push('Empty list');
     t.step(1, 'output', 'Prints "Empty list".');
     return endScope(t, ['temp']);
@@ -348,21 +339,21 @@ export function createList(values, { detail = false } = {}) {
   for (let i = 0; i < values.length; i++) {
     cond(t, 0, true, `i < n? ${i} < ${values.length}`);
     const a = getnodeSteps(t, 1, values[i], { detail });
-    if (cond(t, 2, w.vars.start === null, 'start == NULL?')) {
-      setVar(t, 3, 'start', a, `start = newnode (${a}).`);
+    if (cond(t, 2, w.vars.head === null, 'head == NULL?')) {
+      setVar(t, 3, 'head', a, `head = new_node (${a}).`);
     } else {
-      setVar(t, 5, 'temp', w.vars.start, `temp = start.`);
+      setVar(t, 5, 'temp', w.vars.head, `temp = head.`);
       while (true) {
         const tn = w.nodes[w.vars.temp];
         if (!cond(t, 6, tn.next !== null, `temp->next != NULL? (${fmtPtr(tn.next)})`)) break;
         t.count('moves');
         setVar(t, 7, 'temp', tn.next, `temp = temp->next → ${tn.next}.`);
       }
-      setLink(t, 8, w.vars.temp, 'next', a, `temp->next = newnode: append ${values[i]}.`);
+      setLink(t, 8, w.vars.temp, 'next', a, `temp->next = new_node: append ${values[i]}.`);
     }
   }
   cond(t, 0, false, `i < n? ${values.length} < ${values.length}`);
-  return endScope(t, ['newnode', 'temp']);
+  return endScope(t, ['new_node', 'temp']);
 }
 
 export { buildList, rawGetnode };

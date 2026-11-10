@@ -57,8 +57,8 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
   }
   function onNode(addr) {
     if (!armed) {
-      say(`Node ${addr}: first choose which pointer to change (click a next/left/right field or a variable).`);
-      draw(`Choose a pointer first: click a field (next/left/right) or a variable box, then click the node it should point to.`);
+      say(`Node ${addr}: first choose which pointer to change (click a next or prev field, or a variable).`);
+      draw(`Choose a pointer first: click a field (next or prev) or a variable box, then click the node it should point to.`);
       return;
     }
     connect(armed, addr);
@@ -78,7 +78,7 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
     );
     // toolbar
     clear(tools);
-    const hasNewVar = 'newnode' in w.vars;
+    const hasNewVar = 'new_node' in w.vars;
     const valIn = allowValueInput ? h('input', { type: 'number', value: newValue ?? 0, 'aria-label': 'value for the new node', style: { width: '80px' } }) : null;
     tools.append(
       h(
@@ -86,10 +86,10 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
         {
           class: 'btn',
           disabled: !allowValueInput && newValue == null,
-          onclick: () => push({ type: 'alloc', data: allowValueInput ? Number(valIn.value) : newValue, var: hasNewVar ? 'newnode' : null }),
+          onclick: () => push({ type: 'alloc', data: allowValueInput ? Number(valIn.value) : newValue, var: hasNewVar ? 'new_node' : null }),
           title: 'Allocate and initialise a node (all links NULL)',
         },
-        `${hasNewVar ? 'newnode = ' : ''}getnode(${allowValueInput ? '' : newValue ?? ''})`,
+        `${hasNewVar ? 'new_node = ' : ''}create_node(${allowValueInput ? '' : newValue ?? ''})`,
       ),
       valIn,
     );
@@ -111,7 +111,7 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
     const tgtSel = h('select', { 'aria-label': 'new target', 'data-role': 'target' }, h('option', { value: 'null' }, 'NULL'), Object.values(w.nodes).map((n) => h('option', { value: n.addr }, `${n.addr}  (node ${n.data}${n.freed ? ', FREED' : ''})`)));
     panel.append(
       h('div', { class: 'row' }, h('b', { class: 'small' }, armed ? `Changing ${armed.type === 'var' ? armed.name : `${armed.addr}->${armed.field}`}:` : 'Set a pointer:'), srcSel, h('span', {}, '='), tgtSel, h('button', { class: 'btn primary small', disabled: !armed, onclick: () => armed && connect(armed, tgtSel.value === 'null' ? null : Number(tgtSel.value)) }, 'Apply'), armed ? h('button', { class: 'btn small', 'data-null-drop': '1', onclick: () => connect(armed, null) }, 'Set to NULL') : null, armed ? h('button', { class: 'btn ghost small', onclick: () => { armed = null; draw(); } }, 'Cancel') : null),
-      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, 'Mouse: click a pointer field (next/left/right) or a variable box, then click the node it should point to — or drag from the field onto the node. Keyboard: Tab to a field and press Enter, then pick the target here and press Apply.'),
+      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, 'Mouse: click a pointer field (next or prev) or a variable box, then click the node it should point to — or drag from the field onto the node. Keyboard: Tab to a field and press Enter, then pick the target here and press Apply.'),
       msg ? h('div', { class: 'feedback info small' }, msg) : null,
     );
     // history

@@ -33,6 +33,7 @@ export function blankProgress(now = Date.now()) {
     session: null,
     lab: { drafts: {}, solved: {}, last: null },
     drills: blankDrills(),
+    assessments: {},
     settings: { motion: 'system', speed: 1, timer: false, timerMinutes: 8, theme: 'system', predictMode: true, codeLang: 'cpp' },
   };
 }
@@ -102,7 +103,7 @@ export class ProgressStore {
 
   /**
    * Record one graded attempt.
-   * a = {templateId, seed, concept, type, lecture, correct, hints, revealed, guidance, tag, message}
+   * a = {templateId, seed, concept, type, module, correct, hints, revealed, guidance, tag, message}
    * Independent success = correct, no hints, no revealed solution, guidance not 'full'.
    */
   recordAttempt(a) {
@@ -139,10 +140,10 @@ export class ProgressStore {
     const tp = (this.data.templates[a.templateId] ||= { attempts: 0, correct: 0 });
     tp.attempts++;
     if (a.correct) tp.correct++;
-    this.data.attempts.push({ t: now, templateId: a.templateId, seed: a.seed, concept: a.concept, type: a.type, lecture: a.lecture, correct: !!a.correct, independent, hints: a.hints || 0, revealed: !!a.revealed, tag: a.tag || null });
+    this.data.attempts.push({ t: now, templateId: a.templateId, seed: a.seed, concept: a.concept, type: a.type, module: a.module || (CONCEPT_BY_ID[a.concept] ? CONCEPT_BY_ID[a.concept].module : null), correct: !!a.correct, independent, hints: a.hints || 0, revealed: !!a.revealed, tag: a.tag || null });
     if (this.data.attempts.length > 600) this.data.attempts = this.data.attempts.slice(-600);
     if (!a.correct && !a.revealed) {
-      this.data.mistakes.push({ t: now, templateId: a.templateId, seed: a.seed, concept: a.concept, lecture: a.lecture, type: a.type, tag: a.tag || 'wrong-result', message: String(a.message || '').slice(0, 400) });
+      this.data.mistakes.push({ t: now, templateId: a.templateId, seed: a.seed, concept: a.concept, module: a.module || (CONCEPT_BY_ID[a.concept] ? CONCEPT_BY_ID[a.concept].module : null), type: a.type, tag: a.tag || 'wrong-result', message: String(a.message || '').slice(0, 400) });
       if (this.data.mistakes.length > 200) this.data.mistakes = this.data.mistakes.slice(-200);
     }
     this.save();
@@ -288,6 +289,20 @@ export class ProgressStore {
   setDrillTopics(topics) {
     this.drillData().topics = topics;
     this.save();
+  }
+
+  // ---- knowledge assessments: the latest and the best result per module ('all' = every module)
+  assessmentData() {
+    return (this.data.assessments ||= {});
+  }
+  recordAssessment(key, { correct, total, independent = 0 }) {
+    const a = this.assessmentData();
+    const prev = a[key];
+    const pct = total ? Math.round((correct / total) * 100) : 0;
+    const rec = { at: this.now(), correct, total, independent, pct };
+    a[key] = { last: rec, best: prev && prev.best && prev.best.pct > pct ? prev.best : rec, count: ((prev && prev.count) || 0) + 1 };
+    this.save();
+    return a[key];
   }
 
   // ---- sessions

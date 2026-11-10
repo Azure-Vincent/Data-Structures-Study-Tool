@@ -23,7 +23,7 @@ function wrongResponse(ex) {
     case 'rewire':
       return [];
     case 'fill':
-      return 'start = NULL';
+      return 'head = NULL';
     case 'lab':
       return ex.starter;
     case 'fields':
@@ -35,18 +35,20 @@ function wrongResponse(ex) {
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => 1000 + i * 7919);
 
-test('there are at least five templates per lecture module', () => {
-  for (const lec of [7, 8, 9, 10, 11, 12, 13, 14]) {
-    const n = TEMPLATES.filter((t) => t.lecture === lec).length;
-    assert.ok(n >= 5, `lecture ${lec} has ${n} templates`);
+const MODULE_IDS = ['memory', 'sll', 'dll', 'stack', 'queue', 'tree', 'graph'];
+
+test('there are at least five templates per learning module', () => {
+  for (const m of MODULE_IDS) {
+    const n = TEMPLATES.filter((t) => t.modules.includes(m)).length;
+    assert.ok(n >= 5, `module ${m} has ${n} templates`);
   }
 });
 
-test('every lecture has at least one edge-case template variation', () => {
-  for (const lec of [7, 8, 9, 10, 11, 12, 13, 14]) {
+test('every learning module has at least one edge-case template variation', () => {
+  for (const m of MODULE_IDS) {
     let edge = false;
-    for (const t of TEMPLATES.filter((t) => t.lecture === lec)) for (const s of SEEDS) if (generateExercise(t.id, s).edge) edge = true;
-    assert.ok(edge, `lecture ${lec} produced no edge cases`);
+    for (const t of TEMPLATES.filter((t) => t.modules.includes(m))) for (const s of SEEDS) if (generateExercise(t.id, s).edge) edge = true;
+    assert.ok(edge, `module ${m} produced no edge cases`);
   }
 });
 

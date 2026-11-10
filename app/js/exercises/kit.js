@@ -195,7 +195,7 @@ export function runAgainst(src, c) {
   try {
     r = run(c.world, src, { newValue: c.newValue, maxSteps: c.maxSteps });
   } catch (e) {
-    if (e instanceof InterpError) return { correct: false, message: `Could not read that: ${e.message}. Write C-style statements such as temp->next = newnode;`, tag: 'syntax' };
+    if (e instanceof InterpError) return { correct: false, message: `Could not read that: ${e.message}. Write C-style statements such as temp->next = new_node;`, tag: 'syntax' };
     throw e;
   }
   if (r.error) {
@@ -225,7 +225,7 @@ export function runAgainst(src, c) {
 
 function describeCase(c) {
   if (c.label) return c.label;
-  const head = c.opts?.head || 'start';
+  const head = c.opts?.head || 'head';
   const vals = walk(c.world, c.world.vars[head], forwardField(c.world.kind)).values;
   return vals.length ? `the list ${vals.join(' → ')}` : 'an empty list';
 }
@@ -290,11 +290,11 @@ export function rewire(spec, { explain = '' } = {}) {
       const cmp = compareToGoal(w, spec.goal, { ...(spec.opts || {}), newAddrs: newAddrsOf(spec.world, w) });
       if (cmp.correct) {
         const ff = forwardField(w.kind);
-        const fwd = walk(w, w.vars[spec.opts?.head || 'start'], ff).values;
+        const fwd = walk(w, w.vars[spec.opts?.head || 'head'], ff).values;
         let check = `Check: forward ${fwd.join(' → ') || '(empty)'}`;
         if (w.kind === 'dll' && fwd.length) {
-          const r = walk(w, w.vars[spec.opts?.head || 'start'], 'right');
-          check += `; backward ${walk(w, r.addrs[r.addrs.length - 1], 'left').values.join(' → ')}`;
+          const r = walk(w, w.vars[spec.opts?.head || 'head'], 'next');
+          check += `; backward ${walk(w, r.addrs[r.addrs.length - 1], 'prev').values.join(' → ')}`;
         }
         return { correct: true, message: `${check}. ${explain}`.trim() };
       }

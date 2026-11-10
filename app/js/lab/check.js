@@ -13,7 +13,7 @@ const show = (v) => (v === null ? '–' : dataText(v));
 function expectedList(S, vals) {
   const root = S.roots[0];
   if (!vals.length) return `${root} = NULL (empty)`;
-  return `${root} → ${vals.map(show).join(' → ')}${S.circular ? ' → (back to start)' : ' → NULL'}`;
+  return `${root} → ${vals.map(show).join(' → ')}${S.circular ? ' → (back to head)' : ' → NULL'}`;
 }
 
 /**

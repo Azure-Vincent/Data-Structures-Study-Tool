@@ -94,7 +94,7 @@ export function createWorkspace(trace, opts = {}) {
     const lang = pickLang(traceLangs(code));
     const cur = (x) => x.lead && x.src === st.line;
     return [
-      h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code'), code.ref ? h('span', { class: 'pill' }, code.ref) : null),
+      h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code')),
       measuring && tabs ? tabs.cloneNode(true) : tabs,
       st.opLabel ? h('div', { class: 'small muted' }, `Operation: ${st.opLabel}`) : null,
       h('ol', { 'aria-label': `code (${lang === 'c' ? 'C, as in the notes' : lang === 'py' ? 'Python' : lang === 'cpp' ? 'C++' : 'pseudocode'})` }, traceLines(code, lang).map((x) => h('li', { class: cur(x) ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': cur(x) ? 'step' : null }, codeLine(x.text)))),

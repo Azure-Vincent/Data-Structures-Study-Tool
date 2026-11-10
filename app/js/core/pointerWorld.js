@@ -5,7 +5,7 @@
 // step-back and saved in progress files.
 //
 //   nodes[addr] = { addr, data, next | left,right, freed }
-//   vars[name]  = addr | null        (named pointer variables: start, temp, ...)
+//   vars[name]  = addr | null        (named pointer variables: head, temp, ...)
 //
 // A field value is an address (number), null (NULL) or GARBAGE ('?') for a
 // freshly malloc'd, not yet initialised field.
@@ -15,19 +15,19 @@ export const GARBAGE = '?';
 export const FIELDS = {
   sll: ['next'],
   csll: ['next'],
-  dll: ['left', 'right'],
+  dll: ['prev', 'next'],
 };
 
 export function fieldsOf(kind) {
   return FIELDS[kind] || ['next'];
 }
 
-/** The "forward" field used to walk a list from start. */
+/** The "forward" field used to walk a list from head. */
 export function forwardField(kind) {
-  return kind === 'dll' ? 'right' : 'next';
+  return 'next';
 }
 
-export function createWorld(kind, varNames = ['start'], opts = {}) {
+export function createWorld(kind, varNames = ['head'], opts = {}) {
   return {
     kind,
     nodes: {},
@@ -61,8 +61,8 @@ export function malloc(w, { addr } = {}) {
   return a;
 }
 
-/** getnode() from the notes: malloc + data + every link = NULL. */
-export function getnode(w, data, opts) {
+/** create_node() from the notes: malloc + data + every link = NULL. */
+export function create_node(w, data, opts) {
   const a = malloc(w, opts);
   w.nodes[a].data = data;
   for (const f of fieldsOf(w.kind)) w.nodes[a][f] = null;
@@ -97,17 +97,17 @@ export function liveNodes(w) {
 
 /** Build a clean list from values (no tracing). Returns world. */
 export function buildList(kind, values, opts = {}) {
-  const w = createWorld(kind, opts.vars || ['start'], opts);
+  const w = createWorld(kind, opts.vars || ['head'], opts);
   const ff = forwardField(kind);
   let prev = null;
   const addrs = [];
   for (const v of values) {
-    const a = getnode(w, v);
+    const a = create_node(w, v);
     addrs.push(a);
     if (prev == null) w.vars[w.varOrder[0]] = a;
     else {
       w.nodes[prev][ff] = a;
-      if (kind === 'dll') w.nodes[a].left = prev;
+      if (kind === 'dll') w.nodes[a].prev = prev;
     }
     prev = a;
   }
@@ -140,7 +140,7 @@ export function walk(w, fromAddr, field = forwardField(w.kind), limit = 200) {
   }
 }
 
-/** Values of the list from start (forward). */
+/** Values of the list from head (forward). */
 export function listValues(w, startVar = w.varOrder[0]) {
   return walk(w, w.vars[startVar]).values;
 }

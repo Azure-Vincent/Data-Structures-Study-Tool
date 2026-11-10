@@ -3,10 +3,9 @@
 export const ARRAY_EXAMPLES = [
   {
     id: 'array-shift',
-    lecture: 7,
+    module: 'memory',
     structure: 'arrays',
     title: 'An array with insertion and deletion by shifting',
-    ref: 'Lec 07 p.2–4',
     intro: 'An array is one block of MAX slots side by side. The block never grows, so a separate count `n` remembers how many slots are in use. Inserting makes room by moving the later elements one slot RIGHT (starting from the end); deleting closes the gap by moving them one slot LEFT.',
     params: { max: 6, v1: 10, v2: 30, v3: 20, v4: 5 },
     vary: ['v1', 'v2', 'v3', 'v4'],

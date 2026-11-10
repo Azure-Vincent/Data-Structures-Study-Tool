@@ -42,7 +42,7 @@ with sync_playwright() as p:
           elif k=='rewire':
             sol = pg.evaluate("import('./js/exercises/solver.js').then(m=>m.solveRewire(window.__dslabExercise).actions)")
             for act in sol:
-              if act['type']=='alloc': task.locator('button:has-text("getnode")').click()
+              if act['type']=='alloc': task.locator('button:has-text("create_node")').click()
               elif act['type']=='free':
                 sel=task.locator('select[aria-label="pointer to free"]')
                 opts=sel.locator('option').all()

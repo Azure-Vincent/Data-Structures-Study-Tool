@@ -48,18 +48,17 @@ const PSEUDO_G = `# G is the Lecture 14 graph and s the start vertex: {{start}}.
 # neighbors(G, v) lists the neighbours of v in alphabetical order.`;
 
 const LEC14_CASES = [
-  { label: 'From a (Lec 14 p.4)', setup: { graph: 'lec14', vars: { s: 'a' } }, params: { s: 'a' } },
-  { label: 'From e', setup: { graph: 'lec14', vars: { s: 'e' } }, params: { s: 'e' } },
+  { label: 'From a (Lec 14 p.4)', setup: { graph: 'example', vars: { s: 'a' } }, params: { s: 'a' } },
+  { label: 'From e', setup: { graph: 'example', vars: { s: 'e' } }, params: { s: 'e' } },
 ];
 
 // ---------------------------------------------------------------- the programs
 export const GRAPH_EXAMPLES = [
   {
     id: 'graph-matrix',
-    lecture: 13,
+    module: 'graph',
     structure: 'arrays',
     title: 'Adjacency matrix of a directed graph',
-    ref: 'Lec 13 p.6',
     intro: 'An N × N table of 0s and 1s: `M[u][v] = 1` means there is an edge u → v. A 2-D array is an array of rows; each row is an array. The vertices are 1 … 5, so vertex v uses row / column v − 1.',
     params: {},
     cases: [{ label: 'Lec 13 directed graph' }],
@@ -150,10 +149,9 @@ ${edgeCalls('', '')}
   },
   {
     id: 'graph-adjlist',
-    lecture: 13,
+    module: 'graph',
     structure: 'arrays',
     title: 'Adjacency lists built from linked nodes',
-    ref: 'Lec 13 p.6',
     intro: 'One linked list per vertex (Lec 13 p.6 bottom). `head[i]` holds the first node of vertex i + 1’s list; each node stores one neighbour. Adding an edge u → v is “insert at the end” (Lec 08) into u’s list. Only the edges that exist take memory.',
     params: {},
     cases: [{ label: 'Lec 13 directed graph' }],
@@ -165,15 +163,15 @@ ${edgeCalls('', '')}
 end for
 
 @fa|function add_edge(u, v)
-@a1|    newnode = new Node(v)        # one node per edge: it stores the neighbour v
+@a1|    new_node = new Node(v)        # one node per edge: it stores the neighbour v
 @a2|    if head[u - 1] == NULL then
-@a3|        head[u - 1] = newnode    # u's first neighbour
+@a3|        head[u - 1] = new_node    # u's first neighbour
     else
 @a4|        p = head[u - 1]
 @a5|        while p.next != NULL do
 @a6|            p = p.next           # walk to the last node of u's list
         end while
-@a7|        p.next = newnode         # insert at the end (Lec 08)
+@a7|        p.next = new_node         # insert at the end (Lec 08)
     end if
 @fa_end|end function
 
@@ -202,14 +200,14 @@ struct Node {
 @s2|Node* head[N];                   // head[i]: first node of vertex i+1's list (nullptr = no neighbours)
 
 @fa|void add_edge(int u, int v) {
-@a1|    Node* newnode = new Node{v, nullptr};   // one node per edge: it stores the neighbour v
+@a1|    Node* new_node = new Node{v, nullptr};   // one node per edge: it stores the neighbour v
 @a2|    if (head[u - 1] == nullptr)
-@a3|        head[u - 1] = newnode;   // u's first neighbour
+@a3|        head[u - 1] = new_node;   // u's first neighbour
     else {
 @a4|        Node* p = head[u - 1];
 @a5|        while (p->next != nullptr)
 @a6|            p = p->next;         // walk to the last node of u's list
-@a7|        p->next = newnode;       // insert at the end (Lec 08)
+@a7|        p->next = new_node;       // insert at the end (Lec 08)
     }
 @fa_end|}
 
@@ -250,14 +248,14 @@ ${edgeCalls('    ', ';')}
 @s4|    head[i] = None
 
 @fa,fa_end|def add_edge(u, v):
-@a1|    newnode = Node(v)            # one node per edge: it stores the neighbour v
+@a1|    new_node = Node(v)            # one node per edge: it stores the neighbour v
 @a2|    if head[u - 1] is None:
-@a3|        head[u - 1] = newnode    # u's first neighbour
+@a3|        head[u - 1] = new_node    # u's first neighbour
     else:
 @a4|        p = head[u - 1]
 @a5|        while p.next is not None:
 @a6|            p = p.next           # walk to the last node of u's list
-@a7|        p.next = newnode         # insert at the end (Lec 08)
+@a7|        p.next = new_node         # insert at the end (Lec 08)
 
 ${edgeCalls('', '')}
 
@@ -282,18 +280,17 @@ ${edgeCalls('', '')}
         label: 'a7',
         why: 'The new node goes after the last node of u’s list.',
         wrong: [
-          { cpp: 'p = newnode;', py: 'p = newnode', pseudo: 'p = newnode', why: 'That only moves the local variable p; the list does not change and the node is lost.', tag: 'value-vs-address' },
-          { cpp: 'head[u - 1] = newnode;', py: 'head[u - 1] = newnode', pseudo: 'head[u - 1] = newnode', why: 'That replaces the whole list with the new node — the other neighbours are lost.', tag: 'lost-access' },
+          { cpp: 'p = new_node;', py: 'p = new_node', pseudo: 'p = new_node', why: 'That only moves the local variable p; the list does not change and the node is lost.', tag: 'value-vs-address' },
+          { cpp: 'head[u - 1] = new_node;', py: 'head[u - 1] = new_node', pseudo: 'head[u - 1] = new_node', why: 'That replaces the whole list with the new node — the other neighbours are lost.', tag: 'lost-access' },
         ],
       },
     ],
   },
   {
     id: 'graph-bfs',
-    lecture: 14,
+    module: 'graph',
     structure: 'graph',
     title: 'Breadth-first search with a queue',
-    ref: 'Lec 14 p.3–4',
     intro: 'BFS visits the start vertex, then all of its neighbours, then THEIR undiscovered neighbours, and so on — ring by ring. A queue holds the discovered vertices that still have to be processed, and a vertex is marked as discovered when it ENTERS the queue, so it can never be queued twice.',
     params: { s: 'a' },
     cases: LEC14_CASES,
@@ -400,10 +397,9 @@ int main() {
   },
   {
     id: 'graph-dfs',
-    lecture: 14,
+    module: 'graph',
     structure: 'graph',
     title: 'Depth-first search with recursion',
-    ref: 'Lec 14 p.2–4',
     intro: 'DFS goes as deep as possible along the first undiscovered neighbour, and BACKTRACKS when a vertex has no undiscovered neighbours left. The recursion’s call stack is the stack of Lec 14: each running call is a vertex whose neighbours are still being examined.',
     params: { s: 'a' },
     cases: LEC14_CASES,

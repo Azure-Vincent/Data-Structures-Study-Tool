@@ -1,5 +1,5 @@
 // Exercises built from the "Build it in code" programs (content/impl) and the
-// guided Pseudocode Lab exercises. For every lecture they form a progression:
+// guided Pseudocode Lab exercises. For every topic group they form a progression:
 //   1. predict  — read a complete program (C++, Python or pseudocode) and
 //                 predict exactly what it prints;
 //   2. complete — one statement of an operation is missing: pick the right one
@@ -249,13 +249,22 @@ function writeExercise(labId) {
   };
 }
 
-// ---------------------------------------------------------------- templates, one set per lecture
+// ---------------------------------------------------------------- templates, one set per topic group
+// The groups are the prefixes of the concept ids (l07 … l14); the template ids
+// keep them because saved progress refers to templates by id. A lesson section
+// can narrow a template to one module with params.module.
 
-function byLecture(n) {
-  const impls = IMPLEMENTATIONS.filter((x) => x.lecture === n);
+const groupOf = (conceptId) => (conceptId || '').split('.')[0];
+const inModule = (list, p) => {
+  const m = p.module ? list.filter((x) => x.module === p.module) : list;
+  return m.length ? m : list;
+};
+
+function byGroup(group) {
+  const impls = IMPLEMENTATIONS.filter((x) => groupOf(IMPL_CONCEPT[x.id]) === group);
   const withBlanks = impls.filter((x) => (x.blanks || []).length);
-  const labs = LAB_EXERCISES.filter((x) => x.lecture === n && !x.supplementary);
-  const pad = String(n).padStart(2, '0');
+  const labs = LAB_EXERCISES.filter((x) => groupOf(x.concept) === group && !x.extension);
+  const pad = group.slice(1);
   const variantsOf = (list, key) => {
     const v = {};
     for (const x of list) {
@@ -264,12 +273,11 @@ function byLecture(n) {
     }
     return v;
   };
-  const pickBy = (list, p, key, rng) => (p[key] && list.find((x) => x.id === p[key])) || rng.pick(list);
+  const pickBy = (list, p, key, rng) => (p[key] && inModule(list, p).find((x) => x.id === p[key])) || rng.pick(inModule(list, p));
   const out = [];
   if (impls.length) {
     out.push({
       id: `l${pad}-predict-output`,
-      lecture: n,
       concept: IMPL_CONCEPT[impls[0].id],
       conceptBy: (p) => IMPL_CONCEPT[p.impl],
       variants: variantsOf(impls, 'impl'),
@@ -283,7 +291,6 @@ function byLecture(n) {
   if (withBlanks.length) {
     out.push({
       id: `l${pad}-complete-code`,
-      lecture: n,
       concept: IMPL_CONCEPT[withBlanks[0].id],
       conceptBy: (p) => IMPL_CONCEPT[p.impl],
       variants: variantsOf(withBlanks, 'impl'),
@@ -297,7 +304,6 @@ function byLecture(n) {
   if (labs.length) {
     out.push({
       id: `l${pad}-write-code`,
-      lecture: n,
       concept: labs[0].concept,
       conceptBy: (p) => LAB_BY_ID[p.lab].concept,
       variants: variantsOf(labs, 'lab'),
@@ -311,4 +317,4 @@ function byLecture(n) {
   return out;
 }
 
-export const IMPL_TEMPLATES = [7, 8, 9, 10, 11, 12, 13, 14].flatMap(byLecture);
+export const IMPL_TEMPLATES = ['l07', 'l08', 'l09', 'l10', 'l11', 'l12', 'l13', 'l14'].flatMap(byGroup);

@@ -30,7 +30,7 @@ export function fromSpec(spec, root) {
   return t;
 }
 
-export const LECTURE_TREE = () => fromSpec({ A: ['B', 'C'], B: ['D', 'E'], C: ['F', 'G'] }, 'A');
+export const EXAMPLE_TREE = () => fromSpec({ A: ['B', 'C'], B: ['D', 'E'], C: ['F', 'G'] }, 'A');
 
 export function clone(t) {
   return JSON.parse(JSON.stringify(t));
@@ -256,12 +256,11 @@ export function levelorder(t) {
 export const ORDER_FNS = { preorder, inorder, postorder, levelorder };
 
 export const TRAV_CODE = {
-  preorder: { title: 'preorder(node)  (Root, Left, Right)', ref: 'Lec 14 p.1', lines: ['void preorder(node *root) {', '    if (root == NULL) return;', '    visit(root);            // output FIRST', '    preorder(root->left);', '    preorder(root->right);', '}'] },
-  inorder: { title: 'inorder(node)  (Left, Root, Right)', ref: 'Lec 14 p.1', lines: ['void inorder(node *root) {', '    if (root == NULL) return;', '    inorder(root->left);', '    visit(root);            // output BETWEEN the subtrees', '    inorder(root->right);', '}'] },
-  postorder: { title: 'postorder(node)  (Left, Right, Root)', ref: 'Lec 14 p.2', lines: ['void postorder(node *root) {', '    if (root == NULL) return;', '    postorder(root->left);', '    postorder(root->right);', '    visit(root);            // output LAST', '}'] },
+  preorder: { title: 'preorder(node)  (Root, Left, Right)', lines: ['void preorder(node *root) {', '    if (root == NULL) return;', '    visit(root);            // output FIRST', '    preorder(root->left);', '    preorder(root->right);', '}'] },
+  inorder: { title: 'inorder(node)  (Left, Root, Right)', lines: ['void inorder(node *root) {', '    if (root == NULL) return;', '    inorder(root->left);', '    visit(root);            // output BETWEEN the subtrees', '    inorder(root->right);', '}'] },
+  postorder: { title: 'postorder(node)  (Left, Right, Root)', lines: ['void postorder(node *root) {', '    if (root == NULL) return;', '    postorder(root->left);', '    postorder(root->right);', '    visit(root);            // output LAST', '}'] },
   inorderStack: {
     title: 'inorder with an explicit stack',
-    ref: 'Lec 14 p.1 (stack pictures)',
     lines: ['cur = root;', 'while (cur != NULL || !isEmpty(S)) {', '    while (cur != NULL) {     // go as far left as possible', '        push(S, cur);', '        cur = cur->left;', '    }', '    cur = pop(S);', '    visit(cur);', '    cur = cur->right;', '}'],
   },
 };

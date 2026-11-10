@@ -10,7 +10,7 @@
 //
 // Conventions shared by all three languages (they match the lessons'
 // "Build it in code" programs):
-//   C++     struct Node with nullptr; getnode(value) = new Node{...}; delete
+//   C++     struct Node with nullptr; create_node(value) = new Node{...}; delete
 //   Python  class Node with None; Node(value); no free — an unreachable node is
 //           reclaimed automatically, so `del temp` only drops the last name
 //   Pseudo  the Pseudocode Lab language (docs/PSEUDOCODE.md): new Node(value),
@@ -19,133 +19,133 @@
 export const TRANSLATIONS = {
   // ------------------------------------------------------------ singly linked list (Lec 08–09)
   'sll.insertBeg': {
-    cpp: ['Node* newnode = getnode(value);  // new Node, next = nullptr', 'if (start == nullptr)', '    start = newnode;', 'else {', '    newnode->next = start;    // (1) new node -> old first node', '    start = newnode;          // (2) start -> new node', '}'],
-    py: ['newnode = Node(value)          # data = value, next = None', 'if start is None:', '    start = newnode', 'else:', '    newnode.next = start       # (1) new node -> old first node', '    start = newnode            # (2) start -> new node', null],
-    pseudo: ['newnode = new Node(value)      # next = NULL', 'if start == NULL then', '    start = newnode', 'else', '    newnode.next = start       # (1) new node -> old first node', '    start = newnode            # (2) start -> new node', 'end if'],
+    cpp: ['Node* new_node = create_node(value);  // new Node, next = nullptr', 'if (head == nullptr)', '    head = new_node;', 'else {', '    new_node->next = head;    // (1) new node -> old first node', '    head = new_node;          // (2) head -> new node', '}'],
+    py: ['new_node = Node(value)          # data = value, next = None', 'if head is None:', '    head = new_node', 'else:', '    new_node.next = head       # (1) new node -> old first node', '    head = new_node            # (2) head -> new node', null],
+    pseudo: ['new_node = new Node(value)      # next = NULL', 'if head == NULL then', '    head = new_node', 'else', '    new_node.next = head       # (1) new node -> old first node', '    head = new_node            # (2) head -> new node', 'end if'],
   },
   'sll.insertEnd': {
-    cpp: ['Node* newnode = getnode(value);', 'if (start == nullptr)', '    start = newnode;', 'else {', '    Node* temp = start;', '    while (temp->next != nullptr)', '        temp = temp->next;', '    temp->next = newnode;', '}'],
-    py: ['newnode = Node(value)', 'if start is None:', '    start = newnode', 'else:', '    temp = start', '    while temp.next is not None:', '        temp = temp.next', '    temp.next = newnode', null],
-    pseudo: ['newnode = new Node(value)', 'if start == NULL then', '    start = newnode', 'else', '    temp = start', '    while temp.next != NULL do', ['        temp = temp.next', '    end while'], '    temp.next = newnode', 'end if'],
+    cpp: ['Node* new_node = create_node(value);', 'if (head == nullptr)', '    head = new_node;', 'else {', '    Node* temp = head;', '    while (temp->next != nullptr)', '        temp = temp->next;', '    temp->next = new_node;', '}'],
+    py: ['new_node = Node(value)', 'if head is None:', '    head = new_node', 'else:', '    temp = head', '    while temp.next is not None:', '        temp = temp.next', '    temp.next = new_node', null],
+    pseudo: ['new_node = new Node(value)', 'if head == NULL then', '    head = new_node', 'else', '    temp = head', '    while temp.next != NULL do', ['        temp = temp.next', '    end while'], '    temp.next = new_node', 'end if'],
   },
   'sll.insertMid': {
-    cpp: ['int nodectr = countnode(start);', 'if (pos > 1 && pos <= nodectr) {   // corrected: notes use pos < nodectr', '    Node* newnode = getnode(value);  // corrected: allocate only after validating', '    Node *temp = start, *prev = start;  int ctr = 1;', '    while (ctr < pos) {', '        prev = temp;', '        temp = temp->next;', '        ctr++;', '    }', '    prev->next = newnode;          // (1)', '    newnode->next = temp;          // (2) safe: temp saved the rest', '} else', '    cout << "position " << pos << " is not a middle position\\n";'],
-    py: ['nodectr = countnode(start)', 'if pos > 1 and pos <= nodectr:      # corrected: notes use pos < nodectr', '    newnode = Node(value)            # corrected: allocate only after validating', '    temp = prev = start; ctr = 1', '    while ctr < pos:', '        prev = temp', '        temp = temp.next', '        ctr += 1', null, '    prev.next = newnode              # (1)', '    newnode.next = temp              # (2) safe: temp saved the rest', 'else:', '    print("position", pos, "is not a middle position")'],
-    pseudo: ['nodectr = countnode(start)', 'if pos > 1 and pos <= nodectr then  # corrected: notes use pos < nodectr', '    newnode = new Node(value)        # corrected: allocate only after validating', '    temp = start; prev = start; ctr = 1', '    while ctr < pos do', '        prev = temp', '        temp = temp.next', '        ctr = ctr + 1', '    end while', '    prev.next = newnode              # (1)', '    newnode.next = temp              # (2) safe: temp saved the rest', 'else', ['    print "position", pos, "is not a middle position"', 'end if']],
+    cpp: ['int node_count = count_nodes(head);', 'if (pos > 1 && pos <= node_count) {   // corrected: notes use pos < node_count', '    Node* new_node = create_node(value);  // corrected: allocate only after validating', '    Node *temp = head, *prev = head;  int i = 1;', '    while (i < pos) {', '        prev = temp;', '        temp = temp->next;', '        i++;', '    }', '    prev->next = new_node;          // (1)', '    new_node->next = temp;          // (2) safe: temp saved the rest', '} else', '    cout << "position " << pos << " is not a middle position\\n";'],
+    py: ['node_count = count_nodes(head)', 'if pos > 1 and pos <= node_count:      # corrected: notes use pos < node_count', '    new_node = Node(value)            # corrected: allocate only after validating', '    temp = prev = head; i = 1', '    while i < pos:', '        prev = temp', '        temp = temp.next', '        i += 1', null, '    prev.next = new_node              # (1)', '    new_node.next = temp              # (2) safe: temp saved the rest', 'else:', '    print("position", pos, "is not a middle position")'],
+    pseudo: ['node_count = count_nodes(head)', 'if pos > 1 and pos <= node_count then  # corrected: notes use pos < node_count', '    new_node = new Node(value)        # corrected: allocate only after validating', '    temp = head; prev = head; i = 1', '    while i < pos do', '        prev = temp', '        temp = temp.next', '        i = i + 1', '    end while', '    prev.next = new_node              # (1)', '    new_node.next = temp              # (2) safe: temp saved the rest', 'else', ['    print "position", pos, "is not a middle position"', 'end if']],
   },
   'sll.deleteBeg': {
-    cpp: ['if (start == nullptr) {', '    cout << "No nodes exist\\n"; return;', '}', 'Node* temp = start;', 'start = temp->next;', 'delete temp;'],
-    py: ['if start is None:', '    print("No nodes exist"); return', null, 'temp = start', 'start = temp.next', 'del temp        # the node is unreachable now: Python frees it'],
-    pseudo: ['if start == NULL then', '    print "No nodes exist"; return', 'end if', 'temp = start', 'start = temp.next', 'delete temp'],
+    cpp: ['if (head == nullptr) {', '    cout << "No nodes exist\\n"; return;', '}', 'Node* temp = head;', 'head = temp->next;', 'delete temp;'],
+    py: ['if head is None:', '    print("No nodes exist"); return', null, 'temp = head', 'head = temp.next', 'del temp        # the node is unreachable now: Python frees it'],
+    pseudo: ['if head == NULL then', '    print "No nodes exist"; return', 'end if', 'temp = head', 'head = temp.next', 'delete temp'],
   },
   'sll.deleteEnd': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = start, *prev = start;', 'while (temp->next != nullptr) {', '    prev = temp;', '    temp = temp->next;', '}', 'if (temp == start)              // correction: only one node', '    start = nullptr;', 'else', '    prev->next = nullptr;', 'delete temp;'],
-    py: ['if start is None: print("Empty list"); return', 'temp = prev = start', 'while temp.next is not None:', '    prev = temp', '    temp = temp.next', null, 'if temp is start:               # correction: only one node', '    start = None', 'else:', '    prev.next = None', 'del temp'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start; prev = start', 'while temp.next != NULL do', '    prev = temp', '    temp = temp.next', 'end while', 'if temp == start then           # correction: only one node', '    start = NULL', 'else', ['    prev.next = NULL', 'end if'], 'delete temp'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = head, *prev = head;', 'while (temp->next != nullptr) {', '    prev = temp;', '    temp = temp->next;', '}', 'if (temp == head)              // correction: only one node', '    head = nullptr;', 'else', '    prev->next = nullptr;', 'delete temp;'],
+    py: ['if head is None: print("Empty list"); return', 'temp = prev = head', 'while temp.next is not None:', '    prev = temp', '    temp = temp.next', null, 'if temp is head:               # correction: only one node', '    head = None', 'else:', '    prev.next = None', 'del temp'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head; prev = head', 'while temp.next != NULL do', '    prev = temp', '    temp = temp.next', 'end while', 'if temp == head then           # correction: only one node', '    head = NULL', 'else', ['    prev.next = NULL', 'end if'], 'delete temp'],
   },
   'sll.deleteEndNotes': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = start, *prev = start;', 'while (temp->next != nullptr) {', '    prev = temp;', '    temp = temp->next;', '}', 'prev->next = nullptr;', 'delete temp;                    // start still holds this address!'],
-    py: ['if start is None: print("Empty list"); return', 'temp = prev = start', 'while temp.next is not None:', '    prev = temp', '    temp = temp.next', null, 'prev.next = None', 'del temp        # start still refers to the node, so it is NOT removed'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start; prev = start', 'while temp.next != NULL do', '    prev = temp', '    temp = temp.next', 'end while', 'prev.next = NULL', 'delete temp                     # start still holds this address!'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = head, *prev = head;', 'while (temp->next != nullptr) {', '    prev = temp;', '    temp = temp->next;', '}', 'prev->next = nullptr;', 'delete temp;                    // head still holds this address!'],
+    py: ['if head is None: print("Empty list"); return', 'temp = prev = head', 'while temp.next is not None:', '    prev = temp', '    temp = temp.next', null, 'prev.next = None', 'del temp        # head still refers to the node, so it is NOT removed'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head; prev = head', 'while temp.next != NULL do', '    prev = temp', '    temp = temp.next', 'end while', 'prev.next = NULL', 'delete temp                     # head still holds this address!'],
   },
   'sll.deleteMid': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'int nodectr = countnode(start);', 'if (pos > 1 && pos < nodectr) {', '    Node *temp = start, *prev = start;  int ctr = 1;', '    while (ctr < pos) {', '        prev = temp;', '        temp = temp->next;', '        ctr++;', '    }', '    prev->next = temp->next;     // bypass the node', '    delete temp;                 // then release it', '} else', '    cout << "Invalid position\\n";'],
-    py: ['if start is None: print("Empty list"); return', 'nodectr = countnode(start)', 'if pos > 1 and pos < nodectr:', '    temp = prev = start; ctr = 1', '    while ctr < pos:', '        prev = temp', '        temp = temp.next', '        ctr += 1', null, '    prev.next = temp.next        # bypass the node', '    del temp                     # nothing refers to it now', 'else:', '    print("Invalid position")'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'nodectr = countnode(start)', 'if pos > 1 and pos < nodectr then', '    temp = start; prev = start; ctr = 1', '    while ctr < pos do', '        prev = temp', '        temp = temp.next', '        ctr = ctr + 1', '    end while', '    prev.next = temp.next        # bypass the node', '    delete temp                  # then release it', 'else', ['    print "Invalid position"', 'end if']],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'int node_count = count_nodes(head);', 'if (pos > 1 && pos < node_count) {', '    Node *temp = head, *prev = head;  int i = 1;', '    while (i < pos) {', '        prev = temp;', '        temp = temp->next;', '        i++;', '    }', '    prev->next = temp->next;     // bypass the node', '    delete temp;                 // then release it', '} else', '    cout << "Invalid position\\n";'],
+    py: ['if head is None: print("Empty list"); return', 'node_count = count_nodes(head)', 'if pos > 1 and pos < node_count:', '    temp = prev = head; i = 1', '    while i < pos:', '        prev = temp', '        temp = temp.next', '        i += 1', null, '    prev.next = temp.next        # bypass the node', '    del temp                     # nothing refers to it now', 'else:', '    print("Invalid position")'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'node_count = count_nodes(head)', 'if pos > 1 and pos < node_count then', '    temp = head; prev = head; i = 1', '    while i < pos do', '        prev = temp', '        temp = temp.next', '        i = i + 1', '    end while', '    prev.next = temp.next        # bypass the node', '    delete temp                  # then release it', 'else', ['    print "Invalid position"', 'end if']],
   },
   'sll.traverse': {
-    cpp: ['Node* temp = start;', 'if (start == nullptr) cout << "Empty list";', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->next;', '}'],
-    py: ['temp = start', 'if start is None: print("Empty list")', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.next', null],
-    pseudo: ['temp = start', 'if start == NULL then; print "Empty list"; end if', 'while temp != NULL do', '    print temp.data', '    temp = temp.next', 'end while'],
+    cpp: ['Node* temp = head;', 'if (head == nullptr) cout << "Empty list";', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->next;', '}'],
+    py: ['temp = head', 'if head is None: print("Empty list")', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.next', null],
+    pseudo: ['temp = head', 'if head == NULL then; print "Empty list"; end if', 'while temp != NULL do', '    print temp.data', '    temp = temp.next', 'end while'],
   },
   'sll.createList': {
-    cpp: ['for (int i = 0; i < n; i++) {', '    Node* newnode = getnode(values[i]);', '    if (start == nullptr)', '        start = newnode;', '    else {', '        Node* temp = start;', '        while (temp->next != nullptr)', '            temp = temp->next;', '        temp->next = newnode;', '    }', '}'],
-    py: ['for i in range(n):', '    newnode = Node(values[i])', '    if start is None:', '        start = newnode', '    else:', '        temp = start', '        while temp.next is not None:', '            temp = temp.next', '        temp.next = newnode', null, null],
-    pseudo: ['for i = 0 to n - 1 do', '    newnode = new Node(values[i])', '    if start == NULL then', '        start = newnode', '    else', '        temp = start', '        while temp.next != NULL do', ['            temp = temp.next', '        end while'], '        temp.next = newnode', '    end if', 'end for'],
+    cpp: ['for (int i = 0; i < n; i++) {', '    Node* new_node = create_node(values[i]);', '    if (head == nullptr)', '        head = new_node;', '    else {', '        Node* temp = head;', '        while (temp->next != nullptr)', '            temp = temp->next;', '        temp->next = new_node;', '    }', '}'],
+    py: ['for i in range(n):', '    new_node = Node(values[i])', '    if head is None:', '        head = new_node', '    else:', '        temp = head', '        while temp.next is not None:', '            temp = temp.next', '        temp.next = new_node', null, null],
+    pseudo: ['for i = 0 to n - 1 do', '    new_node = new Node(values[i])', '    if head == NULL then', '        head = new_node', '    else', '        temp = head', '        while temp.next != NULL do', ['            temp = temp.next', '        end while'], '        temp.next = new_node', '    end if', 'end for'],
   },
 
   // ------------------------------------------------------------ doubly linked list (Lec 10)
   'dll.insertBeg': {
-    cpp: ['Node* newnode = getnode(value);  // left = right = nullptr', 'if (start == nullptr)', '    start = newnode;', 'else {', '    newnode->right = start;     // (1)', '    start->left = newnode;      // (2)', '    start = newnode;            // (3)', '}'],
-    py: ['newnode = Node(value)          # left = right = None', 'if start is None:', '    start = newnode', 'else:', '    newnode.right = start      # (1)', '    start.left = newnode       # (2)', '    start = newnode            # (3)', null],
-    pseudo: ['newnode = new Node(value)      # left = right = NULL', 'if start == NULL then', '    start = newnode', 'else', '    newnode.right = start      # (1)', '    start.left = newnode       # (2)', '    start = newnode            # (3)', 'end if'],
+    cpp: ['Node* new_node = create_node(value);  // prev = next = nullptr', 'if (head == nullptr)', '    head = new_node;', 'else {', '    new_node->next = head;     // (1)', '    head->prev = new_node;      // (2)', '    head = new_node;            // (3)', '}'],
+    py: ['new_node = Node(value)          # prev = next = None', 'if head is None:', '    head = new_node', 'else:', '    new_node.next = head      # (1)', '    head.prev = new_node       # (2)', '    head = new_node            # (3)', null],
+    pseudo: ['new_node = new Node(value)      # prev = next = NULL', 'if head == NULL then', '    head = new_node', 'else', '    new_node.next = head      # (1)', '    head.prev = new_node       # (2)', '    head = new_node            # (3)', 'end if'],
   },
   'dll.insertEnd': {
-    cpp: ['Node* newnode = getnode(value);', 'if (start == nullptr)', '    start = newnode;', 'else {', '    Node* temp = start;', '    while (temp->right != nullptr)', '        temp = temp->right;', '    temp->right = newnode;      // (1)', '    newnode->left = temp;       // (2)', '}'],
-    py: ['newnode = Node(value)', 'if start is None:', '    start = newnode', 'else:', '    temp = start', '    while temp.right is not None:', '        temp = temp.right', '    temp.right = newnode       # (1)', '    newnode.left = temp        # (2)', null],
-    pseudo: ['newnode = new Node(value)', 'if start == NULL then', '    start = newnode', 'else', '    temp = start', '    while temp.right != NULL do', ['        temp = temp.right', '    end while'], '    temp.right = newnode       # (1)', '    newnode.left = temp        # (2)', 'end if'],
+    cpp: ['Node* new_node = create_node(value);', 'if (head == nullptr)', '    head = new_node;', 'else {', '    Node* temp = head;', '    while (temp->next != nullptr)', '        temp = temp->next;', '    temp->next = new_node;      // (1)', '    new_node->prev = temp;       // (2)', '}'],
+    py: ['new_node = Node(value)', 'if head is None:', '    head = new_node', 'else:', '    temp = head', '    while temp.next is not None:', '        temp = temp.next', '    temp.next = new_node       # (1)', '    new_node.prev = temp        # (2)', null],
+    pseudo: ['new_node = new Node(value)', 'if head == NULL then', '    head = new_node', 'else', '    temp = head', '    while temp.next != NULL do', ['        temp = temp.next', '    end while'], '    temp.next = new_node       # (1)', '    new_node.prev = temp        # (2)', 'end if'],
   },
   'dll.insertMid': {
-    cpp: ['int nodectr = countnode(start);', 'if (pos > 1 && pos <= nodectr) {', '    Node* newnode = getnode(value);', '    Node *temp = start, *prev = start;  int ctr = 1;', '    while (ctr < pos) {', '        prev = temp;', '        temp = temp->right;', '        ctr++;', '    }', '    newnode->left = prev;       // (1)', '    newnode->right = temp;      // (2)', '    prev->right = newnode;      // (3)', '    temp->left = newnode;       // (4)', '} else', '    cout << "position " << pos << " is not a middle position\\n";'],
-    py: ['nodectr = countnode(start)', 'if pos > 1 and pos <= nodectr:', '    newnode = Node(value)', '    temp = prev = start; ctr = 1', '    while ctr < pos:', '        prev = temp', '        temp = temp.right', '        ctr += 1', null, '    newnode.left = prev        # (1)', '    newnode.right = temp       # (2)', '    prev.right = newnode       # (3)', '    temp.left = newnode        # (4)', 'else:', '    print("position", pos, "is not a middle position")'],
-    pseudo: ['nodectr = countnode(start)', 'if pos > 1 and pos <= nodectr then', '    newnode = new Node(value)', '    temp = start; prev = start; ctr = 1', '    while ctr < pos do', '        prev = temp', '        temp = temp.right', '        ctr = ctr + 1', '    end while', '    newnode.left = prev        # (1)', '    newnode.right = temp       # (2)', '    prev.right = newnode       # (3)', '    temp.left = newnode        # (4)', 'else', ['    print "position", pos, "is not a middle position"', 'end if']],
+    cpp: ['int node_count = count_nodes(head);', 'if (pos > 1 && pos <= node_count) {', '    Node* new_node = create_node(value);', '    Node *temp = head, *prev = head;  int i = 1;', '    while (i < pos) {', '        prev = temp;', '        temp = temp->next;', '        i++;', '    }', '    new_node->prev = prev;       // (1)', '    new_node->next = temp;      // (2)', '    prev->next = new_node;      // (3)', '    temp->prev = new_node;       // (4)', '} else', '    cout << "position " << pos << " is not a middle position\\n";'],
+    py: ['node_count = count_nodes(head)', 'if pos > 1 and pos <= node_count:', '    new_node = Node(value)', '    temp = prev = head; i = 1', '    while i < pos:', '        prev = temp', '        temp = temp.next', '        i += 1', null, '    new_node.prev = prev        # (1)', '    new_node.next = temp       # (2)', '    prev.next = new_node       # (3)', '    temp.prev = new_node        # (4)', 'else:', '    print("position", pos, "is not a middle position")'],
+    pseudo: ['node_count = count_nodes(head)', 'if pos > 1 and pos <= node_count then', '    new_node = new Node(value)', '    temp = head; prev = head; i = 1', '    while i < pos do', '        prev = temp', '        temp = temp.next', '        i = i + 1', '    end while', '    new_node.prev = prev        # (1)', '    new_node.next = temp       # (2)', '    prev.next = new_node       # (3)', '    temp.prev = new_node        # (4)', 'else', ['    print "position", pos, "is not a middle position"', 'end if']],
   },
   'dll.deleteBeg': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = start;             // (1)', 'start = temp->right;            // (2)', 'if (start != nullptr)           // correction: list may now be empty', '    start->left = nullptr;      // (3)', 'delete temp;                    // (4)'],
-    py: ['if start is None: print("Empty list"); return', 'temp = start                   # (1)', 'start = temp.right             # (2)', 'if start is not None:          # correction: list may now be empty', '    start.left = None          # (3)', 'del temp                       # (4) Python frees it'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start                   # (1)', 'start = temp.right             # (2)', 'if start != NULL then          # correction: list may now be empty', ['    start.left = NULL          # (3)', 'end if'], 'delete temp                    # (4)'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = head;             // (1)', 'head = temp->next;            // (2)', 'if (head != nullptr)           // correction: list may now be empty', '    head->prev = nullptr;      // (3)', 'delete temp;                    // (4)'],
+    py: ['if head is None: print("Empty list"); return', 'temp = head                   # (1)', 'head = temp.next             # (2)', 'if head is not None:          # correction: list may now be empty', '    head.prev = None          # (3)', 'del temp                       # (4) Python frees it'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head                   # (1)', 'head = temp.next             # (2)', 'if head != NULL then          # correction: list may now be empty', ['    head.prev = NULL          # (3)', 'end if'], 'delete temp                    # (4)'],
   },
   'dll.deleteBegNotes': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = start;             // (1)', 'start = temp->right;            // (2)', 'start->left = nullptr;          // (3) crashes if start is now nullptr', 'delete temp;                    // (4)'],
-    py: ['if start is None: print("Empty list"); return', 'temp = start                   # (1)', 'start = temp.right             # (2)', 'start.left = None              # (3) AttributeError if start is None', 'del temp                       # (4)'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start                   # (1)', 'start = temp.right             # (2)', 'start.left = NULL              # (3) runtime error if start is NULL', 'delete temp                    # (4)'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = head;             // (1)', 'head = temp->next;            // (2)', 'head->prev = nullptr;          // (3) crashes if head is now nullptr', 'delete temp;                    // (4)'],
+    py: ['if head is None: print("Empty list"); return', 'temp = head                   # (1)', 'head = temp.next             # (2)', 'head.prev = None              # (3) AttributeError if head is None', 'del temp                       # (4)'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head                   # (1)', 'head = temp.next             # (2)', 'head.prev = NULL              # (3) runtime error if head is NULL', 'delete temp                    # (4)'],
   },
   'dll.deleteEnd': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = start;', 'while (temp->right != nullptr)', '    temp = temp->right;', 'if (temp->left == nullptr)      // correction: only one node', '    start = nullptr;', 'else', '    temp->left->right = nullptr;', 'delete temp;'],
-    py: ['if start is None: print("Empty list"); return', 'temp = start', 'while temp.right is not None:', '    temp = temp.right', 'if temp.left is None:          # correction: only one node', '    start = None', 'else:', '    temp.left.right = None', 'del temp'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start', 'while temp.right != NULL do', ['    temp = temp.right', 'end while'], 'if temp.left == NULL then      # correction: only one node', '    start = NULL', 'else', ['    temp.left.right = NULL', 'end if'], 'delete temp'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = head;', 'while (temp->next != nullptr)', '    temp = temp->next;', 'if (temp->prev == nullptr)      // correction: only one node', '    head = nullptr;', 'else', '    temp->prev->next = nullptr;', 'delete temp;'],
+    py: ['if head is None: print("Empty list"); return', 'temp = head', 'while temp.next is not None:', '    temp = temp.next', 'if temp.prev is None:          # correction: only one node', '    head = None', 'else:', '    temp.prev.next = None', 'del temp'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head', 'while temp.next != NULL do', ['    temp = temp.next', 'end while'], 'if temp.prev == NULL then      # correction: only one node', '    head = NULL', 'else', ['    temp.prev.next = NULL', 'end if'], 'delete temp'],
   },
   'dll.deleteMid': {
-    cpp: ['int nodectr = countnode(start);', 'if (pos > 1 && pos < nodectr) {', '    Node* temp = start;  int i = 1;', '    while (i < pos) {', '        temp = temp->right;', '        i++;', '    }', '    temp->right->left = temp->left;   // (1)', '    temp->left->right = temp->right;  // (2)', '    delete temp;', '} else', '    cout << "Invalid position\\n";'],
-    py: ['nodectr = countnode(start)', 'if pos > 1 and pos < nodectr:', '    temp = start; i = 1', '    while i < pos:', '        temp = temp.right', '        i += 1', null, '    temp.right.left = temp.left       # (1)', '    temp.left.right = temp.right      # (2)', '    del temp', 'else:', '    print("Invalid position")'],
-    pseudo: ['nodectr = countnode(start)', 'if pos > 1 and pos < nodectr then', '    temp = start; i = 1', '    while i < pos do', '        temp = temp.right', '        i = i + 1', '    end while', '    temp.right.left = temp.left       # (1)', '    temp.left.right = temp.right      # (2)', '    delete temp', 'else', ['    print "Invalid position"', 'end if']],
+    cpp: ['int node_count = count_nodes(head);', 'if (pos > 1 && pos < node_count) {', '    Node* temp = head;  int i = 1;', '    while (i < pos) {', '        temp = temp->next;', '        i++;', '    }', '    temp->next->prev = temp->prev;   // (1)', '    temp->prev->next = temp->next;  // (2)', '    delete temp;', '} else', '    cout << "Invalid position\\n";'],
+    py: ['node_count = count_nodes(head)', 'if pos > 1 and pos < node_count:', '    temp = head; i = 1', '    while i < pos:', '        temp = temp.next', '        i += 1', null, '    temp.next.prev = temp.prev       # (1)', '    temp.prev.next = temp.next      # (2)', '    del temp', 'else:', '    print("Invalid position")'],
+    pseudo: ['node_count = count_nodes(head)', 'if pos > 1 and pos < node_count then', '    temp = head; i = 1', '    while i < pos do', '        temp = temp.next', '        i = i + 1', '    end while', '    temp.next.prev = temp.prev       # (1)', '    temp.prev.next = temp.next      # (2)', '    delete temp', 'else', ['    print "Invalid position"', 'end if']],
   },
   'dll.traverseFwd': {
-    cpp: ['Node* temp = start;', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->right;', '}'],
-    py: ['temp = start', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.right', null],
-    pseudo: ['temp = start', 'while temp != NULL do', '    print temp.data', '    temp = temp.right', 'end while'],
+    cpp: ['Node* temp = head;', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->next;', '}'],
+    py: ['temp = head', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.next', null],
+    pseudo: ['temp = head', 'while temp != NULL do', '    print temp.data', '    temp = temp.next', 'end while'],
   },
   'dll.traverseBwd': {
-    cpp: ['Node* temp = start;', 'if (temp == nullptr) return;', 'while (temp->right != nullptr)    // first go to the last node', '    temp = temp->right;', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->left;', '}'],
-    py: ['temp = start', 'if temp is None: return', 'while temp.right is not None:    # first go to the last node', '    temp = temp.right', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.left', null],
-    pseudo: ['temp = start', 'if temp == NULL then; return; end if', 'while temp.right != NULL do      # first go to the last node', ['    temp = temp.right', 'end while'], 'while temp != NULL do', '    print temp.data', '    temp = temp.left', 'end while'],
+    cpp: ['Node* temp = head;', 'if (temp == nullptr) return;', 'while (temp->next != nullptr)    // first go to the last node', '    temp = temp->next;', 'while (temp != nullptr) {', '    cout << temp->data << " ";', '    temp = temp->prev;', '}'],
+    py: ['temp = head', 'if temp is None: return', 'while temp.next is not None:    # first go to the last node', '    temp = temp.next', 'while temp is not None:', '    print(temp.data, end=" ")', '    temp = temp.prev', null],
+    pseudo: ['temp = head', 'if temp == NULL then; return; end if', 'while temp.next != NULL do      # first go to the last node', ['    temp = temp.next', 'end while'], 'while temp != NULL do', '    print temp.data', '    temp = temp.prev', 'end while'],
   },
-  'dll.countnode': {
-    cpp: ['int countnode(Node* start) {', '    if (start == nullptr)', '        return 0;', '    else', '        return 1 + countnode(start->right);', '}'],
-    py: ['def countnode(start):', '    if start is None:', '        return 0', '    else:', '        return 1 + countnode(start.right)', null],
-    pseudo: ['function countnode(start)', '    if start == NULL then', '        return 0', '    else', ['        return 1 + countnode(start.right)', '    end if'], 'end function'],
+  'dll.count_nodes': {
+    cpp: ['int count_nodes(Node* head) {', '    if (head == nullptr)', '        return 0;', '    else', '        return 1 + count_nodes(head->next);', '}'],
+    py: ['def count_nodes(head):', '    if head is None:', '        return 0', '    else:', '        return 1 + count_nodes(head.next)', null],
+    pseudo: ['function count_nodes(head)', '    if head == NULL then', '        return 0', '    else', ['        return 1 + count_nodes(head.next)', '    end if'], 'end function'],
   },
 
   // ------------------------------------------------------------ circular singly linked list (Lec 11)
   'csll.insertBeg': {
-    cpp: ['Node* newnode = getnode(value);', 'if (start == nullptr) {', '    start = newnode;', '    newnode->next = start;      // a single node points to itself', '} else {', '    Node* last = start;', '    while (last->next != start)', '        last = last->next;', '    newnode->next = start;      // (1)', '    start = newnode;            // (2)', '    last->next = start;         // (3) close the circle again', '}'],
-    py: ['newnode = Node(value)', 'if start is None:', '    start = newnode', '    newnode.next = start       # a single node points to itself', 'else:', '    last = start', '    while last.next is not start:', '        last = last.next', '    newnode.next = start       # (1)', '    start = newnode            # (2)', '    last.next = start          # (3) close the circle again', null],
-    pseudo: ['newnode = new Node(value)', 'if start == NULL then', '    start = newnode', '    newnode.next = start       # a single node points to itself', 'else', '    last = start', '    while last.next != start do', ['        last = last.next', '    end while'], '    newnode.next = start       # (1)', '    start = newnode            # (2)', '    last.next = start          # (3) close the circle again', 'end if'],
+    cpp: ['Node* new_node = create_node(value);', 'if (head == nullptr) {', '    head = new_node;', '    new_node->next = head;      // a single node points to itself', '} else {', '    Node* last = head;', '    while (last->next != head)', '        last = last->next;', '    new_node->next = head;      // (1)', '    head = new_node;            // (2)', '    last->next = head;         // (3) close the circle again', '}'],
+    py: ['new_node = Node(value)', 'if head is None:', '    head = new_node', '    new_node.next = head       # a single node points to itself', 'else:', '    last = head', '    while last.next is not head:', '        last = last.next', '    new_node.next = head       # (1)', '    head = new_node            # (2)', '    last.next = head          # (3) close the circle again', null],
+    pseudo: ['new_node = new Node(value)', 'if head == NULL then', '    head = new_node', '    new_node.next = head       # a single node points to itself', 'else', '    last = head', '    while last.next != head do', ['        last = last.next', '    end while'], '    new_node.next = head       # (1)', '    head = new_node            # (2)', '    last.next = head          # (3) close the circle again', 'end if'],
   },
   'csll.insertEnd': {
-    cpp: ['Node* newnode = getnode(value);', 'if (start == nullptr) {', '    start = newnode;', '    newnode->next = start;', '} else {', '    Node* temp = start;', '    while (temp->next != start)', '        temp = temp->next;', '    temp->next = newnode;       // (1)', '    newnode->next = start;      // (2)', '}'],
-    py: ['newnode = Node(value)', 'if start is None:', '    start = newnode', '    newnode.next = start', 'else:', '    temp = start', '    while temp.next is not start:', '        temp = temp.next', '    temp.next = newnode        # (1)', '    newnode.next = start       # (2)', null],
-    pseudo: ['newnode = new Node(value)', 'if start == NULL then', '    start = newnode', '    newnode.next = start', 'else', '    temp = start', '    while temp.next != start do', ['        temp = temp.next', '    end while'], '    temp.next = newnode        # (1)', '    newnode.next = start       # (2)', 'end if'],
+    cpp: ['Node* new_node = create_node(value);', 'if (head == nullptr) {', '    head = new_node;', '    new_node->next = head;', '} else {', '    Node* temp = head;', '    while (temp->next != head)', '        temp = temp->next;', '    temp->next = new_node;       // (1)', '    new_node->next = head;      // (2)', '}'],
+    py: ['new_node = Node(value)', 'if head is None:', '    head = new_node', '    new_node.next = head', 'else:', '    temp = head', '    while temp.next is not head:', '        temp = temp.next', '    temp.next = new_node        # (1)', '    new_node.next = head       # (2)', null],
+    pseudo: ['new_node = new Node(value)', 'if head == NULL then', '    head = new_node', '    new_node.next = head', 'else', '    temp = head', '    while temp.next != head do', ['        temp = temp.next', '    end while'], '    temp.next = new_node        # (1)', '    new_node.next = head       # (2)', 'end if'],
   },
   'csll.deleteBeg': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'if (start->next == start) {    // only one node', '    delete start;', '    start = nullptr;  return;', '}', 'Node *last = start, *temp = start;', 'while (last->next != start)', '    last = last->next;', 'start = temp->next;             // (1)', 'last->next = start;             // (2)', 'delete temp;                    // the notes cross temp out; free it explicitly'],
-    py: ['if start is None: print("Empty list"); return', 'if start.next is start:        # only one node', '    pass                       # (nothing to free by hand in Python)', '    start = None; return', null, 'last = temp = start', 'while last.next is not start:', '    last = last.next', 'start = temp.next              # (1)', 'last.next = start              # (2)', 'del temp                       # unreachable now: Python frees it'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'if start.next == start then    # only one node', '    delete start', '    start = NULL; return', 'end if', 'last = start; temp = start', 'while last.next != start do', ['    last = last.next', 'end while'], 'start = temp.next              # (1)', 'last.next = start              # (2)', 'delete temp                    # the notes cross temp out; free it explicitly'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'if (head->next == head) {    // only one node', '    delete head;', '    head = nullptr;  return;', '}', 'Node *last = head, *temp = head;', 'while (last->next != head)', '    last = last->next;', 'head = temp->next;             // (1)', 'last->next = head;             // (2)', 'delete temp;                    // the notes cross temp out; free it explicitly'],
+    py: ['if head is None: print("Empty list"); return', 'if head.next is head:        # only one node', '    pass                       # (nothing to free by hand in Python)', '    head = None; return', null, 'last = temp = head', 'while last.next is not head:', '    last = last.next', 'head = temp.next              # (1)', 'last.next = head              # (2)', 'del temp                       # unreachable now: Python frees it'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'if head.next == head then    # only one node', '    delete head', '    head = NULL; return', 'end if', 'last = head; temp = head', 'while last.next != head do', ['    last = last.next', 'end while'], 'head = temp.next              # (1)', 'last.next = head              # (2)', 'delete temp                    # the notes cross temp out; free it explicitly'],
   },
   'csll.deleteEnd': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = start, *prev = start;', 'while (temp->next != start) {', '    prev = temp;', '    temp = temp->next;', '}', 'if (temp == start)              // only one node', '    start = nullptr;', 'else', '    prev->next = start;         // (1)', 'delete temp;'],
-    py: ['if start is None: print("Empty list"); return', 'temp = prev = start', 'while temp.next is not start:', '    prev = temp', '    temp = temp.next', null, 'if temp is start:              # only one node', '    start = None', 'else:', '    prev.next = start          # (1)', 'del temp'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start; prev = start', 'while temp.next != start do', '    prev = temp', '    temp = temp.next', 'end while', 'if temp == start then          # only one node', '    start = NULL', 'else', ['    prev.next = start          # (1)', 'end if'], 'delete temp'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node *temp = head, *prev = head;', 'while (temp->next != head) {', '    prev = temp;', '    temp = temp->next;', '}', 'if (temp == head)              // only one node', '    head = nullptr;', 'else', '    prev->next = head;         // (1)', 'delete temp;'],
+    py: ['if head is None: print("Empty list"); return', 'temp = prev = head', 'while temp.next is not head:', '    prev = temp', '    temp = temp.next', null, 'if temp is head:              # only one node', '    head = None', 'else:', '    prev.next = head          # (1)', 'del temp'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head; prev = head', 'while temp.next != head do', '    prev = temp', '    temp = temp.next', 'end while', 'if temp == head then          # only one node', '    head = NULL', 'else', ['    prev.next = head          # (1)', 'end if'], 'delete temp'],
   },
   'csll.traverse': {
-    cpp: ['if (start == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = start;', 'do {', '    cout << temp->data << " ";', '    temp = temp->next;', '} while (temp != start);'],
-    py: ['if start is None: print("Empty list"); return', 'temp = start', 'while True:                    # Python has no do-while', '    print(temp.data, end=" ")', '    temp = temp.next', '    if temp is start: break'],
-    pseudo: ['if start == NULL then; print "Empty list"; return; end if', 'temp = start', 'do', '    print temp.data', '    temp = temp.next', 'while temp != start'],
+    cpp: ['if (head == nullptr) { cout << "Empty list\\n"; return; }', 'Node* temp = head;', 'do {', '    cout << temp->data << " ";', '    temp = temp->next;', '} while (temp != head);'],
+    py: ['if head is None: print("Empty list"); return', 'temp = head', 'while True:                    # Python has no do-while', '    print(temp.data, end=" ")', '    temp = temp.next', '    if temp is head: break'],
+    pseudo: ['if head == NULL then; print "Empty list"; return; end if', 'temp = head', 'do', '    print temp.data', '    temp = temp.next', 'while temp != head'],
   },
   'csll.traverseNullBug': {
-    cpp: ['Node* temp = start;', 'while (temp != nullptr) {       // never false in a circle!', '    cout << temp->data << " ";', '    temp = temp->next;', '}'],
-    py: ['temp = start', 'while temp is not None:        # never false in a circle!', '    print(temp.data, end=" ")', '    temp = temp.next', null],
-    pseudo: ['temp = start', 'while temp != NULL do          # never false in a circle!', '    print temp.data', '    temp = temp.next', 'end while'],
+    cpp: ['Node* temp = head;', 'while (temp != nullptr) {       // never false in a circle!', '    cout << temp->data << " ";', '    temp = temp->next;', '}'],
+    py: ['temp = head', 'while temp is not None:        # never false in a circle!', '    print(temp.data, end=" ")', '    temp = temp.next', null],
+    pseudo: ['temp = head', 'while temp != NULL do          # never false in a circle!', '    print temp.data', '    temp = temp.next', 'end while'],
   },
 
   // ------------------------------------------------------------ array queue (Lec 12)
@@ -204,9 +204,9 @@ export const TRANSLATIONS = {
 
   // ------------------------------------------------------------ linked stack and queue (Lec 12)
   'sq.linked.pushHead': {
-    cpp: ['Node* newnode = getnode(x);', 'newnode->next = top;', 'top = newnode;'],
-    py: ['newnode = Node(x)', 'newnode.next = top', 'top = newnode'],
-    pseudo: ['newnode = new Node(x)', 'newnode.next = top', 'top = newnode'],
+    cpp: ['Node* new_node = create_node(x);', 'new_node->next = top;', 'top = new_node;'],
+    py: ['new_node = Node(x)', 'new_node.next = top', 'top = new_node'],
+    pseudo: ['new_node = new Node(x)', 'new_node.next = top', 'top = new_node'],
   },
   'sq.linked.popHead': {
     cpp: ['if (top == nullptr) { cout << "underflow\\n"; return; }', 'Node* temp = top;', 'top = top->next;', 'x = temp->data;  delete temp;'],
@@ -214,19 +214,19 @@ export const TRANSLATIONS = {
     pseudo: ['if top == NULL then; print "underflow"; return; end if', 'temp = top', 'top = top.next', 'x = temp.data; delete temp'],
   },
   'sq.linked.pushTail': {
-    cpp: ['Node* newnode = getnode(x);', 'if (start == nullptr)', '    start = top = newnode;', 'else {', '    top->next = newnode;', '    top = newnode;', '}'],
-    py: ['newnode = Node(x)', 'if start is None:', '    start = top = newnode', 'else:', '    top.next = newnode', '    top = newnode', null],
-    pseudo: ['newnode = new Node(x)', 'if start == NULL then', '    start = newnode; top = newnode', 'else', '    top.next = newnode', '    top = newnode', 'end if'],
+    cpp: ['Node* new_node = create_node(x);', 'if (head == nullptr)', '    head = top = new_node;', 'else {', '    top->next = new_node;', '    top = new_node;', '}'],
+    py: ['new_node = Node(x)', 'if head is None:', '    head = top = new_node', 'else:', '    top.next = new_node', '    top = new_node', null],
+    pseudo: ['new_node = new Node(x)', 'if head == NULL then', '    head = new_node; top = new_node', 'else', '    top.next = new_node', '    top = new_node', 'end if'],
   },
   'sq.linked.popTail': {
-    cpp: ['if (top == nullptr) { cout << "underflow\\n"; return; }', 'if (start == top) {            // last item', '    x = top->data;  delete top;', '    start = top = nullptr;  return;', '}', 'Node* temp = start;', 'while (temp->next != top)     // must find the node BELOW top', '    temp = temp->next;', 'x = top->data;  delete top;', 'top = temp;', 'top->next = nullptr;'],
-    py: ['if top is None: print("underflow"); return', 'if start is top:               # last item', '    x = top.data', '    start = top = None; return', null, 'temp = start', 'while temp.next is not top:    # must find the node BELOW top', '    temp = temp.next', 'x = top.data', 'top = temp', 'top.next = None                # the old top is unreachable: freed'],
-    pseudo: ['if top == NULL then; print "underflow"; return; end if', 'if start == top then           # last item', '    x = top.data; delete top', '    start = NULL; top = NULL; return', 'end if', 'temp = start', 'while temp.next != top do      # must find the node BELOW top', ['    temp = temp.next', 'end while'], 'x = top.data; delete top', 'top = temp', 'top.next = NULL'],
+    cpp: ['if (top == nullptr) { cout << "underflow\\n"; return; }', 'if (head == top) {            // last item', '    x = top->data;  delete top;', '    head = top = nullptr;  return;', '}', 'Node* temp = head;', 'while (temp->next != top)     // must find the node BELOW top', '    temp = temp->next;', 'x = top->data;  delete top;', 'top = temp;', 'top->next = nullptr;'],
+    py: ['if top is None: print("underflow"); return', 'if head is top:               # last item', '    x = top.data', '    head = top = None; return', null, 'temp = head', 'while temp.next is not top:    # must find the node BELOW top', '    temp = temp.next', 'x = top.data', 'top = temp', 'top.next = None                # the old top is unreachable: freed'],
+    pseudo: ['if top == NULL then; print "underflow"; return; end if', 'if head == top then           # last item', '    x = top.data; delete top', '    head = NULL; top = NULL; return', 'end if', 'temp = head', 'while temp.next != top do      # must find the node BELOW top', ['    temp = temp.next', 'end while'], 'x = top.data; delete top', 'top = temp', 'top.next = NULL'],
   },
   'sq.linked.enqueue': {
-    cpp: ['Node* newnode = getnode(x);', 'if (rear == nullptr)           // empty queue', '    front = rear = newnode;', 'else {', '    rear->next = newnode;', '    rear = newnode;', '}'],
-    py: ['newnode = Node(x)', 'if rear is None:               # empty queue', '    front = rear = newnode', 'else:', '    rear.next = newnode', '    rear = newnode', null],
-    pseudo: ['newnode = new Node(x)', 'if rear == NULL then           # empty queue', '    front = newnode; rear = newnode', 'else', '    rear.next = newnode', '    rear = newnode', 'end if'],
+    cpp: ['Node* new_node = create_node(x);', 'if (rear == nullptr)           // empty queue', '    front = rear = new_node;', 'else {', '    rear->next = new_node;', '    rear = new_node;', '}'],
+    py: ['new_node = Node(x)', 'if rear is None:               # empty queue', '    front = rear = new_node', 'else:', '    rear.next = new_node', '    rear = new_node', null],
+    pseudo: ['new_node = new Node(x)', 'if rear == NULL then           # empty queue', '    front = new_node; rear = new_node', 'else', '    rear.next = new_node', '    rear = new_node', 'end if'],
   },
   'sq.linked.dequeue': {
     cpp: ['if (front == nullptr) { cout << "underflow\\n"; return; }', 'Node* temp = front;', 'front = front->next;', 'if (front == nullptr)          // removed the final item', '    rear = nullptr;', 'x = temp->data;  delete temp;'],

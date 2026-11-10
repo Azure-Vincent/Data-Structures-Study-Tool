@@ -5,7 +5,7 @@
 // runs (in the Pseudocode Lab interpreter); the C++ and Python lines are tied to
 // it by LABELS so the walkthrough can highlight the same statement in all three:
 //
-//   @a3|        start = newnode          ← this line carries label a3
+//   @a3|        start = new_node          ← this line carries label a3
 //   @a3,a4|     ...                      ← several labels
 //   @setup|     ...                      ← C++/Python only: builds the starting
 //                                          structure the Lab sets up before step 1

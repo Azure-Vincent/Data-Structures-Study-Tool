@@ -31,7 +31,6 @@ const showOps = (ops, s) => ops.map((o) => (o.op === 'add' || o.op === 'push' ||
 export const l12 = [
   {
     id: 'l12-removal-order',
-    lecture: 12,
     concept: 'l12.lifo-fifo',
     type: 'predict',
     title: 'Same input: stack vs queue',
@@ -55,7 +54,6 @@ export const l12 = [
   },
   {
     id: 'l12-astack-top',
-    lecture: 12,
     concept: 'l12.array-stack',
     type: 'predict',
     title: 'Array stack: final value of top',
@@ -80,7 +78,6 @@ export const l12 = [
   },
   {
     id: 'l12-fails',
-    lecture: 12,
     concept: 'l12.array-stack',
     conceptBy: (p) => (p.q ? 'l12.array-queue' : 'l12.array-stack'),
     type: 'predict',
@@ -105,7 +102,6 @@ export const l12 = [
   },
   {
     id: 'l12-aqueue-fr',
-    lecture: 12,
     concept: 'l12.array-queue',
     type: 'predict',
     title: 'Array queue: F and R',
@@ -115,7 +111,7 @@ export const l12 = [
       const ops = asQueue(opSeq(rng, { len: rng.int(5, 9), maxSize: MAX, allowUnder: rng.bool(0.3) }));
       const r = SQ.runOps(circ ? 'aqueue-circ' : 'aqueue', ops, MAX);
       return {
-        prompt: `${circ ? '**Circular** array queue (supplementary): F = index of the front item, R = index of the next free slot, both wrap with % MAX' : '**Linear** array queue from Lec 12 p.5: F = index of the front item, R = index of the next free slot (one past the last item)'}. MAX = ${MAX}, start with F = R = 0. Failed operations change nothing.\n\n${showOps(ops, false).join(', ')}\n\nWhat are F and R at the end?`,
+        prompt: `${circ ? '**Circular** array queue (supplementary): F = index of the front item, R = index of the next free slot, both wrap with % MAX' : '**Linear** array queue from Lec 12 p.5: F = index of the front item, R = index of the next free slot (one past the last item)'}. MAX = ${MAX}, head with F = R = 0. Failed operations change nothing.\n\n${showOps(ops, false).join(', ')}\n\nWhat are F and R at the end?`,
         visual: { type: 'aqueue', state: SQ.arrayQueue(MAX, circ ? 'circular' : 'linear') },
         edge: r.events.length > 0,
         ...fields(
@@ -131,7 +127,6 @@ export const l12 = [
   },
   {
     id: 'l12-meaning',
-    lecture: 12,
     concept: 'l12.linked-queue',
     conceptBy: (p) => p.concept,
     type: 'choose',
@@ -142,7 +137,7 @@ export const l12 = [
         { q: 'In the INDEX-convention array stack (top = −1 initially; stack[++top] = data), top is…', a: 'The index of the top item', c: 'l12.array-stack', d: ['The index of the next free slot (= number of items)', 'The number of free slots', 'The address of the top node'] },
         { q: 'In the LINKED queue (Lec 12 p.6), rear is…', a: 'A pointer to the last node (NULL when the queue is empty)', c: 'l12.linked-queue', d: ['The index one past the last item', 'A pointer to the first node', 'The number of items'] },
         { q: 'In the LINEAR ARRAY queue (Lec 12 p.5), R is…', a: 'The index of the next free slot (one past the last item)', c: 'l12.array-queue', d: ['The index of the last item', 'A pointer to the last node', 'The number of items in the queue'] },
-        { q: 'In the notes’ LINKED stack (Lec 12 p.4: push/pop at the end of the list), top is…', a: 'A pointer to the last node of the list', c: 'l12.linked-stack', d: ['A pointer to the first node (start)', 'The index of the top item', 'The number of items'] },
+        { q: 'In the notes’ LINKED stack (Lec 12 p.4: push/pop at the end of the list), top is…', a: 'A pointer to the last node of the list', c: 'l12.linked-stack', d: ['A pointer to the first node (head)', 'The index of the top item', 'The number of items'] },
         { q: 'In a linked stack that pushes and pops at the HEAD of the list, top is…', a: 'A pointer to the first node (NULL when empty)', c: 'l12.linked-stack', d: ['A pointer to the last node', 'The index of the next free slot', 'Always NULL'] },
       ];
       const x = rng.pick(qs);
@@ -157,7 +152,6 @@ export const l12 = [
   },
   {
     id: 'l12-rewire-queue',
-    lecture: 12,
     concept: 'l12.linked-queue',
     type: 'rewire',
     title: 'Linked queue: enqueue / dequeue',
@@ -175,14 +169,14 @@ export const l12 = [
       goal.globals = ['front', 'rear'];
       const world = JSON.parse(JSON.stringify(w));
       world.vars.temp = null;
-      world.vars.newnode = null;
-      world.varOrder.push('temp', 'newnode');
-      const spec = { world, goal, opts: { head: 'front', lastVar: 'rear', locals: ['temp', 'newnode'] }, vars: ['front', 'rear', 'temp', 'newnode'], newValue: v };
+      world.vars.new_node = null;
+      world.varOrder.push('temp', 'new_node');
+      const spec = { world, goal, opts: { head: 'front', lastVar: 'rear', locals: ['temp', 'new_node'] }, vars: ['front', 'rear', 'temp', 'new_node'], newValue: v };
       return {
         prompt: `${op === 'enqueue' ? `Enqueue **${v}**` : `Dequeue (remove ${vs[0]} and free it)`}. front points AT the first node, rear points AT the last node.${n === 1 && op === 'dequeue' ? ' This removes the FINAL item.' : ''}${n === 0 ? ' The queue is empty.' : ''}\n\n${guide(guidance, op === 'enqueue' ? (n === 0 ? 'Empty queue: front and rear must BOTH point to the new node.' : 'Link after rear, then move rear.') : n === 1 ? 'When the last item leaves, BOTH front and rear must become NULL — otherwise rear dangles.' : 'temp = front; front = front->next; free(temp).', '')}`,
         edge: n <= 1,
         ...rewire(spec, { explain: 'front and rear are consistent with the list.' }),
-        hints: [op === 'enqueue' ? 'Items join at the rear.' : 'Items leave at the front.', { text: op === 'enqueue' ? 'Look at rear.' : 'Look at front (and rear if only one item).', hl: { vars: [op === 'enqueue' ? 'rear' : 'front'] } }, op === 'enqueue' ? (n === 0 ? 'getnode(); front = new; rear = new.' : 'getnode(); rear->next = new; rear = new.') : n === 1 ? 'temp = front; front = NULL; rear = NULL; free(temp).' : 'temp = front; front = second node; free(temp).'],
+        hints: [op === 'enqueue' ? 'Items join at the rear.' : 'Items leave at the front.', { text: op === 'enqueue' ? 'Look at rear.' : 'Look at front (and rear if only one item).', hl: { vars: [op === 'enqueue' ? 'rear' : 'front'] } }, op === 'enqueue' ? (n === 0 ? 'create_node(); front = new; rear = new.' : 'create_node(); rear->next = new; rear = new.') : n === 1 ? 'temp = front; front = NULL; rear = NULL; free(temp).' : 'temp = front; front = second node; free(temp).'],
         solutionTrace: { struct: 'lqueue', op, world: w, args: op === 'enqueue' ? [v] : [] },
         params: {},
       };
@@ -190,7 +184,6 @@ export const l12 = [
   },
   {
     id: 'l12-rewire-stack',
-    lecture: 12,
     concept: 'l12.linked-stack',
     type: 'rewire',
     title: 'Linked stack at the head: push / pop',
@@ -204,20 +197,19 @@ export const l12 = [
       goal.globals = ['top'];
       const world = JSON.parse(JSON.stringify(w));
       world.vars.temp = null;
-      world.vars.newnode = null;
-      world.varOrder.push('temp', 'newnode');
-      const spec = { world, goal, opts: { head: 'top', locals: ['temp', 'newnode'] }, vars: ['top', 'temp', 'newnode'], newValue: v };
+      world.vars.new_node = null;
+      world.varOrder.push('temp', 'new_node');
+      const spec = { world, goal, opts: { head: 'top', locals: ['temp', 'new_node'] }, vars: ['top', 'temp', 'new_node'], newValue: v };
       return {
         prompt: `This stack keeps its top at the HEAD of the list (top points to the first node). ${op === 'push' ? `Push **${v}**.` : `Pop (remove ${vs[0]} and free it).`}${n === 1 && op === 'pop' ? ' It is the last item.' : ''}\n\n${guide(guidance, op === 'push' ? 'Exactly like insert at the beginning.' : 'Exactly like delete at the beginning.', '')}`,
         edge: n <= 1,
         ...rewire(spec, { explain: 'With the top at the head, push and pop change only the links next to top — no walking through the list.' }),
-        hints: ['A head-based stack is insert/delete at the beginning.', { text: 'Only top and one link change.', hl: { vars: ['top'] } }, op === 'push' ? 'getnode(); new->next = top; top = new.' : 'temp = top; top = top->next; free(temp).'],
+        hints: ['A head-based stack is insert/delete at the beginning.', { text: 'Only top and one link change.', hl: { vars: ['top'] } }, op === 'push' ? 'create_node(); new->next = top; top = new.' : 'temp = top; top = top->next; free(temp).'],
       };
     },
   },
   {
     id: 'l12-choose',
-    lecture: 12,
     concept: 'l12.lifo-fifo',
     type: 'choose',
     title: 'Stack or queue?',

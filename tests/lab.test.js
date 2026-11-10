@@ -24,7 +24,7 @@ test('parser accepts the documented syntax', () => {
     'z ← 3',
     'x += 4',
     'p = new Node(15)',
-    'p->next = start',
+    'p->next = head',
     'p.data = 7',
     'if x > 1 and not (y == 2) then',
     '  print x, y',
@@ -105,8 +105,8 @@ test('re-indenting, Enter indentation and highlighting', () => {
 test('setups build stable addresses for every structure', () => {
   const { state } = buildInitial({ structure: 'dll', values: [1, 2, 3] });
   assert.deepEqual(Object.keys(state.nodes), ['100', '200', '300']);
-  assert.equal(state.nodes[200].left, 100);
-  assert.equal(state.nodes[200].right, 300);
+  assert.equal(state.nodes[200].prev, 100);
+  assert.equal(state.nodes[200].next, 300);
   const q = buildInitial({ structure: 'queue', values: [1, 2] }).state;
   assert.deepEqual(q.frames[0].vars.rear, { ref: 200 });
   const c = buildInitial({ structure: 'csll', values: [1, 2] }).state;
@@ -118,16 +118,16 @@ test('setups build stable addresses for every structure', () => {
 });
 
 test('correct insert-after: distinct alloc, move and link steps with stable identities', () => {
-  const x = run('newnode = new Node(15)\nnewnode.next = start.next\nstart.next = newnode');
+  const x = run('new_node = new Node(15)\nnew_node.next = head.next\nhead.next = new_node');
   assert.deepEqual(kinds(x), ['start', 'alloc', 'move', 'link', 'link', 'end']);
   assert.deepEqual(vals(x), [10, 15, 20, 30]);
   assert.equal(x.steps[1].hl.nodes[0], 400, 'new node gets the next free address');
-  assert.deepEqual(x.steps[4].change, { type: 'field', addr: 100, field: 'next', from: 200, to: 400, text: 'start.next' });
+  assert.deepEqual(x.steps[4].change, { type: 'field', addr: 100, field: 'next', from: 200, to: 400, text: 'head.next' });
   assert.equal(issues(x).length, 0);
 });
 
 test('value change vs pointer change vs traversal are different step kinds', () => {
-  const x = run('p = start.next\np.data = 99\np = p.next\nstart.next = p');
+  const x = run('p = head.next\np.data = 99\np = p.next\nhead.next = p');
   assert.deepEqual(kinds(x).slice(1, 5), ['move', 'data', 'move', 'link']);
   assert.match(x.steps[2].text, /Value change.*No pointer moved/);
   assert.match(x.steps[3].text, /moves along p\.next/);
@@ -136,21 +136,21 @@ test('value change vs pointer change vs traversal are different step kinds', () 
 });
 
 test('conditions, loops, functions, recursion and collections run for real', () => {
-  const x = run('function len(p)\n  if p == NULL then\n    return 0\n  end\n  return 1 + len(p.next)\nend\nn = len(start)\ntotal = 0\nfor i = 1 to n do\n  total = total + i\nend\nprint n, total, 7 / 2, 7 mod 2');
+  const x = run('function len(p)\n  if p == NULL then\n    return 0\n  end\n  return 1 + len(p.next)\nend\nn = len(head)\ntotal = 0\nfor i = 1 to n do\n  total = total + i\nend\nprint n, total, 7 / 2, 7 mod 2');
   assert.deepEqual(x.state.output, ['3 6 3 1']);
   assert.ok(kinds(x).includes('call') && kinds(x).includes('return'));
   const y = run('s = new Stack()\npush(s, 1)\npush(s, 2)\nq = new Queue()\nenqueue(q, pop(s))\nenqueue(q, pop(s))\nwhile not isEmpty(q) do\n  print dequeue(q)\nend\na = [5, 6]\na[1] = 9\nappend(a, 3)\nprint a, size(a)');
   assert.deepEqual(y.state.output, ['2', '1', '[5, 9, 3] 3']);
   const z = run('i = 0\nrepeat\n  i = i + 1\nuntil i == 3\ndo\n  i = i + 1\nwhile i < 5\nprint i');
   assert.deepEqual(z.state.output, ['5']);
-  const g = run('for each w in neighbors(G, s) do\n  print w\nend\nprint degree(G, "e"), hasEdge(G, "a", "b")', { structure: 'graph', graph: 'lec14' });
+  const g = run('for each w in neighbors(G, s) do\n  print w\nend\nprint degree(G, "e"), hasEdge(G, "a", "b")', { structure: 'graph', graph: 'example' });
   assert.deepEqual(g.state.output, ['b', 'e', 'f', '5 true']);
 });
 
 test('functions copy parameters but can assign globals (C-like scoping)', () => {
-  const x = run('function bad(head)\n  head = NULL\nend\nfunction good()\n  start = start.next\nend\nbad(start)\ngood()');
+  const x = run('function bad(head)\n  head = NULL\nend\nfunction good()\n  head = head.next\nend\nbad(head)\ngood()');
   assert.deepEqual(vals(x), [20, 30], 'bad() changed only its copy; good() moved the global');
-  assert.equal(issues(x, 'Lost reference').length, 1, 'node 10 is lost when good() moves start');
+  assert.equal(issues(x, 'Lost reference').length, 1, 'node 10 is lost when good() moves head');
 });
 
 test('short-circuit and/or protects against NULL', () => {
@@ -162,15 +162,15 @@ test('short-circuit and/or protects against NULL', () => {
 // ---------------------------------------------------------------- runtime errors
 test('runtime errors are precise and stop execution', () => {
   const cases = [
-    ['cur = start\nwhile cur.next != NULL do\n  cur = cur.next\nend\nprint cur.next.data', 'null-deref', /cur\.next is NULL, so cur\.next\.data does not exist/],
-    ['temp = start\ndelete temp\nprint temp.data', 'dangling', /deleted on line 2/],
+    ['cur = head\nwhile cur.next != NULL do\n  cur = cur.next\nend\nprint cur.next.data', 'null-deref', /cur\.next is NULL, so cur\.next\.data does not exist/],
+    ['temp = head\ndelete temp\nprint temp.data', 'dangling', /deleted on line 2/],
     ['print curr.data', 'undefined-var', /curr has no value/],
-    ['delete start\ndelete start', 'dangling', /already deleted/],
-    ['start.next = 15', 'value-vs-address', /must point to a node or be NULL/],
-    ['if start == 10 then\n  print 1\nend', 'value-vs-address', /compares a node.*with the value 10/],
-    ['x = start + 1', 'value-vs-address', /arithmetic on pointers/],
-    ['p = start.prev', 'value-vs-address', /no field “prev”/],
-    ['x = start.data\nprint x.next', 'value-vs-address', /not a node/],
+    ['delete head\ndelete head', 'dangling', /already deleted/],
+    ['head.next = 15', 'value-vs-address', /must point to a node or be NULL/],
+    ['if head == 10 then\n  print 1\nend', 'value-vs-address', /compares a node.*with the value 10/],
+    ['x = head + 1', 'value-vs-address', /arithmetic on pointers/],
+    ['p = head.prev', 'value-vs-address', /no field “prev”/],
+    ['x = head.data\nprint x.next', 'value-vs-address', /not a node/],
     ['q = new Queue()\nprint dequeue(q)', 'overflow', /empty queue/],
     ['n = new Node(1)\nfoo(n)', undefined, /no function called foo/],
     ['function f(n)\n  return f(n + 1)\nend\nx = f(1)', 'infinite-loop', /nested calls/],
@@ -185,18 +185,18 @@ test('runtime errors are precise and stop execution', () => {
     assert.equal(x.steps[x.steps.length - 1].kind, 'error');
     assert.ok(x.error.line >= 1);
   }
-  const typo = run('Start = NULL\nprint strat');
-  assert.match(typo.error.hint, /Did you mean start\?/);
+  const typo = run('Head = NULL\nprint haed');
+  assert.match(typo.error.hint, /Did you mean head\?/);
 });
 
 test('the instruction limit stops endless loops without hanging', () => {
   const t0 = Date.now();
-  const x = run('p = start\nwhile p != NULL do\n  print p.data\nend', SLL, { limit: 500 });
+  const x = run('p = head\nwhile p != NULL do\n  print p.data\nend', SLL, { limit: 500 });
   assert.equal(x.error.tag, 'infinite-loop');
   assert.match(x.error.message, /500 steps/);
   assert.equal(x.executed, 500);
   assert.ok(Date.now() - t0 < 3000);
-  const circ = run('p = start\nwhile p != NULL do\n  p = p.next\nend', { structure: 'csll', values: [1, 2, 3] });
+  const circ = run('p = head\nwhile p != NULL do\n  p = p.next\nend', { structure: 'csll', values: [1, 2, 3] });
   assert.equal(circ.error.tag, 'infinite-loop');
 });
 
@@ -211,12 +211,12 @@ test('code never reaches the host: names are only lab variables or functions', (
 
 // ---------------------------------------------------------------- analysis
 test('lost reference: names exactly which pointer changed and which nodes became unreachable', () => {
-  const x = run('newnode = new Node(15)\nstart.next = newnode\nnewnode.next = start.next');
+  const x = run('new_node = new Node(15)\nhead.next = new_node\nnew_node.next = head.next');
   const lost = issues(x, 'Lost reference');
   assert.equal(lost.length, 1);
   assert.equal(lost[0].line, 2);
   assert.deepEqual(lost[0].addrs, [200, 300]);
-  assert.match(lost[0].message, /start\.next \(the next field of @100\) changed from @200 to @400, and it was the last reference to @200/);
+  assert.match(lost[0].message, /head\.next \(the next field of @100\) changed from @200 to @400, and it was the last reference to @200/);
   assert.match(lost[0].hint, /Order matters/);
   // the self-loop is first a note (temporary), then a final warning
   assert.ok(issues(x, 'Temporary cycle').some((i) => i.severity === 'note'));
@@ -228,10 +228,10 @@ test('lost reference: names exactly which pointer changed and which nodes became
 test('temporary disconnections during valid updates are not errors', () => {
   // a new node held only by a variable, a node held only by temp, and deleting before setting NULL
   const ok = [
-    'newnode = new Node(5)\nnewnode.next = start\nstart = newnode',
-    'temp = start\nstart = start.next\ndelete temp',
-    'prev = start\nwhile prev.next.next != NULL do\n  prev = prev.next\nend\ndelete prev.next\nprev.next = NULL',
-    'n = new Node(1)\nstart.next.next.next = n',
+    'new_node = new Node(5)\nnew_node.next = head\nhead = new_node',
+    'temp = head\nhead = head.next\ndelete temp',
+    'prev = head\nwhile prev.next.next != NULL do\n  prev = prev.next\nend\ndelete prev.next\nprev.next = NULL',
+    'n = new Node(1)\nhead.next.next.next = n',
   ];
   for (const code of ok) {
     const x = run(code);
@@ -250,13 +250,13 @@ test('returning from a function can lose nodes held only by its locals', () => {
 });
 
 test('final checks: dangling roots, broken back links, open circles, wrong rear', () => {
-  assert.ok(issues(run('delete start'), 'Dangling pointer').length);
-  const dll = run('n = new Node(5)\nn.right = start\nstart = n', { structure: 'dll', values: [10, 20] });
-  assert.match(issues(dll, 'Broken back link')[0].message, /@100 \(10\)\.left should point back to @300/);
-  const circ = run('n = new Node(4)\np = start\nwhile p.next != start do\n  p = p.next\nend\np.next = n', { structure: 'csll', values: [1, 2] });
+  assert.ok(issues(run('delete head'), 'Dangling pointer').length);
+  const dll = run('n = new Node(5)\nn.right = head\nhead = n', { structure: 'dll', values: [10, 20] });
+  assert.match(issues(dll, 'Broken back link')[0].message, /@100 \(10\)\.prev should point back to @300/);
+  const circ = run('n = new Node(4)\np = head\nwhile p.next != head do\n  p = p.next\nend\np.next = n', { structure: 'csll', values: [1, 2] });
   assert.ok(issues(circ, 'Circle not closed').length);
-  const q = run('front = front.next\ndelete start', { structure: 'queue', values: [1] });
-  assert.ok(q.error, 'start is undefined in a queue');
+  const q = run('front = front.next\ndelete head', { structure: 'queue', values: [1] });
+  assert.ok(q.error, 'head is undefined in a queue');
   const q2 = run('temp = front\nfront = front.next\ndelete temp', { structure: 'queue', values: [1] });
   assert.ok(issues(q2, 'Dangling pointer').some((i) => /rear/.test(i.message)));
   const tree = run('root.left.left = root', { structure: 'tree', values: ['A', 'B'] });
@@ -265,7 +265,7 @@ test('final checks: dangling roots, broken back links, open circles, wrong rear'
 
 // ---------------------------------------------------------------- history controls
 test('execution history: lazy forward, back, goto, stop and reset use real snapshots', () => {
-  const x = new Execution('cur = start\nwhile cur != NULL do\n  cur = cur.next\nend', SLL);
+  const x = new Execution('cur = head\nwhile cur != NULL do\n  cur = cur.next\nend', SLL);
   assert.equal(x.steps.length, 1);
   assert.ok(x.forward() && x.forward() && x.forward());
   assert.equal(x.index, 3);
@@ -286,7 +286,7 @@ test('execution history: lazy forward, back, goto, stop and reset use real snaps
   assert.equal(x.index, 0);
   assert.ok(!x.back());
 
-  const y = new Execution('p = start\nwhile p != NULL do\n  print 1\nend', SLL);
+  const y = new Execution('p = head\nwhile p != NULL do\n  print 1\nend', SLL);
   y.forward();
   y.forward();
   y.stop();
@@ -321,14 +321,14 @@ test('every exercise: solution passes, starter fails, common mistakes get the ri
 
 test('the headline exercise explains a wrong pointer order on every failing test', () => {
   const ex = EXERCISES.find((e) => e.id === 'sll-insert-after');
-  const r = checkExercise(ex, 'newnode = new Node(15)\nstart.next = newnode\nnewnode.next = start.next');
+  const r = checkExercise(ex, 'new_node = new Node(15)\nhead.next = new_node\nnew_node.next = head.next');
   assert.equal(r.tag, 'lost-access');
   const t0 = r.tests[0];
-  assert.match(t0.problems[0].text, /Expected start → 10 → 15 → 20 → 30 → NULL/);
+  assert.match(t0.problems[0].text, /Expected head → 10 → 15 → 20 → 30 → NULL/);
   assert.match(t0.why, /Line 2: .*changed from @200 to @400/);
   // empty and single-node cases are covered and graded
   assert.ok(ex.tests.some((t) => t.setup.values.length === 1));
-  const syntax = checkExercise(ex, 'newnode = new Node(15');
+  const syntax = checkExercise(ex, 'new_node = new Node(15');
   assert.equal(syntax.syntax.kind, 'syntax');
 });
 
@@ -336,7 +336,7 @@ test('free-mode examples run without errors', () => {
   for (const [s, list] of Object.entries(EXAMPLES)) {
     for (const ex of list) {
       if (/^Wrong/.test(ex.title)) continue;
-      const setup = s === 'graph' ? { structure: s, graph: 'lec14' } : { structure: s, values: ex.values || (s === 'tree' ? ['A', 'B', 'C', 'D', 'E', 'F', 'G'] : s === 'stack' ? [30, 20, 10] : [10, 20, 30]) };
+      const setup = s === 'graph' ? { structure: s, graph: 'example' } : { structure: s, values: ex.values || (s === 'tree' ? ['A', 'B', 'C', 'D', 'E', 'F', 'G'] : s === 'stack' ? [30, 20, 10] : [10, 20, 30]) };
       const x = run(ex.code, setup);
       assert.equal(x.error, null, `${s} / ${ex.title}: ${x.error && x.error.message}`);
       assert.equal(x.syntax, null, `${s} / ${ex.title}`);
@@ -349,11 +349,11 @@ test('progress store keeps lab drafts and solved exercises (and old saves still 
   const a = new ProgressStore(storage);
   let notified = 0;
   a.onChange(() => notified++);
-  a.setLabDraft('ex:sll-traverse', 'cur = start');
+  a.setLabDraft('ex:sll-traverse', 'cur = head');
   assert.equal(notified, 0, 'drafts save quietly');
   a.markLabSolved('sll-traverse');
   const b = new ProgressStore(storage);
-  assert.equal(b.labDraft('ex:sll-traverse'), 'cur = start');
+  assert.equal(b.labDraft('ex:sll-traverse'), 'cur = head');
   assert.ok(b.labData().solved['sll-traverse']);
   const legacy = JSON.parse(storage.getItem('dslab.progress.v1'));
   delete legacy.lab;

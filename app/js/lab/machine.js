@@ -399,7 +399,7 @@ export class Machine {
         return;
       }
       if (val !== null && !isRef(val)) {
-        this.err(`${exprText(t)} must point to a node or be NULL, but ${exprText(s.expr)} is ${this.f(val)}.`, s.expr, typeof val === 'number' || typeof val === 'string' ? `To store the value, use ${exprText(t.obj)}.data = ${exprText(s.expr)}. To link, assign a node: ${exprText(t)} = newnode.` : '', 'value-vs-address');
+        this.err(`${exprText(t)} must point to a node or be NULL, but ${exprText(s.expr)} is ${this.f(val)}.`, s.expr, typeof val === 'number' || typeof val === 'string' ? `To store the value, use ${exprText(t.obj)}.data = ${exprText(s.expr)}. To link, assign a node: ${exprText(t)} = new_node.` : '', 'value-vs-address');
       }
       if (isRef(val)) {
         const target = this.node(val.ref);

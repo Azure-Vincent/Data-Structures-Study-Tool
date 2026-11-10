@@ -77,10 +77,10 @@ const QUEUE_PY_SETUP = `# Setup (not part of the lesson's operation): builds the
 
 const SLL_CPP_SETUP_END = `// Clean-up: C++ never frees memory by itself, so give every node back at the end.
 @setup|void destroyList() {
-@setup|    while (start != nullptr) {
-@setup|        Node* rest = start->next;
-@setup|        delete start;
-@setup|        start = rest;
+@setup|    while (head != nullptr) {
+@setup|        Node* rest = head->next;
+@setup|        delete head;
+@setup|        head = rest;
 @setup|    }
 @setup|    top = nullptr;
 @setup|}`;
@@ -91,10 +91,9 @@ const POP_LOOP_NOTE = 'Pop until the stack is empty. The values come out in the 
 export const STACK_QUEUE_EXAMPLES = [
   {
     id: 'stack-array',
-    lecture: 12,
+    module: 'stack',
     structure: 'arrays',
     title: 'A stack in an array (the notes’ convention)',
-    ref: 'Lec 12 p.2–3',
     intro: 'The stack lives in an array of MAX slots. `top` counts the items, so it is also the index of the next FREE slot: push writes at `stack[top]` and then increases top; pop first decreases top and then reads `stack[top]`. top == 0 means empty, top == MAX means full.',
     params: { max: 3 },
     cases: [
@@ -196,7 +195,7 @@ int main() {
 @m7|print(pop())                 # the stack is empty now`,
     notes: {
       s2: '**The storage.** C++ `int stack[MAX]` is a fixed block of MAX ints. Python uses a list of MAX slots and never appends to it, so it behaves like the array. The pseudocode `new Array(MAX)` is the Lab’s array.',
-      s3: 'top = 0: the stack is empty and slot 0 is the next free slot. (Many textbooks instead keep top = index of the top item and start at −1; the notes use the count.)',
+      s3: 'top = 0: the stack is empty and slot 0 is the next free slot. (Many textbooks instead keep top = index of the top item and head at −1; the notes use the count.)',
       p1: '**Overflow check.** top == MAX means every slot is in use; an array cannot grow.',
       p2: 'Edge case: pushing onto a full stack is refused and nothing changes.',
       p4: 'The value goes into slot top — the first free slot.',
@@ -229,10 +228,9 @@ int main() {
   },
   {
     id: 'stack-linked',
-    lecture: 12,
+    module: 'stack',
     structure: 'stack',
     title: 'A linked stack: push and pop at the first node',
-    ref: 'Lec 12 p.4 (simplified)',
     intro: 'Each item is a node; `top` holds the address of the TOP node and every node’s next points to the node below it. Push = insert at the beginning, pop = delete at the beginning (Lec 08/09), so neither has to walk the list. The notes push at the END instead — compare the next program.',
     params: { x: 40 },
     cases: [
@@ -243,9 +241,9 @@ int main() {
 # Starting stack: {{start}}
 
 @fp|function push(value)
-@p1|    newnode = new Node(value)
-@p2|    newnode.next = top           # the new node sits on the old top
-@p3|    top = newnode                # and becomes the top
+@p1|    new_node = new Node(value)
+@p2|    new_node.next = top           # the new node sits on the old top
+@p3|    top = new_node                # and becomes the top
 @fp_end|end function
 
 @fo|function pop()
@@ -274,9 +272,9 @@ ${NODE_CPP}
 Node* top = nullptr;       // address of the top node (nullptr = empty stack)
 
 @fp|void push(int value) {
-@p1|    Node* newnode = new Node{value, nullptr};
-@p2|    newnode->next = top;         // the new node sits on the old top
-@p3|    top = newnode;               // and becomes the top
+@p1|    Node* new_node = new Node{value, nullptr};
+@p2|    new_node->next = top;         // the new node sits on the old top
+@p3|    top = new_node;               // and becomes the top
 @fp_end|}
 
 @fo|int pop() {
@@ -307,9 +305,9 @@ top = None                   # the top node (None = empty stack)
 
 @fp,fp_end|def push(value):
     global top
-@p1|    newnode = Node(value)
-@p2|    newnode.next = top       # the new node sits on the old top
-@p3|    top = newnode            # and becomes the top
+@p1|    new_node = Node(value)
+@p2|    new_node.next = top       # the new node sits on the old top
+@p3|    top = new_node            # and becomes the top
 
 @fo,fo_end|def pop():
     global top
@@ -346,8 +344,8 @@ ${STACK_PY_SETUP}
         label: 'p2',
         why: 'The new node must point at the old top before top moves.',
         wrong: [
-          { cpp: 'top->next = newnode;', py: 'top.next = newnode', pseudo: 'top.next = newnode', why: 'That links the new node BELOW the top, and fails on an empty stack.', tag: 'pointer-walk' },
-          { cpp: 'newnode = top;', py: 'newnode = top', pseudo: 'newnode = top', why: 'That loses the new node.', tag: 'value-vs-address' },
+          { cpp: 'top->next = new_node;', py: 'top.next = new_node', pseudo: 'top.next = new_node', why: 'That links the new node BELOW the top, and fails on an empty stack.', tag: 'pointer-walk' },
+          { cpp: 'new_node = top;', py: 'new_node = top', pseudo: 'new_node = top', why: 'That loses the new node.', tag: 'value-vs-address' },
         ],
       },
       {
@@ -362,24 +360,23 @@ ${STACK_PY_SETUP}
   },
   {
     id: 'stack-linked-end',
-    lecture: 12,
+    module: 'stack',
     structure: 'sll',
     title: 'A linked stack as in the notes: push and pop at the END',
-    ref: 'Lec 12 p.4',
-    intro: 'The notes keep the list in `start` and the TOP item at the end, in `top`. Push links the new node after top. Pop must find the node BELOW top, and a node only knows the node after it, so temp has to walk from start every time. Same behaviour as the previous program, more work per pop.',
+    intro: 'The notes keep the list in `head` and the TOP item at the end, in `top`. Push links the new node after top. Pop must find the node BELOW top, and a node only knows the node after it, so temp has to walk from head every time. Same behaviour as the previous program, more work per pop.',
     params: {},
     cases: [{ label: 'Push 10, 20, 30', setup: { values: [] } }],
-    pseudo: `# Nodes have two fields: data and next. start -> bottom … top -> NULL.
+    pseudo: `# Nodes have two fields: data and next. head -> bottom … top -> NULL.
 @s1|top = NULL
 
 @fp|function push(value)
-@p1|    newnode = new Node(value)
-@p2|    if start == NULL then
-@p3|        start = newnode          # the first item is both bottom and top
-@p4|        top = newnode
+@p1|    new_node = new Node(value)
+@p2|    if head == NULL then
+@p3|        head = new_node          # the first item is both bottom and top
+@p4|        top = new_node
     else
-@p5|        top.next = newnode       # link after the old top
-@p6|        top = newnode
+@p5|        top.next = new_node       # link after the old top
+@p6|        top = new_node
     end if
 @fp_end|end function
 
@@ -389,12 +386,12 @@ ${STACK_PY_SETUP}
 @o3|        return -1
     end if
 @o4|    x = top.data
-@o5|    if start == top then         # only one item left
+@o5|    if head == top then         # only one item left
 @o6|        delete top
-@o7|        start = NULL
+@o7|        head = NULL
 @o8|        top = NULL
     else
-@o9|        temp = start
+@o9|        temp = head
 @o10|        while temp.next != top do
 @o11|            temp = temp.next     # stop on the node BELOW top
         end while
@@ -417,17 +414,17 @@ using namespace std;
 
 ${NODE_CPP}
 
-Node* start = nullptr;     // the bottom node (first in the list)
+Node* head = nullptr;     // the bottom node (first in the list)
 @s1|Node* top = nullptr;       // the top node (last in the list)
 
 @fp|void push(int value) {
-@p1|    Node* newnode = new Node{value, nullptr};
-@p2|    if (start == nullptr) {
-@p3|        start = newnode;         // the first item is both bottom and top
-@p4|        top = newnode;
+@p1|    Node* new_node = new Node{value, nullptr};
+@p2|    if (head == nullptr) {
+@p3|        head = new_node;         // the first item is both bottom and top
+@p4|        top = new_node;
     } else {
-@p5|        top->next = newnode;     // link after the old top
-@p6|        top = newnode;
+@p5|        top->next = new_node;     // link after the old top
+@p6|        top = new_node;
     }
 @fp_end|}
 
@@ -437,12 +434,12 @@ Node* start = nullptr;     // the bottom node (first in the list)
 @o3|        return -1;
     }
 @o4|    int x = top->data;
-@o5|    if (start == top) {          // only one item left
+@o5|    if (head == top) {          // only one item left
 @o6|        delete top;
-@o7|        start = nullptr;
+@o7|        head = nullptr;
 @o8|        top = nullptr;
     } else {
-@o9|        Node* temp = start;
+@o9|        Node* temp = head;
 @o10|        while (temp->next != top)
 @o11|            temp = temp->next;   // stop on the node BELOW top
 @o12|        delete top;
@@ -465,31 +462,31 @@ int main() {
 }`,
     py: `${NODE_PY}
 
-start = None                 # the bottom node (first in the list)
+head = None                 # the bottom node (first in the list)
 @s1|top = None                   # the top node (last in the list)
 
 @fp,fp_end|def push(value):
-    global start, top
-@p1|    newnode = Node(value)
-@p2|    if start is None:
-@p3|        start = newnode          # the first item is both bottom and top
-@p4|        top = newnode
+    global head, top
+@p1|    new_node = Node(value)
+@p2|    if head is None:
+@p3|        head = new_node          # the first item is both bottom and top
+@p4|        top = new_node
     else:
-@p5|        top.next = newnode       # link after the old top
-@p6|        top = newnode
+@p5|        top.next = new_node       # link after the old top
+@p6|        top = new_node
 
 @fo,fo_end|def pop():
-    global start, top
+    global head, top
 @o1|    if top is None:
 @o2|        print("stack underflow")
 @o3|        return -1
 @o4|    x = top.data
-@o5|    if start is top:             # only one item left
+@o5|    if head is top:             # only one item left
 @o6|        # (nothing to free: the node is reclaimed once no variable refers to it)
-@o7|        start = None
+@o7|        head = None
 @o8|        top = None
     else:
-@o9|        temp = start
+@o9|        temp = head
 @o10|        while temp.next is not top:
 @o11|            temp = temp.next     # stop on the node BELOW top
 @o12|        # (nothing to free: see above)
@@ -504,14 +501,14 @@ start = None                 # the bottom node (first in the list)
 @m5|    print(pop())
 @m6|print(pop())`,
     notes: {
-      s1: 'Two pointers: start (the bottom, first node of the list) and top (the last node). The Lab already provides start = NULL.',
+      s1: 'Two pointers: head (the bottom, first node of the list) and top (the last node). The Lab already provides head = NULL.',
       p2: 'Empty stack: the new node is the whole list.',
       p5: '**Link change.** The old top’s next now points to the new node; no walking is needed because top already points at the last node.',
       p6: 'top moves to the new last node.',
       o4: 'Copy the value before the node is freed.',
-      o5: 'Edge case: one item. Removing it empties the stack, so BOTH start and top must become NULL.',
+      o5: 'Edge case: one item. Removing it empties the stack, so BOTH head and top must become NULL.',
       o6: '**Free.** C++ `delete top` frees the node; top still holds the old address (a dangling pointer) until the next lines overwrite it. Python has nothing to free.',
-      o9: 'More than one item: find the node BELOW top. A node only stores the address of the node after it, so the only way is to walk from start.',
+      o9: 'More than one item: find the node BELOW top. A node only stores the address of the node after it, so the only way is to walk from head.',
       o10: 'Stop when temp’s next node is top — temp is then directly below it.',
       o11: '**Traversal.** temp moves one node forward. This walk is what makes the notes’ version slower than pushing and popping at the first node.',
       o12: 'Free the old top. temp->next still holds its address for a moment…',
@@ -540,10 +537,9 @@ start = None                 # the bottom node (first in the list)
   },
   {
     id: 'queue-array',
-    lecture: 12,
+    module: 'queue',
     structure: 'arrays',
     title: 'A queue in an array (linear, as in the notes)',
-    ref: 'Lec 12 p.5',
     intro: 'Items enter at the REAR and leave from the FRONT. F is the index of the front item, R the index of the next free slot; F == R means empty. Both only move forward, so once R reaches MAX the queue reports “full” even if slots at the beginning were freed by dequeues.',
     params: { max: 4 },
     cases: [
@@ -688,10 +684,9 @@ int main() {
   },
   {
     id: 'queue-linked',
-    lecture: 12,
+    module: 'queue',
     structure: 'queue',
     title: 'A linked queue: enqueue at the rear, dequeue at the front',
-    ref: 'Lec 12 p.6',
     intro: 'Two pointers: `front` (the node that leaves next) and `rear` (the last node). Enqueue links a new node after rear; dequeue removes the front node. The edge cases are the empty queue and removing the final item — then rear must become NULL too.',
     params: { x: 30 },
     cases: [
@@ -702,13 +697,13 @@ int main() {
 # Starting queue: {{start}}
 
 @fe|function enqueue(value)
-@e1|    newnode = new Node(value)
+@e1|    new_node = new Node(value)
 @e2|    if rear == NULL then
-@e3|        front = newnode          # empty queue: the new node is front AND rear
-@e4|        rear = newnode
+@e3|        front = new_node          # empty queue: the new node is front AND rear
+@e4|        rear = new_node
     else
-@e5|        rear.next = newnode      # link after the old rear
-@e6|        rear = newnode
+@e5|        rear.next = new_node      # link after the old rear
+@e6|        rear = new_node
     end if
 @fe_end|end function
 
@@ -742,13 +737,13 @@ Node* front = nullptr;     // the node that leaves next
 Node* rear = nullptr;      // the last node (nullptr when the queue is empty)
 
 @fe|void enqueue(int value) {
-@e1|    Node* newnode = new Node{value, nullptr};
+@e1|    Node* new_node = new Node{value, nullptr};
 @e2|    if (rear == nullptr) {
-@e3|        front = newnode;         // empty queue: the new node is front AND rear
-@e4|        rear = newnode;
+@e3|        front = new_node;         // empty queue: the new node is front AND rear
+@e4|        rear = new_node;
     } else {
-@e5|        rear->next = newnode;    // link after the old rear
-@e6|        rear = newnode;
+@e5|        rear->next = new_node;    // link after the old rear
+@e6|        rear = new_node;
     }
 @fe_end|}
 
@@ -783,13 +778,13 @@ rear = None                  # the last node (None when the queue is empty)
 
 @fe,fe_end|def enqueue(value):
     global front, rear
-@e1|    newnode = Node(value)
+@e1|    new_node = Node(value)
 @e2|    if rear is None:
-@e3|        front = newnode          # empty queue: the new node is front AND rear
-@e4|        rear = newnode
+@e3|        front = new_node          # empty queue: the new node is front AND rear
+@e4|        rear = new_node
     else:
-@e5|        rear.next = newnode      # link after the old rear
-@e6|        rear = newnode
+@e5|        rear.next = new_node      # link after the old rear
+@e6|        rear = new_node
 
 @fd,fd_end|def dequeue():
     global front, rear
@@ -840,8 +835,8 @@ ${QUEUE_PY_SETUP}
         label: 'e5',
         why: 'The new node joins after the current rear.',
         wrong: [
-          { cpp: 'newnode->next = front;', py: 'newnode.next = front', pseudo: 'newnode.next = front', why: 'That puts the new node in FRONT of the queue (stack behaviour).', tag: 'lifo-fifo' },
-          { cpp: 'rear = newnode->next;', py: 'rear = newnode.next', pseudo: 'rear = newnode.next', why: 'newnode.next is NULL: rear is lost and the new node is never linked.', tag: 'lost-access' },
+          { cpp: 'new_node->next = front;', py: 'new_node.next = front', pseudo: 'new_node.next = front', why: 'That puts the new node in FRONT of the queue (stack behaviour).', tag: 'lifo-fifo' },
+          { cpp: 'rear = new_node->next;', py: 'rear = new_node.next', pseudo: 'rear = new_node.next', why: 'new_node.next is NULL: rear is lost and the new node is never linked.', tag: 'lost-access' },
         ],
       },
     ],

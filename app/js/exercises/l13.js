@@ -20,7 +20,6 @@ function smallTree(rng, lo = 5, hi = 9) {
 export const l13 = [
   {
     id: 'l13-relations',
-    lecture: 13,
     concept: 'l13.tree-terms',
     type: 'classify',
     title: 'Tree relationships',
@@ -62,7 +61,6 @@ export const l13 = [
   },
   {
     id: 'l13-measures',
-    lecture: 13,
     concept: 'l13.tree-measures',
     type: 'predict',
     title: 'Level, height and depth',
@@ -106,7 +104,6 @@ export const l13 = [
   },
   {
     id: 'l13-classify',
-    lecture: 13,
     concept: 'l13.tree-classify',
     type: 'classify',
     title: 'Classify the binary tree',
@@ -132,7 +129,6 @@ export const l13 = [
   },
   {
     id: 'l13-array-index',
-    lecture: 13,
     concept: 'l13.tree-repr',
     type: 'convert',
     title: 'Array representation',
@@ -173,7 +169,6 @@ export const l13 = [
   },
   {
     id: 'l13-formulas',
-    lecture: 13,
     concept: 'l13.tree-measures',
     type: 'predict',
     title: 'Node-count formulas',
@@ -226,7 +221,6 @@ export const l13 = [
   },
   {
     id: 'l13-matrix',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Drawing → adjacency matrix',
@@ -263,7 +257,6 @@ export const l13 = [
   },
   {
     id: 'l13-adjlist',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Matrix → adjacency list',
@@ -295,7 +288,6 @@ export const l13 = [
   },
   {
     id: 'l13-draw',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Adjacency list → drawing',
@@ -330,7 +322,6 @@ export const l13 = [
   },
   {
     id: 'l13-build-tree',
-    lecture: 13,
     concept: 'l13.tree-repr',
     type: 'build',
     title: 'Build the tree from its array',

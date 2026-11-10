@@ -2,6 +2,7 @@
 // watch the structure change. Guided exercises are graded on test cases; free
 // mode lets you pick or build any starting structure.
 import { h, clear, md, pill, steadyLabel } from '../ui/dom.js';
+import { MODULE_BY_ID } from '../content/concepts.js';
 import { steadyPanel } from '../ui/steady.js';
 import { icon } from '../ui/icons.js';
 import { createCodeEditor } from '../ui/codeEditor.js';
@@ -67,9 +68,9 @@ function referencePanel(onTry) {
 
 /**
  * labView(ctx, a, b, { drill })
- * With `drill` (from the Pseudocode drills page) the exercise is one card of a
+ * With `drill` (from the Cumulative Review page) the exercise is one item of a
  * spaced-repetition session: no exercise picker, a fresh draft per review, and
- * the first passing check (or a revealed solution) grades the card:
+ * the first passing check (or a revealed solution) grades the review:
  * drill = { id, pos, total, card, review(outcome) → record, next(), end(), when(due) }.
  */
 export function labView(ctx, a, b, { drill = null } = {}) {
@@ -124,7 +125,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
 
   function freeSetup() {
     const saved = freeVals();
-    if (S.render === 'graph') return { structure, graph: saved?.graph || 'lec14', vars: { s: saved?.s ?? GRAPH_EXAMPLES[saved?.graph || 'lec14'].start } };
+    if (S.render === 'graph') return { structure, graph: GRAPH_EXAMPLES[saved?.graph] ? saved.graph : 'example', vars: { s: saved?.s ?? GRAPH_EXAMPLES[GRAPH_EXAMPLES[saved?.graph] ? saved.graph : 'example'].start } };
     return { structure, values: saved?.values ?? FREE_DEFAULTS[structure] };
   }
 
@@ -135,8 +136,8 @@ export function labView(ctx, a, b, { drill = null } = {}) {
   root.append(
     ...[
     drill
-      ? h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Pseudocode drills · card ${drill.pos + 1} of ${drill.total}`), h('h1', {}, ex.title), h('div', { class: 'subtitle' }, 'Write it from memory, run it on the diagram, then check it. The result decides when this card comes back.')), refBtn)
-      : h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Tools'), h('h1', {}, 'Pseudocode Lab'), h('div', { class: 'subtitle' }, 'Write pseudocode, run it line by line, and watch every node, pointer and variable change.')), refBtn),
+      ? h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Cumulative Review · exercise ${drill.pos + 1} of ${drill.total}`), h('h1', {}, ex.title), h('div', { class: 'subtitle' }, 'Write the operation from memory, execute it on the diagram and check it. The result determines when this exercise is scheduled again.')), refBtn)
+      : h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Pseudocode Lab'), h('h1', {}, 'Pseudocode Development'), h('div', { class: 'subtitle' }, 'Write pseudocode, execute it line by line and observe every node, pointer and variable change.')), refBtn),
     drill
       ? null
       : h(
@@ -175,12 +176,12 @@ export function labView(ctx, a, b, { drill = null } = {}) {
           'div',
           { class: 'row lab-picker drill-bar' },
           h('div', { class: 'drill-progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': drill.total, 'aria-valuenow': drill.pos + (reviewed ? 1 : 0), 'aria-label': 'Session progress' }, h('span', { style: { width: `${((drill.pos + (reviewed ? 1 : 0)) / drill.total) * 100}%` } })),
-          h('span', { class: 'small muted' }, rec ? `Box ${rec.box} of 6 · reviewed ${rec.reps} time${rec.reps === 1 ? '' : 's'}` : 'New card'),
+          h('span', { class: 'small muted' }, rec ? `Review level ${rec.box} of 6 · reviewed ${rec.reps} time${rec.reps === 1 ? '' : 's'}` : 'First review'),
           h('span', { class: 'spacer' }),
-          reviewed ? null : h('button', { class: 'btn small ghost', title: 'Counts as forgotten: the card comes back in 10 minutes', onclick: () => { drill.review('again'); drill.next(); } }, 'Skip card'),
+          reviewed ? null : h('button', { class: 'btn small ghost', title: 'Recorded as not recalled: the exercise is scheduled again in 10 minutes', onclick: () => { drill.review('again'); drill.next(); } }, 'Skip exercise'),
           h('button', { class: 'btn small', onclick: () => drill.end() }, 'End session'),
         ),
-        h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.render === 'none' ? 'Array' : S.label, 'type'), pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`)), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
+        h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.render === 'none' ? 'Array' : S.label, 'type'), pill(MODULE_BY_ID[ex.module].title)), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
       );
     }
     if (mode === 'guided') {
@@ -199,7 +200,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
       ctxPanel.append(
         ...[
         drill ? null : h('div', { class: 'row lab-picker' }, h('label', { class: 'inline small' }, h('b', {}, 'Exercise'), sel), h('button', { class: 'btn small', disabled: i === 0, onclick: () => ctx.go(`#/lab/${EXERCISES[i - 1].id}`), 'aria-label': 'Previous exercise' }, '←'), h('button', { class: 'btn small', disabled: i === EXERCISES.length - 1, onclick: () => ctx.go(`#/lab/${EXERCISES[i + 1].id}`), 'aria-label': 'Next exercise' }, '→'), h('span', { class: 'small muted' }, `${i + 1} of ${EXERCISES.length} · ${Object.keys(lab.solved).length} solved`)),
-        drill ? null : h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.label, 'type'), pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`), ex.supplementary ? pill('Supplementary', 'supp') : null, lab.solved[ex.id] ? h('span', { class: 'lvl mastered' }, 'solved') : null), h('h2', {}, ex.title), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
+        drill ? null : h('div', { class: 'lab-goal' }, h('div', { class: 'row', style: { marginBottom: '6px' } }, pill(S.label, 'type'), pill(MODULE_BY_ID[ex.module].title), ex.extension ? pill('Extension', 'supp') : null, lab.solved[ex.id] ? h('span', { class: 'lvl mastered' }, 'solved') : null), h('h2', {}, ex.title), md(`**Goal.** ${ex.goal}`, 'prose lab-goal-text')),
         h(
           'div',
           { class: 'lab-tests' },
@@ -352,7 +353,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
     const hintBtn = hintsShown < ex.hints.length ? h('button', { class: 'btn', onclick: () => { hintsShown++; drawCheck(result); } }, `Hint ${hintsShown + 1} of ${ex.hints.length}`) : null;
     const solBtn = !revealed
       ? h('button', { class: 'btn ghost', disabled: hintsShown < ex.hints.length, title: hintsShown < ex.hints.length ? 'Use the hints first' : '', onclick: () => {
-          if (!window.confirm(drill && !reviewed ? 'Show a corrected solution? The card then counts as forgotten and comes back in 10 minutes.' : 'Show a corrected solution? Revealing it means this attempt won’t count as solved on your own.')) return;
+          if (!window.confirm(drill && !reviewed ? 'Show the solution? The review is then recorded as not recalled and the exercise is scheduled again in 10 minutes.' : 'Show a corrected solution? Revealing it means this attempt won’t count as solved on your own.')) return;
           revealed = true;
           if (drill && !reviewed) reviewed = { outcome: 'again', rec: drill.review('again') };
           drawCheck(result);
@@ -399,12 +400,12 @@ export function labView(ctx, a, b, { drill = null } = {}) {
     const { outcome, rec } = reviewed;
     const when = drill.when(rec.due);
     const text = {
-      good: `Remembered — passed on the first check without hints. This card comes back ${when}.`,
-      hard: `Passed, with ${hintsShown ? 'hints' : 'more than one check'}. The card stays in its box and comes back ${when}.`,
-      again: `The solution was shown, so the card counts as forgotten. It comes back ${when}${drill.total > drill.pos + 1 ? ' and once more at the end of this session' : ''}. You can still finish it here for practice.`,
+      good: `Passed on the first check without hints. This exercise is scheduled again ${when}.`,
+      hard: `Passed with ${hintsShown ? 'hints' : 'more than one check'}. The review level is unchanged and the exercise is scheduled again ${when}.`,
+      again: `The solution was shown, so this review is recorded as not recalled. The exercise is scheduled again ${when}${drill.total > drill.pos + 1 ? ' and once more at the end of this session' : ''}. It can still be completed here for practice.`,
     }[outcome];
     const last = drill.pos + 1 >= drill.total;
-    return h('div', { class: `feedback ${outcome === 'again' ? 'info' : 'ok'} drill-verdict` }, h('div', {}, h('b', { class: 'verdict' }, outcome === 'good' ? 'Good.' : outcome === 'hard' ? 'Hard.' : 'Again.'), ' ', text), h('button', { class: 'btn primary', onclick: () => drill.next() }, last ? 'Finish the session' : 'Next card →'));
+    return h('div', { class: `feedback ${outcome === 'again' ? 'info' : 'ok'} drill-verdict` }, h('div', {}, h('b', { class: 'verdict' }, outcome === 'good' ? 'Recalled.' : outcome === 'hard' ? 'Recalled with difficulty.' : 'Not recalled.'), ' ', text), h('button', { class: 'btn primary', onclick: () => drill.next() }, last ? 'Finish the session' : 'Next exercise →'));
   }
 
   function runCheck() {
@@ -417,7 +418,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
     if (!result.syntax && src !== lastCheckedCode) {
       lastCheckedCode = src;
       const failed = result.tests.find((t) => !t.pass);
-      store.recordAttempt({ templateId: `lab-${ex.id}`, seed: 0, concept: ex.concept, type: 'lab', lecture: ex.lecture, correct: result.passed, hints: hintsShown, revealed, guidance: 'none', tag: result.tag, message: failed ? `Pseudocode Lab “${ex.title}”: ${failed.problems[0].text}` : '' });
+      store.recordAttempt({ templateId: `lab-${ex.id}`, seed: 0, concept: ex.concept, type: 'lab', module: ex.module, correct: result.passed, hints: hintsShown, revealed, guidance: 'none', tag: result.tag, message: failed ? `Pseudocode Lab “${ex.title}”: ${failed.problems[0].text}` : '' });
       if (result.passed && !revealed) store.markLabSolved(ex.id);
     }
     drawCheck(result);

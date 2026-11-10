@@ -157,7 +157,7 @@ async function coreChecks(page) {
   const cppLine = ((await walk.locator('.walk-code li.cur').first().textContent().catch(() => '')) || '').trim();
   await walk.locator('.lang-tabs button[data-lang="py"]').click();
   const pyLine = ((await walk.locator('.walk-code li.cur').first().textContent().catch(() => '')) || '').trim();
-  check('walkthrough highlights the statement in C++ and Python', /newnode/.test(cppLine) && /newnode/.test(pyLine) && cppLine !== pyLine, `C++: ${cppLine} | Python: ${pyLine}`);
+  check('walkthrough highlights the statement in C++ and Python', /new_node/.test(cppLine) && /new_node/.test(pyLine) && cppLine !== pyLine, `C++: ${cppLine} | Python: ${pyLine}`);
 
   // a graded exercise: put the statements in a correct order with the ↑ buttons, then Check
   await go(page, '#/try/l08-order-insert/3');
@@ -177,7 +177,7 @@ async function coreChecks(page) {
   // Pseudocode Lab: run a solution to the end, then check it against the goal
   await go(page, '#/lab/sll-insert-after');
   await page.locator('textarea.ce-input').evaluate((t) => {
-    t.value = 'newnode = new Node(15)\nnewnode.next = start.next\nstart.next = newnode\n';
+    t.value = 'new_node = new Node(15)\nnew_node.next = start.next\nstart.next = new_node\n';
     t.dispatchEvent(new Event('input'));
   });
   await page.waitForTimeout(500);

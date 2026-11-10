@@ -7,7 +7,7 @@ import { renderTree, renderGraph } from './render/treegraph.js';
 import { createRewireEditor } from './rewire.js';
 import { createWorkspace } from './workspace.js';
 import { TYPE_LABELS } from '../exercises/registry.js';
-import { CONCEPT_BY_ID } from '../content/concepts.js';
+import { CONCEPT_BY_ID, MODULE_BY_ID } from '../content/concepts.js';
 import { solveRewire } from '../exercises/solver.js';
 import { buildTrace, solutionSpec, graphFrom } from '../sim/specs.js';
 import { walk, forwardField, clone } from '../core/pointerWorld.js';
@@ -36,7 +36,7 @@ export function renderExercise(ex, cb = {}) {
   const head = h(
     'div',
     { class: 'task-head' },
-    h('div', {}, h('h2', {}, ex.title), h('div', { class: 'row small' }, pill(`Lecture ${String(ex.lecture).padStart(2, '0')}`), pill(TYPE_LABELS[ex.type] || ex.type), concept ? h('span', { class: 'muted' }, concept.name) : null, ex.edge ? pill('edge case', 'edge') : null, ex.guidance === 'full' ? pill('guided') : ex.guidance === 'none' ? pill('independent') : null)),
+    h('div', {}, h('h2', {}, ex.title), h('div', { class: 'row small' }, ex.module ? pill(MODULE_BY_ID[ex.module].title) : null, pill(TYPE_LABELS[ex.type] || ex.type), concept ? h('span', { class: 'muted' }, concept.name) : null, ex.edge ? pill('edge case', 'edge') : null, ex.guidance === 'full' ? pill('guided') : ex.guidance === 'none' ? pill('independent') : null)),
   );
   const prompt = md(ex.prompt, 'task-prompt');
   const visualHost = h('div', { style: { margin: '8px 0' } });
@@ -213,7 +213,7 @@ export function renderExercise(ex, cb = {}) {
         const hl = hintHighlight;
         if (!hl) return;
         const w = ex.world;
-        const as = walk(w, w.vars[ex.opts.head || 'start'], forwardField(w.kind)).addrs;
+        const as = walk(w, w.vars[ex.opts.head || 'head'], forwardField(w.kind)).addrs;
         ed.setHighlight((hl.pos || []).map((p) => as[p - 1]).filter(Boolean));
       };
       break;

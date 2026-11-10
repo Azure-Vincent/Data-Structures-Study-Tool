@@ -1,10 +1,12 @@
 // Application shell: navigation, routing, theme/motion settings.
 import { h, clear, stickyWhenFits } from './ui/dom.js';
 import { ProgressStore } from './progress/store.js';
-import { LECTURES } from './content/concepts.js';
-import { LESSON_BY_LECTURE } from './content/lessons.js';
+import { MODULES } from './content/concepts.js';
+import { LESSON_BY_ID } from './content/lessons.js';
 import { dashboardView } from './views/dashboard.js';
-import { lessonView } from './views/lesson.js';
+import { lessonView, modulesView, moduleLinkForOldLesson } from './views/lesson.js';
+import { assessmentView } from './views/assessment.js';
+import { implementationView } from './views/implementation.js';
 import { practiceView } from './views/practice.js';
 import { exploreView } from './views/explore.js';
 import { repairView } from './views/repair.js';
@@ -60,20 +62,20 @@ export const ctx = {
   },
 };
 
-function lessonPct(L) {
-  const lesson = LESSON_BY_LECTURE[L.n];
-  const rec = store.data.lessons[L.id];
+function modulePct(M) {
+  const lesson = LESSON_BY_ID[M.id];
+  const rec = store.data.lessons[M.id];
   if (!lesson || !rec) return 0;
-  return Math.round((store.lessonDoneCount(L.id, lesson.sections.map((x) => x.key)) / lesson.sections.length) * 100);
+  return Math.round((store.lessonDoneCount(M.id, lesson.sections.map((x) => x.key)) / lesson.sections.length) * 100);
 }
 
-function navLink(href, label, extra, ico) {
+function navLink(href, label, extra, ico, cls) {
   const cur = location.hash === href || (href !== '#/' && location.hash.startsWith(href + '/')) || (href === '#/' && (location.hash === '' || location.hash === '#'));
-  return h('a', { href, 'aria-current': cur ? 'page' : null, onclick: () => setMenu(false) }, ico ? icon(ico) : null, label, extra);
+  return h('a', { href, class: cls || null, 'aria-current': cur ? 'page' : null, onclick: () => setMenu(false) }, ico ? icon(ico) : null, label, extra);
 }
 
 function brand() {
-  return h('a', { class: 'brand', href: '#/' }, icon('brand', 'brand-mark'), h('span', {}, h('b', {}, 'DS Study Lab'), h('span', { class: 'brand-sub' }, 'Lectures 07–14 · C/C++')));
+  return h('a', { class: 'brand', href: '#/' }, icon('brand', 'brand-mark'), h('span', {}, h('b', {}, 'DS Study Lab'), h('span', { class: 'brand-sub' }, 'Data Structures and Algorithms')));
 }
 
 function setMenu(open) {
@@ -83,29 +85,38 @@ function setMenu(open) {
   if (open) side.querySelector('a[aria-current="page"], a')?.focus();
 }
 
-// cards due in the pseudocode drills (shown next to the menu entry)
-function drillBadge() {
+// exercises due in the Cumulative Review (shown next to the menu entry)
+function reviewBadge() {
   const n = dueCards(store.drillData(), store.now()).length;
-  return n ? h('span', { class: 'nav-badge', title: `${n} drill card${n === 1 ? '' : 's'} due` }, String(n)) : null;
+  return n ? h('span', { class: 'nav-badge', title: `${n} review exercise${n === 1 ? '' : 's'} due` }, String(n)) : null;
 }
 
 function drawNav() {
   clear(side).append(
     brand(),
-    h('div', { class: 'nav' }, navLink('#/', 'Dashboard', null, 'home'), navLink('#/practice', 'Practice', null, 'practice'), navLink('#/drills', 'Pseudocode drills', drillBadge(), 'cards'), navLink('#/progress', 'Progress', null, 'progress')),
-    h('div', { class: 'nav-group' }, 'Lectures'),
+    h('div', { class: 'nav' }, navLink('#/', 'Learning Dashboard', null, 'home'), navLink('#/modules', 'Learning Modules', null, 'book')),
+    h(
+      'div',
+      { class: 'nav nav-sub', role: 'group', 'aria-label': 'Learning modules' },
+      MODULES.map((M) => {
+        const p = modulePct(M);
+        return navLink(`#/module/${M.id}`, [h('span', { class: 'lec-n', style: `--p:${p}`, title: `${p}% of the module completed` }, String(M.n)), h('span', { class: 'lec-t' }, M.title)], h('span', { class: 'pct' }, p ? (p === 100 ? '✓' : `${p}%`) : ''));
+      }),
+    ),
+    h('div', { class: 'nav-group' }, 'Practice and Application'),
     h(
       'div',
       { class: 'nav' },
-      LECTURES.map((L) => {
-        const p = lessonPct(L);
-        return navLink(`#/lesson/${L.n}`, [h('span', { class: 'lec-n', style: `--p:${p}`, title: `${p}% of the lesson done` }, String(L.n).padStart(2, '0')), h('span', { class: 'lec-t' }, L.short)], h('span', { class: 'pct' }, p ? (p === 100 ? '✓' : `${p}%`) : ''));
-      }),
+      navLink('#/explore', 'Interactive Visualizations', null, 'explore'),
+      navLink('#/practice', 'Practice Exercises', null, 'practice'),
+      navLink('#/lab', 'Pseudocode Development', null, 'code'),
+      navLink('#/review', 'Cumulative Review', reviewBadge(), 'cards', 'nav-child'),
+      navLink('#/implementation', 'C++ Implementation', null, 'braces'),
+      navLink('#/repair', 'Algorithm Debugging', null, 'repair'),
+      navLink('#/assessment', 'Knowledge Assessment', null, 'assess'),
     ),
-    h('div', { class: 'nav-group' }, 'Tools'),
-    h('div', { class: 'nav' }, navLink('#/lab', 'Pseudocode Lab', null, 'code'), navLink('#/explore', 'Explore workspace', null, 'explore'), navLink('#/repair', 'Repair mode', null, 'repair')),
-    h('div', { class: 'nav-group' }, 'App'),
-    h('div', { class: 'nav' }, navLink('#/settings', 'Settings & data', null, 'settings')),
+    h('div', { class: 'nav-group' }, 'Records'),
+    h('div', { class: 'nav' }, navLink('#/progress', 'Learning Progress', null, 'progress'), navLink('#/settings', 'Settings and Data', null, 'settings')),
   );
 }
 
@@ -130,14 +141,35 @@ function route() {
       case '':
         view = dashboardView(ctx);
         break;
+      case 'modules':
+        view = modulesView(ctx);
+        break;
+      case 'module':
+        view = lessonView(ctx, parts[1] || MODULES[0].id, parts[2] != null ? Number(parts[2]) : null);
+        break;
       case 'lesson':
-        view = lessonView(ctx, Number(parts[1] || 7), parts[2] != null ? Number(parts[2]) : null);
+        // links from before the learning modules (#/lesson/<number>/<step>) open the same step in its module
+        view = h('p', { class: 'muted' }, 'Opening the learning module…');
+        moduleLinkForOldLesson(Number(parts[1]), parts[2] != null ? Number(parts[2]) : 0).then((to) => {
+          history.replaceState(null, '', to);
+          route();
+        });
         break;
       case 'practice':
         view = practiceView(ctx, parts[1] || null, parts[2] || null);
         break;
       case 'explore':
-        view = exploreView(ctx, parts[1] || null);
+        if (parts[1] === 'code') {
+          // the program explorer moved to its own page
+          history.replaceState(null, '', '#/implementation');
+          view = implementationView(ctx, null);
+        } else view = exploreView(ctx, parts[1] || null);
+        break;
+      case 'implementation':
+        view = implementationView(ctx, parts[1] || null);
+        break;
+      case 'assessment':
+        view = assessmentView(ctx, parts[1] || null, parts[2] || null);
         break;
       case 'repair':
         view = repairView(ctx, parts[1] || null);
@@ -145,7 +177,12 @@ function route() {
       case 'lab':
         view = labView(ctx, parts[1] || null, parts[2] || null);
         break;
+      case 'review':
+        view = drillsView(ctx, parts[1] || null);
+        break;
       case 'drills':
+        // the Cumulative Review was first called "Pseudocode drills"
+        history.replaceState(null, '', `#/review${parts[1] ? `/${parts[1]}` : ''}`);
         view = drillsView(ctx, parts[1] || null);
         break;
       case 'complexity':
@@ -163,15 +200,15 @@ function route() {
         // Open one generated exercise directly: #/try/<templateId>/<seed>
         const ex = generateExercise(parts[1], Number(parts[2] || 1), { guidance: parts[3] || 'less' });
         window.__dslabExercise = ex;
-        view = h('div', {}, h('div', { class: 'page-head' }, h('h1', {}, 'Single exercise')), renderExercise(ex, { onResult: (r) => store.recordAttempt({ templateId: ex.templateId, seed: ex.seed, concept: ex.concept, type: ex.type, lecture: ex.lecture, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: ex.guidance, tag: r.tag, message: r.message }) }));
+        view = h('div', {}, h('div', { class: 'page-head' }, h('h1', {}, 'Exercise')), renderExercise(ex, { onResult: (r) => store.recordAttempt({ templateId: ex.templateId, seed: ex.seed, concept: ex.concept, type: ex.type, module: ex.module, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: ex.guidance, tag: r.tag, message: r.message }) }));
         break;
       }
       default:
-        view = h('p', {}, 'Page not found. ', h('a', { href: '#/' }, 'Go to the dashboard'));
+        view = h('p', {}, 'This page does not exist. ', h('a', { href: '#/' }, 'Return to the Learning Dashboard'));
     }
   } catch (e) {
     console.error(e);
-    view = h('div', { class: 'feedback bad' }, h('b', {}, 'Something went wrong while opening this page. '), String(e.message || e));
+    view = h('div', { class: 'feedback bad' }, h('b', {}, 'This page could not be opened. '), String(e.message || e));
   }
   page.append(view);
   drawNav();

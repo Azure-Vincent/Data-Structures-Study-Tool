@@ -1,10 +1,10 @@
 // A tiny interpreter for the pointer statements used in the lectures, e.g.
-//   newnode->next = start;   temp = temp->next;   free(temp);
+//   new_node->next = head;   temp = temp->next;   free(temp);
 //   while (temp->next != NULL) temp = temp->next;
-//   do { print(temp->data); temp = temp->next; } while (temp != start);
+//   do { print(temp->data); temp = temp->next; } while (temp != head);
 // It lets the app GRADE pseudocode ordering and fill-in-the-blank answers by
 // running them, so any equivalent correct answer is accepted.
-import { clone, getnode, free, fieldsOf, lostNodes, GARBAGE } from './pointerWorld.js';
+import { clone, create_node, free, fieldsOf, lostNodes, GARBAGE } from './pointerWorld.js';
 
 export class InterpError extends Error {
   constructor(msg, kind = 'runtime') {
@@ -161,11 +161,11 @@ class Parser {
       this.eat();
       return { t: 'null' };
     }
-    if (k === 'getnode') {
+    if (k === 'create_node') {
       this.eat();
       this.eat('(');
       this.eat(')');
-      return { t: 'getnode' };
+      return { t: 'create_node' };
     }
     if (k === '(') {
       this.eat('(');
@@ -220,7 +220,7 @@ export function show(e) {
   if (e.t === 'null') return 'NULL';
   if (e.t === 'var') return e.name;
   if (e.t === 'field') return `${show(e.of)}->${e.f}`;
-  if (e.t === 'getnode') return 'getnode()';
+  if (e.t === 'create_node') return 'create_node()';
   return '?';
 }
 
@@ -251,8 +251,8 @@ export function run(world, program, opts = {}) {
 
   const val = (e) => {
     if (e.t === 'null') return null;
-    if (e.t === 'getnode') {
-      const a = getnode(w, opts.newValue ?? 0, opts.newAddr != null ? { addr: opts.newAddr } : undefined);
+    if (e.t === 'create_node') {
+      const a = create_node(w, opts.newValue ?? 0, opts.newAddr != null ? { addr: opts.newAddr } : undefined);
       return a;
     }
     if (e.t === 'var') {
@@ -422,7 +422,7 @@ export function runLines(world, lines, { title = 'code', newValue, ref = '', lan
     let msg = changes.length ? changes.join('; ') + '.' : 'Nothing changed.';
     if (r.output.length) msg += ` Printed: ${r.output.join(' ')}.`;
     if (lost.length) msg += ` ⚠ Access LOST to ${lost.join(', ')}: no pointer holds ${lost.length > 1 ? 'these addresses' : 'this address'} any more.`;
-    const kind = lost.length ? 'error' : /free\s*\(/.test(src) ? 'free' : /getnode/.test(src) ? 'alloc' : /->\s*\w+\s*=/.test(src) ? 'link' : 'var';
+    const kind = lost.length ? 'error' : /free\s*\(/.test(src) ? 'free' : /create_node/.test(src) ? 'alloc' : /->\s*\w+\s*=/.test(src) ? 'link' : 'var';
     t.step(i, kind, msg, { lost, error: lost.length > 0 });
   }
   t.state = clone(w);

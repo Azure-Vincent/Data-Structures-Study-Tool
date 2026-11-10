@@ -272,7 +272,7 @@ It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs i
 - Only the Windows installer and the Linux AppImage update themselves; the portable .exe, the macOS app and the .deb show a download link instead.
 - Linux builds are for x64 only.
 - In-progress answers are not saved; a resumed session continues at the current task, not mid-task.
-- The pointer interpreter that grades “arrange / complete the code” understands pointer statements: assignments, `->`, `getnode()`, `free()`, `while`/`do-while`/`if`, `print`. It does not understand integer counters or arithmetic, so exercises keep those parts fixed.
+- The pointer interpreter that grades “arrange / complete the code” understands pointer statements: assignments, `->`, `create_node()`, `free()`, `while`/`do-while`/`if`, `print`. It does not understand integer counters or arithmetic, so exercises keep those parts fixed.
 - The app runs only the pseudocode. In a walkthrough the C++ and Python lines are highlighted through statement labels; that those programs really behave the same is checked by `tests/langs/verify.mjs` (and CI), not inside the app. “Write it yourself” is graded in pseudocode; C++ and Python versions you write are compared with the model program, not graded.
 - Mastery and review intervals use simple fixed rules (Leitner boxes), not an adaptive model.
 - Two things depend on reading the handwriting, which was ambiguous:

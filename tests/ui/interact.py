@@ -36,7 +36,7 @@ with sync_playwright() as p:
     shot(pg,'i1_sim')
     # 2. rewire exercise: insert 15 after 10
     pg.goto(BASE+lesson_route(pg, 'e:now-do-it-insert-15-after-10')); pg.wait_for_timeout(400)
-    pg.locator('button:has-text("getnode(15)")').click()
+    pg.locator('button:has-text("create_node(15)")').click()
     def field(addr, f='next'): return pg.locator(f'g[data-addr="{addr}"] rect.field-hit[data-field="{f}"]')
     def node(addr): return pg.locator(f'g[data-addr="{addr}"] rect.box')
     # wrong order first: 100->next = 400 loses access

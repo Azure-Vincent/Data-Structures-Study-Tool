@@ -226,17 +226,14 @@ export function lightestPath(g, s, t) {
 export const GRAPH_CODE = {
   bfs: {
     title: 'BFS(s)  — queue',
-    ref: 'Lec 14 p.3–4',
     lines: ['mark s discovered;  enqueue(Q, s);', 'while (!isEmpty(Q)) {', '    v = dequeue(Q);  output(v);', '    for each neighbour u of v (in the stated order) {', '        if (u is not discovered) {', '            mark u discovered;  enqueue(Q, u);', '        }', '    }', '    mark v processed;', '}'],
   },
   dfs: {
     title: 'DFS(v)  — recursion (call stack)',
-    ref: 'Lec 14 p.2–4',
     lines: ['void DFS(v) {', '    mark v discovered;  output(v);', '    for each neighbour u of v (in the stated order) {', '        if (u is not discovered)', '            DFS(u);           // go deeper', '    }', '    mark v processed;     // backtrack', '}'],
   },
   full: {
     title: 'traverse the WHOLE graph',
-    ref: 'Supplementary (disconnected graphs)',
     lines: ['for each vertex s (in order) {', '    if (s is not discovered)', '        BFS(s)  or  DFS(s);   // one call per component', '}'],
   },
 };
@@ -372,36 +369,32 @@ export function traceDFS(g, s, opts = {}) {
 }
 
 // ---------------------------------------------------------------- lecture graphs
-export function lec14Graph() {
+export function exampleGraph() {
   const g = fromEdgeList(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'], [
     ['a', 'b'], ['a', 'e'], ['a', 'f'], ['b', 'c'], ['b', 'd'], ['b', 'e'], ['c', 'g'], ['d', 'g'], ['e', 'g'], ['e', 'f'], ['e', 'i'], ['f', 'i'], ['g', 'h'], ['h', 'i'],
   ]);
   g.pos = { a: [0.45, 0.06], b: [0.28, 0.3], c: [0.08, 0.55], d: [0.3, 0.55], e: [0.55, 0.52], f: [0.8, 0.3], g: [0.3, 0.86], h: [0.58, 0.86], i: [0.85, 0.72] };
-  g.ref = 'Lec 14 p.4';
   return g;
 }
 
-export function lec13Directed() {
+export function directedGraph() {
   const g = fromEdgeList(['1', '2', '3', '4', '5'], [['1', '2'], ['1', '3'], ['1', '5'], ['2', '3'], ['2', '4'], ['2', '5'], ['3', '4'], ['5', '3'], ['5', '4']], { directed: true });
   g.pos = { 1: [0.5, 0.08], 2: [0.12, 0.42], 3: [0.88, 0.42], 4: [0.28, 0.9], 5: [0.72, 0.9] };
-  g.ref = 'Lec 13 p.6 (edges read from the handwritten drawing)';
   return g;
 }
 
-export function lec13Weighted() {
+export function weightedGraph() {
   const g = fromEdgeList(['A', 'B', 'C', 'D', 'E', 'F', 'G'], [
     ['A', 'B', 3], ['A', 'C', 6], ['B', 'C', 2], ['B', 'D', 4], ['C', 'D', 1], ['C', 'E', 4], ['C', 'F', 2], ['D', 'E', 2], ['D', 'G', 4], ['E', 'G', 1], ['E', 'F', 2], ['F', 'G', 1],
   ], { weighted: true });
   g.pos = { A: [0.04, 0.55], B: [0.24, 0.1], C: [0.3, 0.55], D: [0.6, 0.1], E: [0.6, 0.52], F: [0.6, 0.92], G: [0.92, 0.5] };
-  g.ref = 'Lec 13 p.6';
   return g;
 }
 
-export function lec13SelfLoop() {
+export function selfLoopGraph() {
   // the 3x3 matrix on Lec 13 p.6: 1→1,1→2,1→3, 2→3, 3→2
   const g = fromMatrix(['1', '2', '3'], [[1, 1, 1], [0, 0, 1], [0, 1, 0]], { directed: true });
   g.pos = { 1: [0.2, 0.25], 2: [0.75, 0.2], 3: [0.55, 0.8] };
-  g.ref = 'Lec 13 p.6';
   return g;
 }
 

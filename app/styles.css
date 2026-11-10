@@ -3280,3 +3280,110 @@ button.linkish:hover {
 .drills > .feedback {
   margin-bottom: 14px;
 }
+
+/* ---------------------------------------------------------------- navigation: modules and sub-entries */
+.nav-sub {
+  margin: 1px 0 4px;
+}
+.nav-sub a {
+  padding-left: 16px;
+  font-size: 13px;
+  align-items: flex-start;
+}
+.nav-sub a .lec-n {
+  width: 22px;
+  height: 22px;
+  font-size: 10.5px;
+}
+.nav-sub a .lec-t {
+  padding-top: 2px;
+}
+.nav a.nav-child {
+  padding-left: 38px;
+  font-size: 13.5px;
+}
+.nav a.nav-child .ico {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------------------------------------------------------------- module outline: part headings */
+.outline .history li.part-head {
+  display: block;
+  cursor: default;
+  margin-top: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.outline .history li.part-head:first-child {
+  margin-top: 0;
+}
+.outline .history li.part-head:hover {
+  background: none;
+}
+
+/* ---------------------------------------------------------------- Learning Modules page */
+.module-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.module-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px 18px;
+  align-items: start;
+}
+.module-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pointer);
+  background: var(--pointer-soft);
+}
+.module-item.done .module-num {
+  color: #fff;
+  background: var(--ok);
+}
+.module-body h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.module-body h2 a {
+  color: inherit;
+}
+.module-body p {
+  margin: 0 0 6px;
+}
+.module-body .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-3);
+  margin: 6px 0 4px;
+}
+.module-actions {
+  align-self: center;
+}
+@media (max-width: 640px) {
+  .module-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .module-actions {
+    grid-column: 1 / -1;
+  }
+}
+.assessment-table th[scope='row'] {
+  font-weight: 600;
+  text-align: left;
+}

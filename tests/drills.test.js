@@ -1,9 +1,11 @@
-// Pseudocode drills: the spaced-repetition schedule and how the store keeps it.
+// Cumulative Review: the spaced-repetition schedule and how the store keeps it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DRILL_DECK, DRILL_BY_ID, DRILL_TOPICS, DRILL_INTERVALS, AGAIN_DELAY, applyReview, dueCards, newCards, newLeftToday, sessionCards, aheadCards, forecast, cardStatus, whenText, blankDrills, topicOf } from '../app/js/progress/drills.js';
 import { EXERCISES } from '../app/js/lab/exercises.js';
 import { ProgressStore, memoryStorage, STORAGE_KEY, blankProgress } from '../app/js/progress/store.js';
+import { moduleOrder } from '../app/js/content/concepts.js';
+import { migrateProgress } from '../app/js/progress/migrate.js';
 
 const DAY = 864e5;
 const T0 = new Date(2026, 9, 5, 9, 0).getTime(); // a Monday morning, local time
@@ -15,22 +17,23 @@ function clock(start = T0) {
   return f;
 }
 
-test('the deck: every graded main-course Lab exercise is a card, in lecture order, with a topic', () => {
-  const main = EXERCISES.filter((e) => !e.supplementary);
+test('the deck: every graded Lab exercise except the extensions is a card, in module order, with its module as topic', () => {
+  const main = EXERCISES.filter((e) => !e.extension);
   assert.equal(DRILL_DECK.length, main.length);
-  assert.ok(DRILL_DECK.every((c, i) => i === 0 || DRILL_DECK[i - 1].ex.lecture <= c.ex.lecture));
-  assert.ok(!DRILL_BY_ID['bst-insert'] && !DRILL_BY_ID['sll-reverse'], 'supplementary exercises are not cards');
+  assert.ok(DRILL_DECK.every((c, i) => i === 0 || moduleOrder(DRILL_DECK[i - 1].ex.module) <= moduleOrder(c.ex.module)));
+  assert.ok(!DRILL_BY_ID['bst-insert'] && !DRILL_BY_ID['sll-reverse'], 'extension exercises are not cards');
   const topics = new Set(DRILL_TOPICS.map((t) => t.id));
   for (const c of DRILL_DECK) assert.ok(topics.has(c.topic), c.id);
-  // linked lists, stacks and queues, and graphs are all covered
-  assert.equal(topicOf(DRILL_BY_ID['sll-insert-end'].ex), 'lists');
-  assert.equal(topicOf(DRILL_BY_ID['csll-delete-first'].ex), 'lists');
-  assert.equal(topicOf(DRILL_BY_ID['stack-pop'].ex), 'stacks-queues');
-  assert.equal(topicOf(DRILL_BY_ID['astack-push-pop'].ex), 'stacks-queues');
-  assert.equal(topicOf(DRILL_BY_ID['queue-dequeue'].ex), 'stacks-queues');
-  assert.equal(topicOf(DRILL_BY_ID['graph-bfs'].ex), 'graphs');
-  assert.equal(topicOf(DRILL_BY_ID['graph-matrix-build'].ex), 'graphs');
-  for (const t of ['lists', 'stacks-queues', 'graphs', 'trees', 'arrays']) assert.ok(DRILL_DECK.some((c) => c.topic === t), t);
+  // linked lists, stacks, queues, trees and graphs are all covered
+  assert.equal(topicOf(DRILL_BY_ID['sll-insert-end'].ex), 'sll');
+  assert.equal(topicOf(DRILL_BY_ID['csll-delete-first'].ex), 'sll');
+  assert.equal(topicOf(DRILL_BY_ID['dll-insert-front'].ex), 'dll');
+  assert.equal(topicOf(DRILL_BY_ID['stack-pop'].ex), 'stack');
+  assert.equal(topicOf(DRILL_BY_ID['astack-push-pop'].ex), 'stack');
+  assert.equal(topicOf(DRILL_BY_ID['queue-dequeue'].ex), 'queue');
+  assert.equal(topicOf(DRILL_BY_ID['graph-bfs'].ex), 'graph');
+  assert.equal(topicOf(DRILL_BY_ID['graph-matrix-build'].ex), 'graph');
+  for (const t of ['memory', 'sll', 'dll', 'stack', 'queue', 'tree', 'graph']) assert.ok(DRILL_DECK.some((c) => c.topic === t), t);
 });
 
 test('good moves a card up a box and the interval grows; hard keeps the box; again resets it', () => {
@@ -63,7 +66,7 @@ test('sessions: every due card first (earliest first), then at most the daily nu
   assert.equal(dueCards(d, T0).length, 0);
   assert.equal(newLeftToday(d, T0), d.newPerDay);
   const first = sessionCards(d, T0);
-  assert.deepEqual(first, DRILL_DECK.slice(0, d.newPerDay).map((c) => c.id), 'new cards come in lecture order');
+  assert.deepEqual(first, DRILL_DECK.slice(0, d.newPerDay).map((c) => c.id), 'new cards come in module order');
   // review the first three today: they count against today's new cards
   for (const id of first.slice(0, 3)) d.cards[id] = applyReview(null, 'good', T0);
   assert.equal(newLeftToday(d, T0), d.newPerDay - 3);
@@ -75,8 +78,8 @@ test('sessions: every due card first (earliest first), then at most the daily nu
   assert.equal(s.length, 3 + d.newPerDay);
   assert.deepEqual(s.slice(0, 3).sort(), first.slice(0, 3).sort());
   // topic filter
-  d.topics = ['graphs'];
-  assert.ok(sessionCards(d, t1).every((id) => DRILL_BY_ID[id].topic === 'graphs'));
+  d.topics = ['graph'];
+  assert.ok(sessionCards(d, t1).every((id) => DRILL_BY_ID[id].topic === 'graph'));
   d.topics = [];
   assert.ok(sessionCards(d, t1).length > 0, 'no topic chosen means every topic');
 });
@@ -121,8 +124,8 @@ test('the store: reviews are saved, a forgotten card returns once at the end of 
   const again = new ProgressStore(storage, { now });
   assert.equal(again.drillData().cards[ids[0]].box, 1);
   assert.equal(again.drillData().cards[ids[1]].lapses, 2);
-  s.setDrillTopics(['lists']);
-  assert.deepEqual(new ProgressStore(storage, { now }).drillData().topics, ['lists']);
+  s.setDrillTopics(['sll']);
+  assert.deepEqual(new ProgressStore(storage, { now }).drillData().topics, ['sll']);
 });
 
 test('older saves and exports without drills still load, with an empty deck', () => {
@@ -143,4 +146,11 @@ test('older saves and exports without drills still load, with an empty deck', ()
   const s3 = new ProgressStore(memoryStorage(), { now: clock() });
   assert.equal(s3.importJSON(s.exportJSON()).ok, true);
   assert.equal(s3.drillData().cards[DRILL_DECK[0].id].box, 1);
+});
+
+test('review topics saved before the modules existed become the matching modules', () => {
+  const old = blankProgress(T0);
+  old.contentVersion = 2;
+  old.drills.topics = ['lists', 'graphs'];
+  assert.deepEqual(migrateProgress(old).drills.topics, ['sll', 'dll', 'graph']);
 });

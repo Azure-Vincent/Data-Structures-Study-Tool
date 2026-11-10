@@ -13,21 +13,18 @@ import * as SQ from '../core/stackQueue.js';
 import * as T from '../core/tree.js';
 import * as G from '../core/graph.js';
 import { problems } from '../core/invariants.js';
-import { createWalkthrough } from '../ui/walkthrough.js';
-import { IMPLEMENTATIONS, IMPL_BY_ID } from '../content/impl/index.js';
 
 const STRUCTS = [
-  { id: 'sll', label: 'Singly linked list', ref: 'Lec 08–09' },
-  { id: 'dll', label: 'Doubly linked list', ref: 'Lec 10' },
-  { id: 'csll', label: 'Circular list', ref: 'Lec 11' },
-  { id: 'astack', label: 'Array stack', ref: 'Lec 12' },
-  { id: 'lstack-head', label: 'Linked stack (head)', ref: 'Supplementary' },
-  { id: 'lstack-tail', label: 'Linked stack (tail, notes)', ref: 'Lec 12' },
-  { id: 'aqueue', label: 'Array queue', ref: 'Lec 12' },
-  { id: 'lqueue', label: 'Linked queue', ref: 'Lec 12' },
-  { id: 'tree', label: 'Binary tree', ref: 'Lec 13–14' },
-  { id: 'graph', label: 'Graph', ref: 'Lec 13–14' },
-  { id: 'code', label: 'Programs (C++ / Python / pseudocode)', ref: 'Lec 07–14' },
+  { id: 'sll', label: 'Singly Linked List' },
+  { id: 'dll', label: 'Doubly Linked List' },
+  { id: 'csll', label: 'Circular Linked List' },
+  { id: 'astack', label: 'Array Stack' },
+  { id: 'lstack-head', label: 'Linked Stack (head)' },
+  { id: 'lstack-tail', label: 'Linked Stack (tail)' },
+  { id: 'aqueue', label: 'Array Queue' },
+  { id: 'lqueue', label: 'Linked Queue' },
+  { id: 'tree', label: 'Binary Tree' },
+  { id: 'graph', label: 'Graph' },
 ];
 
 const LIST_OPS = {
@@ -51,7 +48,7 @@ const LIST_OPS = {
     ['deleteEnd', 'delete at end (corrected)', ''],
     ['traverseFwd', 'traverse left → right', ''],
     ['traverseBwd', 'traverse right → left', ''],
-    ['countnode', 'countnode (recursive)', ''],
+    ['count_nodes', 'count_nodes (recursive)', ''],
   ],
   csll: [
     ['insertBeg', 'insert at beginning', 'v'],
@@ -79,7 +76,7 @@ export function exploreView(ctx, which) {
   const area = h('div', { style: { marginTop: '12px' } });
   let destroy = [];
   ctx.setCleanup(() => destroy.forEach((f) => f()));
-  root.append(h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Explore workspace'), h('div', { class: 'subtitle' }, 'Build a structure, run operations step by step, edit pointers by hand.')), h('span', { class: 'muted small' }, 'Free exploration — nothing here is graded.')), tabs, area);
+  root.append(h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Interactive Visualizations'), h('div', { class: 'subtitle' }, 'Build a data structure, execute operations step by step and edit pointers directly.')), h('span', { class: 'muted small' }, 'Exploration only: results are not graded.')), tabs, area);
 
   const drawTabs = () => {
     clear(tabs).append(STRUCTS.map((s) => h('button', { class: 'btn small', 'aria-pressed': String(s.id === struct), onclick: () => { struct = s.id; history.replaceState(null, '', `#/explore/${s.id}`); drawTabs(); drawArea(); } }, s.label)));
@@ -92,49 +89,13 @@ export function exploreView(ctx, which) {
     if (struct === 'sll' || struct === 'dll' || struct === 'csll') c = listExplorer(store, struct);
     else if (struct === 'tree') c = treeBuilder(store, { traverse: true });
     else if (struct === 'graph') c = graphEditor(store);
-    else if (struct === 'code') c = programExplorer(store);
     else c = seqExplorer(store, struct);
     destroy.push(c.destroy);
-    area.append(h('p', { class: 'small muted' }, `Based on ${STRUCTS.find((s) => s.id === struct).ref}.`), c.el);
+    area.append(c.el);
   };
   drawTabs();
   drawArea();
   return root;
-}
-
-// ------------------------------------------------------------------ "Build it in code" programs
-// Every walkthrough program of the lessons, chosen freely: run it step by step in any language.
-function programExplorer(store) {
-  const last = store.data.settings.exploreProgram;
-  let id = IMPL_BY_ID[last] ? last : IMPLEMENTATIONS[0].id;
-  let wt = null;
-  const el = h('div');
-  const host = h('div');
-  const groups = {};
-  for (const ex of IMPLEMENTATIONS) (groups[ex.lecture] ||= []).push(ex);
-  const sel = h(
-    'select',
-    { 'aria-label': 'program', onchange: (e) => { id = e.target.value; store.setSetting('exploreProgram', id); draw(); } },
-    Object.entries(groups).map(([lec, list]) => h('optgroup', { label: `Lecture ${String(lec).padStart(2, '0')}` }, list.map((ex) => h('option', { value: ex.id, selected: ex.id === id }, ex.title)))),
-  );
-  const draw = () => {
-    if (wt) wt.destroy();
-    const ex = IMPL_BY_ID[id];
-    wt = createWalkthrough(ex, {
-      onOpenLab: (code, setup) => {
-        store.setLabDraft(`free:${setup.structure}`, code);
-        const lab = store.labData();
-        lab.freeValues ||= {};
-        lab.freeValues[setup.structure] = setup.graph ? { graph: setup.graph, s: setup.vars?.s } : { values: setup.values || [] };
-        store.save();
-        location.hash = `#/lab/free/${setup.structure}`;
-      },
-    });
-    clear(host).append(wt.el);
-  };
-  el.append(h('div', { class: 'panel' }, h('div', { class: 'row' }, h('label', { class: 'inline' }, 'Program', sel), h('span', { class: 'small muted' }, 'The same program in C++, Python and pseudocode; the pseudocode runs, and the matching C++ / Python line is highlighted at every step.'))), host);
-  draw();
-  return { el, destroy: () => wt && wt.destroy() };
 }
 
 // ------------------------------------------------------------------ lists
@@ -190,7 +151,7 @@ function listExplorer(store, kind) {
       const diag = h('div');
       const ew = PW.clone(world);
       ew.globals = ew.globals || [ew.varOrder[0]];
-      for (const v of ['temp', 'prev', 'newnode']) if (!(v in ew.vars)) PW.addVar(ew, v, null);
+      for (const v of ['temp', 'prev', 'new_node']) if (!(v in ew.vars)) PW.addVar(ew, v, null);
       const ed = createRewireEditor({
         world: ew,
         newValue: Number(vIn.value),
@@ -200,11 +161,11 @@ function listExplorer(store, kind) {
       // give the sandbox the usual helper variables
       const showProblems = () => {
         const w = ed.world();
-        const ps = problems(w, { ignoreVars: ['temp', 'prev', 'newnode'] });
+        const ps = problems(w, { ignoreVars: ['temp', 'prev', 'new_node'] });
         clear(diag).append(
           h('h3', {}, 'Diagnosis of the current pointers'),
           ps.length ? h('ul', {}, ps.map((p) => h('li', {}, p.message))) : h('p', { class: 'small', style: { color: 'var(--ok)' } }, 'No problems found: every node is reachable, nothing dangles, links are consistent.'),
-          h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { world = PW.clone(ed.world()); PW.sweepFreed(world); for (const v of ['temp', 'prev', 'newnode']) PW.dropVar(world, v); mode = 'run'; draw(); toast('Saved as the current list'); } }, 'Use this as the current list'), h('button', { class: 'btn ghost', onclick: () => { mode = 'run'; draw(); } }, 'Cancel')),
+          h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { world = PW.clone(ed.world()); PW.sweepFreed(world); for (const v of ['temp', 'prev', 'new_node']) PW.dropVar(world, v); mode = 'run'; draw(); toast('Saved as the current list'); } }, 'Use this as the current list'), h('button', { class: 'btn ghost', onclick: () => { mode = 'run'; draw(); } }, 'Cancel')),
         );
       };
       stage.append(h('div', { class: 'panel', style: { marginTop: '12px' } }, h('h2', {}, 'Manual pointer editing'), h('p', { class: 'small muted' }, 'Every change is an action you can undo. Unreachable nodes are flagged orange, freed nodes red.'), ed.el, diag));
@@ -277,7 +238,7 @@ function seqExplorer(store, kind) {
 
 // ------------------------------------------------------------------ tree builder
 export function treeBuilder(store, { traverse = true } = {}) {
-  let t = T.LECTURE_TREE();
+  let t = T.EXAMPLE_TREE();
   let sel = null;
   let bst = false;
   let ws = null;
@@ -338,7 +299,7 @@ export function treeBuilder(store, { traverse = true } = {}) {
         h('label', { class: 'inline' }, 'New node label', labIn),
         bst ? h('button', { class: 'btn primary', onclick: bstInsert }, 'BST insert') : h('button', { class: 'btn', disabled: !!t.root, onclick: () => add(null, null) }, 'Add as root'),
         h('button', { class: 'btn ghost', onclick: () => { t = T.emptyTree(); sel = null; labIn.value = bst ? '' : 'A'; draw(); } }, 'Clear'),
-        h('button', { class: 'btn ghost', onclick: () => { t = T.LECTURE_TREE(); sel = null; labIn.value = nextLabel(); draw(); } }, 'Lecture tree A–G'),
+        h('button', { class: 'btn ghost', onclick: () => { t = T.EXAMPLE_TREE(); sel = null; labIn.value = nextLabel(); draw(); } }, 'Lecture tree A–G'),
         h('span', { class: 'spacer' }),
         h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: bst, onchange: (e) => { bst = e.target.checked; t = T.emptyTree(); sel = null; labIn.value = bst ? '50' : 'A'; draw(); } }), 'BST mode (supplementary)'),
       ),
@@ -410,7 +371,7 @@ export function treeBuilder(store, { traverse = true } = {}) {
 
 // ------------------------------------------------------------------ graph editor
 export function graphEditor(store) {
-  let g = G.lec14Graph();
+  let g = G.exampleGraph();
   let first = null;
   let ws = null;
   const el = h('div');
@@ -437,7 +398,7 @@ export function graphEditor(store) {
       h(
         'div',
         { class: 'row' },
-        h('label', { class: 'inline' }, 'Example', h('select', { onchange: (e) => { g = GRAPHS[e.target.value](); first = null; draw(); } }, [['lec14', 'Lec 14 p.4 (a–i)'], ['lec13directed', 'Lec 13 p.6 directed'], ['lec13weighted', 'Lec 13 p.6 weighted'], ['lec13loop', 'Lec 13 p.6 with self-loop'], ['disconnected', 'Disconnected + self-loop']].map(([k, l]) => h('option', { value: k }, l)))),
+        h('label', { class: 'inline' }, 'Example', h('select', { onchange: (e) => { g = GRAPHS[e.target.value](); first = null; draw(); } }, [['example', 'Undirected graph (a–i)'], ['directed', 'Directed graph (1–5)'], ['weighted', 'Weighted graph (A–G)'], ['selfloop', 'Directed graph with a self-loop'], ['disconnected', 'Disconnected graph with a self-loop']].map(([k, l]) => h('option', { value: k }, l)))),
         h('button', { class: 'btn ghost', onclick: () => { g = G.createGraph({ directed: g.directed, weighted: g.weighted }); first = null; draw(); } }, 'Empty graph'),
         h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.directed, onchange: (e) => { g.directed = e.target.checked; draw(); } }), 'directed'),
         h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.weighted, onchange: (e) => { g.weighted = e.target.checked; draw(); } }), 'weighted'),

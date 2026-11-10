@@ -9,7 +9,7 @@ const ROW0 = 130; // chain row top
 const ROW1 = 300; // detached row top
 
 function geometry(kind) {
-  if (kind === 'dll') return { w: 150, fields: { left: [0, 42], data: [42, 108], right: [108, 150] }, gap: 62 };
+  if (kind === 'dll') return { w: 150, fields: { prev: [0, 42], data: [42, 108], next: [108, 150] }, gap: 62 };
   return { w: 120, fields: { data: [0, 64], next: [64, 120] }, gap: 62 };
 }
 
@@ -175,7 +175,7 @@ export function renderList(world, opts = {}) {
       const [x0, x1] = G.fields[f];
       const sx = p.x + (x0 + x1) / 2;
       const sy = centerY(p);
-      const isLeft = f === 'left';
+      const isLeft = f === 'prev';
       const dangling = !w.nodes[t] || w.nodes[t].freed;
       const classes = ['edge'];
       if (isLeft) classes.push('left');

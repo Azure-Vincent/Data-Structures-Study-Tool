@@ -62,7 +62,7 @@ test('linked stack at the tail pops in O(n), at the head in O(1)', () => {
 });
 
 test('lecture traversal tree A..G', () => {
-  const t = T.LECTURE_TREE();
+  const t = T.EXAMPLE_TREE();
   assert.deepEqual(T.preorder(t), ['A', 'B', 'D', 'E', 'C', 'F', 'G']);
   assert.deepEqual(T.inorder(t), ['D', 'B', 'E', 'A', 'F', 'C', 'G']);
   assert.deepEqual(T.postorder(t), ['D', 'E', 'B', 'F', 'G', 'C', 'A']);
@@ -79,7 +79,7 @@ test('lecture traversal tree A..G', () => {
 });
 
 test('tree measures, classification and array representation', () => {
-  const t = T.LECTURE_TREE();
+  const t = T.EXAMPLE_TREE();
   assert.equal(T.height(t), 2);
   assert.equal(T.level(t, 'D'), 2);
   assert.equal(T.depthNotes(t, 'D'), 3);
@@ -112,7 +112,7 @@ test('random trees respect requested shapes', () => {
 });
 
 test('lecture 14 graph: DFS and BFS match the notes with alphabetical order', () => {
-  const g = G.lec14Graph();
+  const g = G.exampleGraph();
   assert.equal(G.dfsOrder(g, 'a').join(''), 'abcgdefih');
   assert.equal(G.bfsOrder(g, 'a').join(''), 'abefcdgih');
   assert.equal(G.traceDFS(g, 'a').result.join(''), 'abcgdefih');
@@ -123,7 +123,7 @@ test('lecture 14 graph: DFS and BFS match the notes with alphabetical order', ()
 });
 
 test('graph representations, self-loops, disconnected traversal', () => {
-  const g = G.lec13SelfLoop();
+  const g = G.selfLoopGraph();
   const m = G.matrix(g).m;
   assert.deepEqual(m, [[1, 1, 1], [0, 0, 1], [0, 1, 0]]);
   assert.deepEqual(G.adjList(g), { 1: ['1', '2', '3'], 2: ['3'], 3: ['2'] });
@@ -134,7 +134,7 @@ test('graph representations, self-loops, disconnected traversal', () => {
   assert.deepEqual(G.traceDFS(d, 'A', { all: true }).result, ['A', 'B', 'C', 'D', 'E']);
   assert.equal(G.degree(g, '1'), 4); // directed: out 3 (incl. loop) + in 1 (loop)
   // matrix ↔ list round trip
-  const w = G.lec13Weighted();
+  const w = G.weightedGraph();
   const mm = G.matrix(w);
   assert.equal(mm.m[0][0], 0);
   assert.equal(mm.m[0][3], Infinity);
@@ -143,7 +143,7 @@ test('graph representations, self-loops, disconnected traversal', () => {
 });
 
 test('BFS minimises edges, not weight', () => {
-  const w = G.lec13Weighted();
+  const w = G.weightedGraph();
   const { parent } = G.bfsTree(w, 'A');
   const p = G.pathTo(parent, 'D');
   assert.deepEqual(p, ['A', 'B', 'D']);

@@ -48,7 +48,7 @@ an instruction limit, so an endless loop cannot freeze the app.
 | `for each x in coll do … end` | Loop over an array, queue, stack or set (a copy of its items when the loop starts). |
 | `repeat … until c` | Body first; stops when `c` is true. |
 | `do … while c` | Body first; repeats while `c` is true (C's `do { } while`). The closing `while c` has **no** `do`. |
-| `break`, `continue` | Leave the loop / start its next round. |
+| `break`, `continue` | Leave the loop / head its next round. |
 | `function f(a, b) … end` | Define a function (top level only). `return expr` or plain `return`. |
 | `f(x)` | Call a function on its own line. |
 
@@ -68,9 +68,9 @@ Each structure fixes the fields its nodes have and the variables that hold it:
 
 | Structure | Node fields | Pointer variables |
 |---|---|---|
-| Singly linked list | `data`, `next` | `start` |
-| Doubly linked list | `data`, `left`, `right` (`prev` = left, `next` = right) | `start` |
-| Circular linked list | `data`, `next` (last node → start) | `start` |
+| Singly linked list | `data`, `next` | `head` |
+| Doubly linked list | `data`, `left`, `right` (`prev` = left, `next` = right) | `head` |
+| Circular linked list | `data`, `next` (last node → head) | `head` |
 | Stack (linked) | `data`, `next` (first node is the top) | `top` |
 | Queue (linked) | `data`, `next` | `front`, `rear` |
 | Binary tree | `data`, `left`, `right` | `root` |
@@ -81,7 +81,7 @@ Each structure fixes the fields its nodes have and the variables that hold it:
 number, text, a node's address or another array, so a 2-D array (a matrix) is an array of rows:
 `M[i] = new Array(N)`, then `M[i][j] = 0`. The diagram draws an array of arrays as a table and an
 array whose slots hold first nodes (adjacency lists) as chains of nodes. The **Arrays only**
-structure is for programs that start with no nodes at all: the array, the array stack and queue,
+structure is for programs that head with no nodes at all: the array, the array stack and queue,
 the tree stored in an array and the adjacency matrix. A test or setup can give such a program its
 input variables (for example `pos` and `x`).
 
@@ -93,10 +93,10 @@ different from a pointer change.
 
 - Parameters are **copies** (like C). Changing a parameter inside a function does not change the
   caller's variable. To change the caller's pointer, return the new value:
-  `start = insertFront(start, 5)`.
+  `head = insertFront(head, 5)`.
 - Inside a function, reading a name looks at the function's own variables first, then the global
   (top-level) ones. Assigning to a name that already exists globally updates the global (like a
-  C global such as `start`). Any other assignment creates a local variable.
+  C global such as `head`). Any other assignment creates a local variable.
 - Recursion is allowed up to 100 nested calls.
 - Your own function may use the name of a built-in helper (for example your own `push(value)` for
   an array stack); inside the program your function is the one that runs.
@@ -124,11 +124,11 @@ Problems are shown in three categories:
 
 | Category | Stops the run? | Examples |
 |---|---|---|
-| **Syntax error** | can't start | missing `then`/`do`/`end`, `=` used in a condition, braces, a type like `int x`, `x++`, an unclosed string, a stray `end` |
+| **Syntax error** | can't head | missing `then`/`do`/`end`, `=` used in a condition, braces, a type like `int x`, `x++`, an unclosed string, a stray `end` |
 | **Runtime error** | yes, on that line | following `NULL` (`cur.next` when `cur` is NULL); using a deleted node; using a variable before assigning it (with a "did you mean" suggestion); deleting a node twice; storing a number in a link; comparing a node with a value; arithmetic on pointers; an unknown field (e.g. `prev` in a singly linked list); underflow of a built-in queue/stack; an endless loop hitting the instruction limit; runaway recursion |
 | **Logic warning** | no | a node becomes **unreachable** (named, with exactly which reference changed); at the end: an unintended cycle, a broken link into deleted memory, a broken back link in a doubly linked list, a circle that is not closed, `rear` not on the last node, a structure pointer left dangling, leaked nodes |
 
-Temporary states are allowed. A new node held only by `newnode`, or a node held only by `temp`
+Temporary states are allowed. A new node held only by `new_node`, or a node held only by `temp`
 while you rewire, is not a problem. Deleting a node that is still linked, or creating a
 temporary cycle, produces only a **note**. It becomes a warning if it is still there when the
 program ends. Only a node that nothing can reach any more is flagged right away: it can never be

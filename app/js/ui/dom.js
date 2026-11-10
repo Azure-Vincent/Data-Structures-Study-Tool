@@ -177,8 +177,4 @@ export function pill(text, cls = '') {
   return h('span', { class: `pill ${cls}` }, text);
 }
 
-export function refPill(ref) {
-  if (!ref) return null;
-  const supp = /supplementary/i.test(ref);
-  return pill(ref, supp ? 'supp' : 'ref');
-}
+
