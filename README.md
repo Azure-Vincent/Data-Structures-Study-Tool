@@ -37,7 +37,7 @@ The desktop app checks GitHub for a newer Release when it starts and every few h
 
 ### Publishing a release
 
-Every push and pull request runs the **Build desktop apps** workflow. On Windows, macOS and Linux it runs the tests, builds the installers, installs them the way a user would, launches the installed app and drives its core features, then uninstalls it.
+Every pull request, every push to `main` and every version tag runs the **Build desktop apps** workflow. On Windows, macOS and Linux it runs the tests, builds the installers, installs them the way a user would, launches the installed app and drives its core features, then uninstalls it.
 
 To publish a version, push a tag:
 ```bash
@@ -234,7 +234,7 @@ It writes a JSON report and a screenshot to `smoke-out/`. The CI workflow runs i
 For this version (the restructuring into seven learning modules):
 - all 167 Node tests pass, and `tests/langs/verify.mjs` compiled every C++ program and the complete C examples, ran every Python program and found all 148 outputs identical to the pseudocode's (Linux, g++ and Python 3);
 - in headless Chromium (browser mode) every page opens without console errors, old links redirect to their new pages, all 237 module steps open (`lessons.py`), all 83 templates are answered correctly through the interface (`kinds.py`), and `interact.py`, `lab.py`, `drills.py` (27/27), `steady.py` (27/27) and `scroll.py` (21/21) pass;
-- the desktop smoke test and the installers are verified by the **Build desktop apps** workflow on every push.
+- the desktop smoke test and the installers are verified by the **Build desktop apps** workflow when this branch is opened as a pull request (the Electron runtime could not be downloaded in the environment used for the checks above).
 
 For the previous release, the **Build desktop apps** workflow built, installed and launched every download and ran the desktop smoke test against it, including the check that a walkthrough highlights the same statement in C++ and Python:
 
