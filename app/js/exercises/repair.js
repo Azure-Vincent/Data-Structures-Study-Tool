@@ -61,7 +61,7 @@ export const REPAIRS = [
         world: w,
         initialActions: [{ type: 'setVar', name: 'temp', value: w.vars.head }, { type: 'free', addr: w.vars.head }],
         goal: SLL.deleteEnd(buildList('sll', [v])).final,
-        story: `delete_at_end() from the notes ran on a one-node list: temp = head; free(temp). head still holds the freed address. Make the list correctly empty.`,
+        story: `A version of delete_at_end() without the one-node case ran on a one-node list: temp = head; free(temp). head still holds the freed address. Make the list correctly empty.`,
       };
     },
   },

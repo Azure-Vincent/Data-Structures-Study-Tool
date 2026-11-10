@@ -87,7 +87,7 @@ export function createRewireEditor({ world, newValue = null, initialActions = []
           class: 'btn',
           disabled: !allowValueInput && newValue == null,
           onclick: () => push({ type: 'alloc', data: allowValueInput ? Number(valIn.value) : newValue, var: hasNewVar ? 'new_node' : null }),
-          title: 'Allocate and initialise a node (all links NULL)',
+          title: 'Allocate and initialize a node (all links NULL)',
         },
         `${hasNewVar ? 'new_node = ' : ''}create_node(${allowValueInput ? '' : newValue ?? ''})`,
       ),

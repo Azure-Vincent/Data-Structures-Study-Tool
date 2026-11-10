@@ -6,7 +6,7 @@ BASE='http://localhost:5173/'
 def shot(pg,name): pg.screenshot(path=f'shots/{name}.png', full_page=True)
 
 # lesson steps are addressed by their stable key (positions change when lessons grow)
-LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/lesson/' + l.lecture + '/' + i; } return null; })"
+LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/module/' + l.id + '/' + i; } return null; })"
 def lesson_route(pg, key):
     if not pg.url.startswith('http'):
         pg.goto(BASE); pg.wait_for_timeout(200)
@@ -35,7 +35,7 @@ with sync_playwright() as p:
     print('predictions asked:', asked, '| final explain:', pg.locator('.explain').inner_text()[:90])
     shot(pg,'i1_sim')
     # 2. rewire exercise: insert 15 after 10
-    pg.goto(BASE+lesson_route(pg, 'e:now-do-it-insert-15-after-10')); pg.wait_for_timeout(400)
+    pg.goto(BASE+lesson_route(pg, 'e:insert-15-after-10')); pg.wait_for_timeout(400)
     pg.locator('button:has-text("create_node(15)")').click()
     def field(addr, f='next'): return pg.locator(f'g[data-addr="{addr}"] rect.field-hit[data-field="{f}"]')
     def node(addr): return pg.locator(f'g[data-addr="{addr}"] rect.box')
@@ -59,7 +59,7 @@ with sync_playwright() as p:
     t1 = pg.locator('.task h2').inner_text()
     print('practice task 1:', t1, '|', pg.locator('.page-head .muted').first.inner_text())
     pg.locator('button:has-text("Reveal solution")').click()
-    pg.locator('button:has-text("Next task")').click(); pg.wait_for_timeout(300)
+    pg.locator('button:has-text("Next exercise")').click(); pg.wait_for_timeout(300)
     t2 = pg.locator('.task h2').inner_text()
     pg.reload(); pg.wait_for_timeout(600)
     pg.goto(BASE+'#/'); pg.wait_for_timeout(300)
@@ -92,7 +92,7 @@ with sync_playwright() as p:
     print('BFS end:', pg.locator('.explain').inner_text()[:120])
     shot(pg,'i7_bfs')
     # 7. tree lesson click traversal
-    pg.goto(BASE+lesson_route(pg, 'e:required-click-the-preorder')); pg.wait_for_timeout(300)
+    pg.goto(BASE+lesson_route(pg, 'e:select-the-preorder-sequence')); pg.wait_for_timeout(300)
     for v in 'ABDECFG': pg.locator(f'.task g[data-node="{v}"]').click()
     pg.locator('button:has-text("Check")').click()
     print('preorder:', pg.locator('.feedback').first.inner_text()[:80].replace('\n',' '))

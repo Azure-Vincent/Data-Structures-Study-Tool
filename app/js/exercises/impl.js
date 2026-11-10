@@ -1,4 +1,4 @@
-// Exercises built from the "Build it in code" programs (content/impl) and the
+// Exercises built from the implementation programs (content/impl) and the
 // guided Pseudocode Lab exercises. For every topic group they form a progression:
 //   1. predict  — read a complete program (C++, Python or pseudocode) and
 //                 predict exactly what it prints;
@@ -16,7 +16,7 @@ import { EXERCISES as LAB_EXERCISES, EXERCISE_BY_ID as LAB_BY_ID } from '../lab/
 import { MISTAKE_LABELS } from '../content/concepts.js';
 import { describeSetup } from '../lab/structures.js';
 
-/** The topic each program practises. */
+/** The concept each program practices. */
 export const IMPL_CONCEPT = {
   'array-shift': 'l07.arrays-vs-lists',
   'sll-create': 'l08.node-anatomy',
@@ -183,7 +183,7 @@ function predictExercise(rng, implId) {
       `Follow the main part from the top: it calls ${(prog.pseudo.lines.filter((l, i) => prog.pseudo.labels[i].some((x) => /^m\d+$/.test(x))).map((l) => l.trim().replace(/\s+#.*$/, '')).slice(0, 3).join('; '))}${prog.pseudo.labels.filter((ls) => ls.some((x) => /^m\d+$/.test(x))).length > 3 ? '; …' : ''}.`,
       `The output starts with: ${out.slice(0, Math.max(1, Math.ceil(out.length / 3))).join(' ')} …`,
     ],
-    solutionText: `Output:\n${out.join('\n')}\n\nOpen the "Build it in code" walkthrough of this program to see every step.`,
+    solutionText: `Output:\n${out.join('\n')}\n\nThe implementation walkthrough of this program in the module shows every step.`,
   };
 }
 
@@ -227,7 +227,7 @@ function writeExercise(labId) {
   return {
     kind: 'lab',
     concept: lab.concept,
-    title: `Write it yourself: ${lab.title.charAt(0).toLowerCase()}${lab.title.slice(1)}`,
+    title: `Write the pseudocode: ${lab.title.charAt(0).toLowerCase()}${lab.title.slice(1)}`,
     prompt: `${lab.goal}\n\nWrite it in **pseudocode** (the Pseudocode Lab’s syntax). **Check** runs your code on ${lab.tests.length} different starting structures — ${lab.tests.map((t) => t.name.toLowerCase()).join(', ')} — and compares the real result with the goal.`,
     labId,
     structure: lab.structure,

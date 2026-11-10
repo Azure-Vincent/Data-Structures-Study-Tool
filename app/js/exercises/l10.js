@@ -1,4 +1,4 @@
-// Lecture 10 — Doubly linked lists (prev = previous, next = next).
+// Doubly linked lists: each node has a prev (previous node) and a next (next node) link.
 import { opts, mcq, numeric, sequenceText, orderCode, fillCode, rewire } from './kit.js';
 import { values, randList, listText, rewireSpec, withPointers, withNewnode, vals, addrs, guide } from './helpers.js';
 import * as DLL from '../core/dll.js';
@@ -34,12 +34,12 @@ export const l10 = [
       const v = params.value ?? rng.int(1, 99);
       const pos = kind === 'mid' ? params.pos ?? rng.int(2, vs.length) : null;
       const spec = rewireSpec(w, insOp(kind, v, pos), { newValue: v });
-      const linkCount = vs.length === 0 ? 'Only head changes.' : kind === 'mid' ? 'FOUR links change: new→prev, new→next, prev→next, next→prev.' : 'Two links on the new node side and one on the old neighbour, plus head if inserting at the front.';
+      const linkCount = vs.length === 0 ? 'Only head changes.' : kind === 'mid' ? 'FOUR links change: new→prev, new→next, prev→next, next→prev.' : 'Two links change (one in the new node, one in its neighbor), plus head when inserting at the front.';
       return {
         prompt: `Insert **${v}** ${kind === 'beg' ? 'at the beginning' : kind === 'end' ? 'at the end' : `at position ${pos}`}. Update BOTH directions. Goal: ${listText(vals(spec.goal))} (and backwards: ${listText([...vals(spec.goal)].reverse())}).\n\n${guide(guidance, linkCount, 'Check both directions before you submit.')}`,
         edge: vs.length <= 1,
         ...rewire(spec, { explain: 'Forward and backward traversals agree.' }),
-        hints: ['Every forward link X→Y needs a matching backward link Y→X.', { text: 'Find the neighbours of the new node.', hl: { pos: kind === 'mid' ? [pos - 1, pos] : kind === 'beg' ? [1] : [vs.length] } }, kind === 'mid' ? `Set the new node's prev and next first, then node ${pos - 1}'s next and node ${pos}'s prev.` : kind === 'beg' ? 'new->next = old first; old first->prev = new; head = new.' : 'last->next = new; new->prev = last.'],
+        hints: ['Every forward link X→Y needs a matching backward link Y→X.', { text: 'Find the neighbors of the new node.', hl: { pos: kind === 'mid' ? [pos - 1, pos] : kind === 'beg' ? [1] : [vs.length] } }, kind === 'mid' ? `Set the new node's prev and next first, then node ${pos - 1}'s next and node ${pos}'s prev.` : kind === 'beg' ? 'new->next = old first; old first->prev = new; head = new.' : 'last->next = new; new->prev = last.'],
         solutionTrace: { struct: 'dll', op: kind === 'beg' ? 'insertBeg' : kind === 'end' ? 'insertEnd' : 'insertMid', world: w, args: kind === 'mid' ? [v, pos] : [v] },
         params: { kind },
       };
@@ -58,10 +58,10 @@ export const l10 = [
       const spec = rewireSpec(w, delOp(kind, pos), { vars: ['head', 'temp'] });
       const target = kind === 'beg' ? vs[0] : kind === 'end' ? vs[vs.length - 1] : vs[pos - 1];
       return {
-        prompt: `Delete **${target}** and free it. Both neighbours must stop pointing at it. Goal: ${listText(vals(spec.goal))}.\n\n${guide(guidance, kind === 'mid' ? '(1) temp->next->prev = temp->prev; (2) temp->prev->next = temp->next; then free(temp).' : kind === 'beg' ? (vs.length === 1 ? 'Only node: head = NULL, then free.' : 'temp = head; head = temp->next; head->prev = NULL; free(temp).') : vs.length === 1 ? 'Only node: head = NULL, then free.' : 'temp on the last node; temp->prev->next = NULL; free(temp).', '')}`,
+        prompt: `Delete **${target}** and free it. Both neighbors must stop pointing at it. Goal: ${listText(vals(spec.goal))}.\n\n${guide(guidance, kind === 'mid' ? '(1) temp->next->prev = temp->prev; (2) temp->prev->next = temp->next; then free(temp).' : kind === 'beg' ? (vs.length === 1 ? 'Only node: head = NULL, then free.' : 'temp = head; head = temp->next; head->prev = NULL; free(temp).') : vs.length === 1 ? 'Only node: head = NULL, then free.' : 'temp on the last node; temp->prev->next = NULL; free(temp).', '')}`,
         edge: vs.length === 1,
         ...rewire(spec, { explain: 'No link points to the freed node.' }),
-        hints: ['A node in the middle of a doubly linked list is pointed to TWICE: once from each neighbour.', { text: 'Highlight the links that point INTO the node.', hl: { pos: [kind === 'beg' ? 1 : kind === 'end' ? vs.length : pos] } }, 'Keep temp on the node, update the neighbour links, then free.'],
+        hints: ['A node in the middle of a doubly linked list is pointed to TWICE: once from each neighbor.', { text: 'Highlight the links that point INTO the node.', hl: { pos: [kind === 'beg' ? 1 : kind === 'end' ? vs.length : pos] } }, 'Keep temp on the node, update the neighbor links, then free.'],
         solutionTrace: { struct: 'dll', op: kind === 'beg' ? 'deleteBeg' : kind === 'end' ? 'deleteEnd' : 'deleteMid', world: w, args: kind === 'mid' ? [pos] : [] },
         params: { kind },
       };
@@ -105,7 +105,7 @@ export const l10 = [
         prompt: `Arrange the statements to ${desc} Several orders may be valid — any that works is accepted.`,
         visual: { type: 'list', world: cases[0].world },
         ...orderCode(sh, cases, items.map((i) => i.id), { explain: kind === 'del' ? 'Lines (1) and (2) are independent, so either order works; free must be last.' : 'Both statements that READ prev->next must run before prev->next is overwritten.' }),
-        hints: ['Which statements read a link that another statement overwrites?', { text: 'prev->next is the only path to node 2.' }, kind === 'del' ? 'free(temp) must come after both neighbours are updated.' : 'Do prev->next = new_node last.'],
+        hints: ['Which statements read a link that another statement overwrites?', { text: 'prev->next is the only path to node 2.' }, kind === 'del' ? 'free(temp) must come after both neighbors are updated.' : 'Do prev->next = new_node last.'],
         params: { kind: kind === 'del' ? 'del' : 'ins' },
       };
     },
@@ -179,7 +179,7 @@ export const l10 = [
           return { world: w, newValue: v, goal: DLL.insertBeg(w, v, { detail: false }).final, opts: { locals: ['new_node'] }, label: listText(vs) };
         });
         return {
-          prompt: `Complete \`insert_at_beginning\` (non-empty list, new value ${v}). Lec 10 p.3 steps (1)–(3).`,
+          prompt: `Complete \`insert_at_beginning\` (non-empty list, new value ${v}).`,
           visual: { type: 'list', world: cases[0].world },
           ...fillCode('new_node = create_node();\nnew_node->next = head;\n____;\nhead = new_node;', cases, 'head->prev = new_node', { explain: 'Without it the old first node still has prev = NULL and a backward traversal would stop before reaching the new node.' }),
           hints: ['Which BACKWARD link is still missing?', { text: 'The old first node must point back to the new node.' }, 'Assign head->prev before head moves.'],
@@ -192,7 +192,7 @@ export const l10 = [
       });
       const tmpl = kind === 'del1' ? '____;\ntemp->prev->next = temp->next;\nfree(temp);' : 'temp->next->prev = temp->prev;\n____;\nfree(temp);';
       return {
-        prompt: 'temp is on the node to delete (node 2). Complete the missing line from Lec 10 p.6.',
+        prompt: 'temp is on the node to delete (node 2). Complete the missing line.',
         visual: { type: 'list', world: cases[0].world },
         ...fillCode(tmpl, cases, kind === 'del1' ? 'temp->next->prev = temp->prev' : 'temp->prev->next = temp->next', { explain: 'One line fixes the forward link, the other the backward link.' }),
         hints: ['Two links point INTO temp; both must skip it.', { text: kind === 'del1' ? 'The node AFTER temp still points back to temp.' : 'The node BEFORE temp still points forward to temp.' }, kind === 'del1' ? 'Assign temp->next->prev.' : 'Assign temp->prev->next.'],
@@ -217,7 +217,7 @@ export const l10 = [
       const dir = broken ? 'back' : rng.pick(['back', 'fwd']);
       const out = dir === 'back' ? DLL.traverseBwd(w).output : DLL.traverseFwd(w).output;
       return {
-        prompt: `Look closely at every prev AND next field. What does the ${dir === 'back' ? '**next → prev** traversal (go to the last node, then follow prev)' : '**prev → next** traversal (follow next)'} print?`,
+        prompt: `Look closely at every prev AND next field. What does the ${dir === 'back' ? '**backward** traversal (go to the last node, then follow prev)' : '**forward** traversal (follow next from head)'} print?`,
         visual: { type: 'list', world: w },
         edge: broken,
         ...sequenceText(out, { explain: broken ? 'A broken prev link is invisible to a forward traversal; only the backward traversal exposes it.' : 'In a correct doubly linked list the backward output is the forward output reversed.' }),

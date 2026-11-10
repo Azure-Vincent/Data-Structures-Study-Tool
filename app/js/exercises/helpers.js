@@ -1,4 +1,4 @@
-// Shared generators used by several lecture templates.
+// Shared generators used by several exercise templates.
 import { buildList, createWorld, addVar, walk, forwardField, clone } from '../core/pointerWorld.js';
 
 /** Random list values (distinct). */
@@ -6,7 +6,7 @@ export function values(rng, n, lo = 1, hi = 99) {
   return rng.distinct(n, lo, hi);
 }
 
-/** Build a list whose addresses are either lecture-style (100, 200, ...) or scattered. */
+/** Build a list whose addresses are either evenly spaced (100, 200, ...) or scattered. */
 export function randList(rng, kind, vals, { vars = ['head'], scatter = null, globals } = {}) {
   const useScatter = scatter ?? rng.bool(0.5);
   const opts = { vars, globals: globals || [vars[0]] };

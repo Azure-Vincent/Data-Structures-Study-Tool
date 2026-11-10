@@ -1,4 +1,4 @@
-// A tiny interpreter for the pointer statements used in the lectures, e.g.
+// A small interpreter for the C-style pointer statements used in the exercises, e.g.
 //   new_node->next = head;   temp = temp->next;   free(temp);
 //   while (temp->next != NULL) temp = temp->next;
 //   do { print(temp->data); temp = temp->next; } while (temp != head);
@@ -195,7 +195,7 @@ class Parser {
       return { t: 'not', a: this.cmp() };
     }
     if (this.peek() === '(') {
-      // parenthesised condition
+      // parenthesized condition
       const save = this.i;
       try {
         this.eat('(');
@@ -267,7 +267,7 @@ export function run(world, program, opts = {}) {
   };
   const deref = (a, label) => {
     if (a === null) throw new InterpError(`${label} is NULL — dereferencing it crashes (segmentation fault).`);
-    if (a === GARBAGE) throw new InterpError(`${label} holds garbage (uninitialised).`);
+    if (a === GARBAGE) throw new InterpError(`${label} holds garbage (uninitialized).`);
     const n = w.nodes[a];
     if (!n) throw new InterpError(`${label} = ${a} is not a valid address.`);
     if (n.freed) throw new InterpError(`${label} points to freed memory (use after free).`);
@@ -371,7 +371,7 @@ export function run(world, program, opts = {}) {
   return { world: w, output, error, lost, steps };
 }
 
-/** Normalise C-ish text for display/comparison. */
+/** Normalize C-style text for display/comparison. */
 export function normCode(s) {
   return String(s)
     .replace(/\s+/g, '')

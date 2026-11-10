@@ -1,5 +1,5 @@
-// Singly linked list algorithms (Lectures 08 and 09), traced step by step.
-// Code lines follow the notes' C style; corrections are marked in comments.
+// Singly linked list algorithms, traced step by step.
+// Code lines are written in C; comments state the rules the code relies on.
 import { Tracer, keyCodes } from './trace.js';
 import { addVar, fmtPtr, walk, buildList, create_node as rawGetnode } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
@@ -35,8 +35,8 @@ export const SLL_CODE = {
     title: 'insert_at_position(pos)',
     lines: [
       'node_count = count_nodes(head);',
-      'if (pos > 1 && pos <= node_count) {   // corrected: notes use pos < node_count',
-      '    new_node = create_node();           // corrected: allocate only after validating',
+      'if (pos > 1 && pos <= node_count) {   // middle positions: 2 .. node_count',
+      '    new_node = create_node();           // allocate only after validating',
       '    temp = prev = head;  i = 1;',
       '    while (i < pos) {',
       '        prev = temp;',
@@ -69,15 +69,15 @@ export const SLL_CODE = {
       '    prev = temp;',
       '    temp = temp->next;',
       '}',
-      'if (temp == head)              // correction: only one node',
+      'if (temp == head)              // one-node list: temp is the only node',
       '    head = NULL;',
       'else',
       '    prev->next = NULL;',
       'free(temp);',
     ],
   },
-  deleteEndNotes: {
-    title: 'delete_at_end() exactly as in the notes',
+  deleteEndIncorrect: {
+    title: 'delete_at_end() without the one-node case (incorrect)',
     lines: [
       'if (head == NULL) { printf("Empty list"); return; }',
       'temp = prev = head;',
@@ -201,7 +201,7 @@ export function insertMid(world, value, pos, opts = {}) {
   let i = 1;
   w.locals = { node_count, pos, i };
   t.count('varWrites', 2);
-  t.step(3, 'var', `temp = prev = head (${w.vars.head}); i = 1. Both helpers head at the first node.`, { vars: ['temp', 'prev'] });
+  t.step(3, 'var', `temp = prev = head (${w.vars.head}); i = 1. Both pointers start at the first node.`, { vars: ['temp', 'prev'] });
   while (cond(t, 4, i < pos, `i < pos? ${i} < ${pos}`)) {
     setVar(t, 5, 'prev', w.vars.temp, `prev = temp (${w.vars.temp}). prev follows one node behind temp.`);
     const nx = w.nodes[w.vars.temp].next;
@@ -227,15 +227,15 @@ export function deleteBeg(world) {
     t.fail(1, 'Underflow: the list is empty, nothing to delete.');
     return endScope(t, []);
   }
-  setVar(t, 3, 'temp', w.vars.head, `temp = head (${w.vars.head}): save the first node so we can free it after unlinking.`);
+  setVar(t, 3, 'temp', w.vars.head, `temp = head (${w.vars.head}): save the first node so that it can be freed after unlinking.`);
   const nx = w.nodes[w.vars.temp].next;
   setVar(t, 4, 'head', nx, nx === null ? `head = temp->next = NULL: the list becomes empty.` : `head = temp->next: head now points to ${nx} (data ${d(w, nx)}).`);
   freeStep(t, 5, 'temp');
   return endScope(t, ['temp']);
 }
 
-export function deleteEnd(world, { notesVersion = false } = {}) {
-  const t = new Tracer(world, notesVersion ? SLL_CODE.deleteEndNotes : SLL_CODE.deleteEnd);
+export function deleteEnd(world, { incorrectVersion = false } = {}) {
+  const t = new Tracer(world, incorrectVersion ? SLL_CODE.deleteEndIncorrect : SLL_CODE.deleteEnd);
   const w = t.state;
   if (cond(t, 0, w.vars.head === null, `head == NULL? head = ${fmtPtr(w.vars.head)}`, { vars: ['head'] })) {
     t.output.push('Empty list');
@@ -254,13 +254,13 @@ export function deleteEnd(world, { notesVersion = false } = {}) {
     t.count('moves');
     setVar(t, 4, 'temp', tn.next, `temp = temp->next → ${tn.next} (data ${d(w, tn.next)}).`);
   }
-  if (notesVersion) {
+  if (incorrectVersion) {
     setLink(t, 6, w.vars.prev, 'next', null, w.vars.prev === w.vars.temp
-      ? `prev->next = NULL — but prev and temp are the SAME node (the only node), so this only changes the node we are about to free.`
+      ? `prev->next = NULL, but prev and temp are the SAME node (the only node), so this only changes the node that is about to be freed.`
       : `prev->next = NULL: node ${w.vars.prev} becomes the new last node.`);
     const wasOnly = w.vars.head === w.vars.temp;
     freeStep(t, 7, 'temp', wasOnly
-      ? `free(temp) releases ${w.vars.temp}. BUG: head still holds ${w.vars.head}, the address of freed memory — head is now a DANGLING pointer. The notes need "head = NULL" for a one-node list.`
+      ? `free(temp) releases ${w.vars.temp}. BUG: head still holds ${w.vars.head}, the address of freed memory: head is now a DANGLING pointer. A one-node list needs "head = NULL".`
       : undefined);
     return endScope(t, ['temp', 'prev']);
   }
@@ -306,7 +306,7 @@ export function deleteMid(world, pos) {
     t.step(7, 'var', `i++ → ${i}.`);
   }
   const after = w.nodes[w.vars.temp].next;
-  setLink(t, 9, w.vars.prev, 'next', after, `prev->next = temp->next: node ${w.vars.prev} (data ${d(w, w.vars.prev)}) now skips over ${w.vars.temp} and points to ${fmtPtr(after)}. temp still holds the removed node, so we can free it.`);
+  setLink(t, 9, w.vars.prev, 'next', after, `prev->next = temp->next: node ${w.vars.prev} (data ${d(w, w.vars.prev)}) now skips over ${w.vars.temp} and points to ${fmtPtr(after)}. temp still holds the removed node, so it can be freed.`);
   freeStep(t, 10, 'temp');
   delete w.locals;
   return endScope(t, ['temp', 'prev']);

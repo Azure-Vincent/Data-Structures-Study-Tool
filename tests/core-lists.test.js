@@ -13,7 +13,7 @@ const back = (w) => {
   return PW.walk(w, r.addrs[r.addrs.length - 1], 'prev').values;
 };
 
-test('SLL insert at beginning, end, middle (lecture example 10 20 30)', () => {
+test('SLL insert at beginning, end, middle (example list 10 20 30)', () => {
   let w = PW.buildList('sll', [10, 20, 30]);
   assert.deepEqual(vals(SLL.insertBeg(w, 5).final), [5, 10, 20, 30]);
   assert.deepEqual(vals(SLL.insertEnd(w, 40).final), [10, 20, 30, 40]);
@@ -44,9 +44,9 @@ test('SLL operations on empty and singleton lists', () => {
   assert.equal(d2.final.vars.head, null);
 });
 
-test('notes version of delete_at_end leaves head dangling for one node', () => {
+test('the incomplete delete_at_end leaves head dangling for one node', () => {
   const one = PW.buildList('sll', [9]);
-  const tr = SLL.deleteEnd(one, { notesVersion: true });
+  const tr = SLL.deleteEnd(one, { incorrectVersion: true });
   // before sweep, the last-but-one step shows head pointing at a freed block
   const freeStep = tr.steps.find((s) => s.kind === 'free');
   const st = freeStep.state;
@@ -89,7 +89,7 @@ test('traverse output and counters', () => {
   assert.equal(ins.counters.moves, 2); // n-1 moves for n = 3
 });
 
-test('create_list appends in input order (Lec 08 p.3)', () => {
+test('create_list appends in input order', () => {
   for (const n of [1, 2, 3, 5, 8]) {
     const want = Array.from({ length: n }, (_, i) => i);
     const tr = SLL.createList(want);
@@ -107,7 +107,7 @@ test('DLL operations keep both directions consistent', () => {
   const one = PW.buildList('dll', [1]);
   assert.equal(DLL.deleteBeg(one).final.vars.head, null);
   assert.equal(DLL.deleteEnd(one).final.vars.head, null);
-  const crash = DLL.deleteBeg(one, { notesVersion: true });
+  const crash = DLL.deleteBeg(one, { incorrectVersion: true });
   assert.match(crash.error, /CRASH/);
 });
 

@@ -120,10 +120,10 @@ async function coreChecks(page) {
   page.on('pageerror', (e) => pageErrors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && pageErrors.push(m.text()));
   await page.waitForSelector('h1', { timeout: 60000 });
-  check('window opens on the dashboard', (await page.locator('h1').first().textContent()).includes('Your study desk'));
+  check('window opens on the dashboard', (await page.locator('h1').first().textContent()).includes('Learning Dashboard'));
   check('window title', (await page.title()).includes('DS Study Lab'), await page.title());
 
-  const routes = ['#/', '#/lesson/8', '#/practice', '#/drills', '#/explore', '#/repair', '#/progress', '#/settings', '#/lab'];
+  const routes = ['#/', '#/modules', '#/module/sll', '#/explore', '#/practice', '#/lab', '#/review', '#/implementation', '#/repair', '#/assessment', '#/progress', '#/settings'];
   const blank = [];
   for (const r of routes) {
     await go(page, r);
@@ -133,7 +133,7 @@ async function coreChecks(page) {
   check(`all ${routes.length} main pages render`, !blank.length, blank.join(' '));
 
   // lesson steps are addressed by their stable key (positions change when lessons grow)
-  const lessonRoute = (key) => page.evaluate((k) => import('./js/content/lessons.js').then((m) => { for (const l of m.LESSONS) { const i = l.sections.findIndex((s) => s.key === k); if (i >= 0) return `#/lesson/${l.lecture}/${i}`; } return null; }), key);
+  const lessonRoute = (key) => page.evaluate((k) => import('./js/content/lessons.js').then((m) => { for (const l of m.LESSONS) { const i = l.sections.findIndex((s) => s.key === k); if (i >= 0) return `#/module/${l.id}/${i}`; } return null; }), key);
 
   // a lesson simulation steps forward (answering any prediction question)
   await go(page, await lessonRoute('s:predict-the-intermediate-states-insert-15-at-pos'));
@@ -149,7 +149,7 @@ async function coreChecks(page) {
   const after = await page.locator('.stepnum').first().textContent();
   check('lesson simulation steps forward', before !== after, `${before} → ${after}`);
 
-  // a "Build it in code" walkthrough: the same statement is highlighted in C++ and in Python
+  // an implementation walkthrough: the same statement is highlighted in C++ and in Python
   await go(page, await lessonRoute('w:sll-insert-beg'));
   const walk = page.locator('.walk');
   for (let k = 0; k < 3; k++) await walk.locator('button:has-text("Step ▶")').click();
@@ -177,19 +177,19 @@ async function coreChecks(page) {
   // Pseudocode Lab: run a solution to the end, then check it against the goal
   await go(page, '#/lab/sll-insert-after');
   await page.locator('textarea.ce-input').evaluate((t) => {
-    t.value = 'new_node = new Node(15)\nnew_node.next = start.next\nstart.next = new_node\n';
+    t.value = 'new_node = new Node(15)\nnew_node.next = head.next\nhead.next = new_node\n';
     t.dispatchEvent(new Event('input'));
   });
   await page.waitForTimeout(500);
   await page.locator('button:has-text("Run to end")').click();
   await page.waitForTimeout(200);
-  check('Pseudocode Lab runs a program', (await page.locator('.lab-explain').textContent()).includes('start → 10 → 15 → 20 → 30'));
+  check('Pseudocode Lab runs a program', (await page.locator('.lab-explain').textContent()).includes('head → 10 → 15 → 20 → 30'));
   await page.locator('button:has-text("Check my solution")').click();
   await page.waitForTimeout(300);
   check('Pseudocode Lab grades the solution', (await page.locator('.lab-check .feedback').textContent()).includes('All 3 test cases pass'));
   await page.screenshot({ path: join(out, `${label}-lab.png`) });
 
-  // Explore: run an operation step by step
+  // Interactive Visualizations: run an operation step by step
   await go(page, '#/explore');
   await page.locator('button:has-text("Run step by step")').click();
   await page.waitForTimeout(300);
@@ -202,7 +202,7 @@ async function coreChecks(page) {
     } else await ws.locator('button:has-text("Step ▶")').click();
     await page.waitForTimeout(150);
   }
-  check('Explore runs an operation step by step', (await ws.count()) === 1 && (await ws.locator('.stepnum').textContent()) !== s0);
+  check('Interactive Visualizations run an operation step by step', (await ws.count()) === 1 && (await ws.locator('.stepnum').textContent()) !== s0);
 
   // desktop-only Settings panel (needs the preload bridge)
   await go(page, '#/settings');

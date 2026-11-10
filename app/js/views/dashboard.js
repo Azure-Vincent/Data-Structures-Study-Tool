@@ -69,7 +69,7 @@ export function dashboardView(ctx) {
       quick('cards', 'Cumulative Review', drillsDue ? `${drillsDue} pseudocode exercise${drillsDue > 1 ? 's' : ''} due for review` : 'Spaced review of pseudocode from every module', () => ctx.go('#/review')),
       quick('code', 'Pseudocode Development', 'Write pseudocode and execute it step by step', () => ctx.go('#/lab')),
       quick('explore', 'Interactive Visualizations', 'Build structures and run operations', () => ctx.go('#/explore')),
-      quick('check', 'Knowledge Assessment', 'Assess each module without hints', () => ctx.go('#/assessment')),
+      quick('assess', 'Knowledge Assessment', 'Assess each module without hints', () => ctx.go('#/assessment')),
     ),
     h('div', { class: 'stats' }, stat('Concepts mastered', mastered, CONCEPTS.length, (mastered / CONCEPTS.length) * 100), stat('Module steps completed', stepsDone, stepsTotal, stepsTotal ? (stepsDone / stepsTotal) * 100 : 0), stat('Modules completed', lessonsDone, MODULES.length), stat('Answers submitted', attempts)),
     h(
@@ -94,7 +94,7 @@ export function dashboardView(ctx) {
               { class: ['lec-card', rec && rec.completed ? 'done' : nDone ? 'started' : ''] },
               h('div', { class: 'lec-top' }, h('span', { class: 'num' }, String(M.n)), h('div', {}, h('a', { class: 'title', href: `#/module/${M.id}` }, M.title))),
               h('div', {}, h('div', { class: 'meta' }, h('span', {}, `${nDone} of ${lesson.sections.length} steps`), h('span', {}, `${pct}%`)), h('div', { class: 'bar', role: 'img', 'aria-label': `module ${pct}% complete` }, h('span', { style: { width: pct + '%' } }))),
-              h('div', { class: 'foot' }, h('div', { class: 'dots', 'aria-label': 'concepts' }, cs.map((c) => h('a', { class: `dot ${store.level(c.id)}`, href: `#/practice/new/concept/${c.id}`, title: `${c.name} — ${store.level(c.id)} (click to practise)`, 'aria-label': `Practise ${c.name} (${store.level(c.id)})` }))), h('span', { class: 'small muted' }, `${m}/${cs.length} mastered`)),
+              h('div', { class: 'foot' }, h('div', { class: 'dots', 'aria-label': 'concepts' }, cs.map((c) => h('a', { class: `dot ${store.level(c.id)}`, href: `#/practice/new/concept/${c.id}`, title: `${c.name} — ${store.level(c.id)} (select to practice)`, 'aria-label': `Practice ${c.name} (${store.level(c.id)})` }))), h('span', { class: 'small muted' }, `${m}/${cs.length} mastered`)),
             );
           }),
         ),
@@ -114,7 +114,7 @@ export function dashboardView(ctx) {
           { class: 'panel' },
           h('div', { class: 'panel-title' }, h('h3', {}, 'Recent errors')),
           mistakes.length
-            ? mistakes.map((m) => h('div', { class: 'mistake' }, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('b', {}, CONCEPT_BY_ID[m.concept]?.name || m.concept), h('span', { class: 'when' }, ago(m.t))), h('div', {}, m.message), h('a', { href: `#/practice/new/concept/${m.concept}`, class: 'small' }, 'Practise this again →')))
+            ? mistakes.map((m) => h('div', { class: 'mistake' }, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('b', {}, CONCEPT_BY_ID[m.concept]?.name || m.concept), h('span', { class: 'when' }, ago(m.t))), h('div', {}, m.message), h('a', { href: `#/practice/new/concept/${m.concept}`, class: 'small' }, 'Practice this concept →')))
             : h('div', { class: 'empty' }, 'No errors recorded.'),
           recurring.length ? h('div', { class: 'row', style: { marginTop: '10px' } }, h('b', { class: 'small' }, 'Recurring errors:'), recurring.map((r) => h('span', { class: 'pill edge' }, `${MISTAKE_LABELS[r.tag] || r.tag} (${r.count})`))) : null,
         ),

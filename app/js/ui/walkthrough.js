@@ -1,4 +1,4 @@
-// "Build it in code" walkthrough: one program shown in C++, Python or
+// implementation walkthrough: one program shown in C++, Python or
 // pseudocode, executed step by step. The pseudocode is what runs (the
 // Pseudocode Lab interpreter); the C++ and Python lines carrying the same label
 // are highlighted, so each statement is tied to the change it makes in the

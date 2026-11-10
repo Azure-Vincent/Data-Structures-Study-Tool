@@ -92,11 +92,15 @@ test('syntax errors name the line and explain the fix', () => {
 });
 
 test('re-indenting, Enter indentation and highlighting', () => {
-  assert.equal(reindent('if a then\nwhile b do\nx = 1\nend\nelse\ny = 2\nend'), 'if a then\n  while b do\n    x = 1\n  end\nelse\n  y = 2\nend');
-  assert.equal(reindent('repeat\nx = 1\nuntil x\ndo\ny = 1\nwhile y'), 'repeat\n  x = 1\nuntil x\ndo\n  y = 1\nwhile y');
-  assert.equal(nextIndent('  while p != NULL do'), '    ');
-  assert.equal(nextIndent('  x = 1'), '  ');
-  assert.equal(nextIndent('else'), '  ');
+  // one block level is 4 spaces
+  assert.equal(reindent('if a then\nwhile b do\nx = 1\nend while\nelse\ny = 2\nend if'), 'if a then\n    while b do\n        x = 1\n    end while\nelse\n    y = 2\nend if');
+  assert.equal(reindent('function f(p)\n  if p == NULL then\n  return 0\n  end\nend'), 'function f(p)\n    if p == NULL then\n        return 0\n    end\nend');
+  assert.equal(reindent('do\ny = 1\nwhile y\nrepeat\nx = 1\nuntil x'), 'do\n    y = 1\nwhile y\nrepeat\n    x = 1\nuntil x');
+  assert.equal(reindent('if a then\nx = 1\nend if', '  '), 'if a then\n  x = 1\nend if', 'the unit can still be chosen');
+  assert.equal(nextIndent('    while p != NULL do'), '        ');
+  assert.equal(nextIndent('    x = 1'), '    ');
+  assert.equal(nextIndent('else'), '    ');
+  assert.equal(nextIndent('for each w in neighbors(G, v) do'), '    ');
   const spans = highlightLine('p.next = new Node(15) # c');
   assert.deepEqual(spans.filter((s) => s.cls).map((s) => [s.cls, s.text]), [['tk-op', '.'], ['tk-field', 'next'], ['tk-op', '='], ['tk-kw', 'new'], ['tk-type', 'Node'], ['tk-op', '('], ['tk-num', '15'], ['tk-op', ')'], ['tk-com', '# c']]);
 });

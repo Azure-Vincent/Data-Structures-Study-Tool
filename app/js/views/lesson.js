@@ -17,7 +17,7 @@ import { IMPL_BY_ID } from '../content/impl/index.js';
 export const NOTE_TAGS = { technical: 'Technical Note', terms: 'Terminology', extension: 'Extension', prereq: 'Prerequisite', pitfalls: 'Common Errors and Edge Cases' };
 const isWriting = (s) => s.type === 'exercise' && /-write-code$/.test(s.templateId);
 
-// Every section is labelled with the kind of work it asks for.
+// Every section is labeled with the kind of work it asks for.
 const SECTION_NAMES = {
   read: 'Conceptual Foundations',
   code: 'C++ Implementation',
@@ -55,8 +55,9 @@ export function sectionName(s) {
 /** Open a module by its old lesson link (#/lesson/<number>/<step>): the step keeps its section. */
 export function moduleLinkForOldLesson(n, i) {
   const old = { 7: 'l07', 8: 'l08', 9: 'l09', 10: 'l10', 11: 'l11', 12: 'l12', 13: 'l13', 14: 'l14' }[n];
-  return import('../progress/migrate.js').then(({ V2_LESSON_KEYS, LESSON_MODULE }) => {
-    const key = old && V2_LESSON_KEYS[old] ? V2_LESSON_KEYS[old][i || 0] : null;
+  return import('../progress/migrate.js').then(({ V2_LESSON_KEYS, LESSON_MODULE, KEY_RENAMES }) => {
+    const oldKey = old && V2_LESSON_KEYS[old] ? V2_LESSON_KEYS[old][i || 0] : null;
+    const key = KEY_RENAMES[oldKey] || oldKey;
     for (const l of LESSONS) {
       const k = l.sections.findIndex((x) => x.key === key);
       if (k >= 0) return `#/module/${l.id}/${k}`;
@@ -122,7 +123,7 @@ export function lessonView(ctx, id, at) {
     const nDone = store.lessonDoneCount(lesson.id, keys);
     const pct = Math.round((nDone / lesson.sections.length) * 100);
     progBar.style.width = pct + '%';
-    progTxt.textContent = `${nDone} of ${lesson.sections.length} steps done`;
+    progTxt.textContent = `${nDone} of ${lesson.sections.length} steps completed`;
     clear(outline).append(
       lesson.sections.map((s, i) => [
         s.part ? h('li', { class: 'part-head', role: 'presentation' }, s.part) : null,

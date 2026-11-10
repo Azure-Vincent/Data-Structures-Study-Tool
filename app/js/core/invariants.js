@@ -10,7 +10,7 @@ export function applyAction(w, act) {
     case 'setField': {
       const n = w.nodes[act.addr];
       if (!n) return { ok: false, error: `There is no node at ${act.addr}.` };
-      if (n.freed) return { ok: false, error: `Node ${act.addr} has been freed; writing to it is undefined behaviour.` };
+      if (n.freed) return { ok: false, error: `Node ${act.addr} has been freed; writing to it is undefined behavior.` };
       n[act.field] = act.value;
       return { ok: true };
     }
@@ -76,7 +76,7 @@ export function problems(w, opts = {}) {
     for (const f of fieldsOf(kind)) {
       const t = n[f];
       if (typeof t === 'number' && (!w.nodes[t] || w.nodes[t].freed)) out.push({ code: 'dangling-link', message: `${L(w, a)}->${f} still points to ${t}, which was freed (dangling link).`, nodes: [a, t], field: { addr: a, f } });
-      if (t === GARBAGE) out.push({ code: 'garbage', message: `${L(w, a)}->${f} was never initialised (garbage).`, nodes: [a], field: { addr: a, f } });
+      if (t === GARBAGE) out.push({ code: 'garbage', message: `${L(w, a)}->${f} was never initialized (garbage).`, nodes: [a], field: { addr: a, f } });
     }
   }
   // 3. lost access / memory leak

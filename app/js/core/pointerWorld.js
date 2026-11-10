@@ -1,14 +1,14 @@
 // Simulated heap for pointer-based structures (singly, doubly, circular lists,
 // linked stacks and queues). Pure data + pure helpers: no DOM here.
 //
-// A "world" is a plain JSON-serialisable object so it can be snapshotted for
+// A "world" is a plain JSON-serializable object so it can be snapshotted for
 // step-back and saved in progress files.
 //
-//   nodes[addr] = { addr, data, next | left,right, freed }
+//   nodes[addr] = { addr, data, next | prev,next, freed }
 //   vars[name]  = addr | null        (named pointer variables: head, temp, ...)
 //
 // A field value is an address (number), null (NULL) or GARBAGE ('?') for a
-// freshly malloc'd, not yet initialised field.
+// freshly malloc'd, not yet initialized field.
 
 export const GARBAGE = '?';
 
@@ -44,7 +44,7 @@ export function clone(w) {
   return JSON.parse(JSON.stringify(w));
 }
 
-/** malloc(sizeof(node)) – fields are uninitialised garbage until assigned. */
+/** malloc(sizeof(node)) – fields are uninitialized garbage until assigned. */
 export function malloc(w, { addr } = {}) {
   let a = addr;
   if (a == null) {
@@ -61,7 +61,7 @@ export function malloc(w, { addr } = {}) {
   return a;
 }
 
-/** create_node() from the notes: malloc + data + every link = NULL. */
+/** create_node(): malloc + data + every link = NULL. */
 export function create_node(w, data, opts) {
   const a = malloc(w, opts);
   w.nodes[a].data = data;

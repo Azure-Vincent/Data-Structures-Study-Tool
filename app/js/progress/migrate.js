@@ -451,6 +451,45 @@ export const V2_LESSON_KEYS = {
   ]
 };
 
+/** Section keys renamed in content version 3 (old key → new key); every other key is unchanged. */
+export const KEY_RENAMES = {
+  'e:try-it-compute-an-address': 'e:compute-an-element-address',
+  'n:lecture-terms-standard-terms': 'n:sll-terminology',
+  'c:declaring-a-node-and-getnode': 'c:declaring-a-node-and-create-node',
+  's:worked-example-creatlist-builds-10-20-30': 's:worked-example-create-list-10-20-30',
+  'e:your-turn-insert-at-the-beginning': 'e:insert-at-the-beginning-by-pointer-assignment',
+  'e:required-example-10-20-30-insert-15-after-10-whi': 'e:insert-15-after-10-which-links-change',
+  'e:now-do-it-insert-15-after-10': 'e:insert-15-after-10',
+  'n:two-details-in-insert-at-mid': 'n:two-details-in-insert-at-position',
+  's:delete-at-beg': 's:delete-at-beginning',
+  'e:your-turn-delete-the-first-node': 'e:delete-the-first-node-by-pointer-assignment',
+  's:delete-at-last': 's:delete-at-end',
+  'n:one-node-list-delete-at-last-leaves-start-dangli': 'n:single-node-delete-at-end-leaves-head-dangling',
+  's:the-notes-version-on-a-one-node-list': 's:incomplete-delete-at-end-on-a-single-node',
+  'e:required-example-now-delete-20-from-10-15-20-30-': 'e:delete-20-which-pointers-change',
+  's:delete-at-mid-pos-3': 's:delete-at-position-3',
+  'e:now-do-it-delete-20': 'e:delete-20',
+  's:required-demo-why-waiting-for-null-fails': 's:why-testing-for-null-fails',
+  'n:the-creation-loop-in-the-notes': 'n:circular-append-loop-condition',
+  'e:your-turn-insert': 'e:insert-into-a-circular-list',
+  'e:required-delete-the-only-node-correctly': 'e:delete-the-only-node',
+  'c:the-node-and-getnode': 'c:dll-node-and-create-node',
+  'e:your-turn-both-directions': 'e:dll-insert-both-directions',
+  'n:one-node-lists-in-delete-at-beg-delete-at-end': 'n:dll-single-node-deletion',
+  'e:required-forward-looks-right-backward-is-broken-': 'e:repair-the-backward-links',
+  's:recursive-countnode': 's:recursive-count-nodes',
+  'e:required-same-input-stack-vs-queue': 'e:same-input-stack-and-queue',
+  'c:array-stack-notes-in-c-and-c': 'c:array-stack-in-every-language',
+  's:linked-stack-notes-style-push-pop-at-the-end': 's:linked-stack-top-at-the-tail',
+  's:preorder-on-the-lecture-tree-entered-vs-output': 's:preorder-on-the-example-tree',
+  'e:required-click-the-preorder': 'e:select-the-preorder-sequence',
+  'e:required-click-the-inorder': 'e:select-the-inorder-sequence',
+  'e:required-click-the-postorder': 'e:select-the-postorder-sequence',
+  's:inorder-with-an-explicit-stack-the-notes-stack-p': 's:inorder-with-an-explicit-stack',
+  's:dfs-from-a-lec-14-p-4-graph': 's:dfs-from-a',
+  'n:edge-labels-on-p-3-are-discovery-order-not-dista': 'n:edge-numbers-are-discovery-order',
+};
+
 /** Exercise templates that only asked about running time or counted work. */
 export const REMOVED_TEMPLATES = ['l07-reach', 'l08-cost', 'l09-tail-cost', 'l11-count', 'l12-ends-cost', 'l14-cost'];
 /** Topics that were entirely about running time. */
@@ -554,6 +593,7 @@ function toVersion3(d) {
   // ---- lessons l07–l14 -> modules: every completed key moves to the module that now holds it
   if (d.lessons && typeof d.lessons === 'object') {
     const where = MODULE_OF_KEY();
+    const rk = (k) => KEY_RENAMES[k] || k;
     const old = Object.keys(V2_LESSON_KEYS).filter((id) => d.lessons[id]);
     const out = {};
     for (const lesson of LESSONS) {
@@ -562,8 +602,8 @@ function toVersion3(d) {
       let at = null;
       for (const id of old) {
         const rec = d.lessons[id];
-        for (const k of Array.isArray(rec.done) ? rec.done : []) if (where[k] === lesson.id && !done.includes(k)) done.push(k);
-        if (at == null && typeof rec.at === 'string' && where[rec.at] === lesson.id && !rec.completed) at = rec.at;
+        for (const k of (Array.isArray(rec.done) ? rec.done : []).map(rk)) if (where[k] === lesson.id && !done.includes(k)) done.push(k);
+        if (at == null && typeof rec.at === 'string' && where[rk(rec.at)] === lesson.id && !rec.completed) at = rk(rec.at);
       }
       if (!done.length && at == null) continue;
       out[lesson.id] = { at: at ?? keys.find((k) => !done.includes(k)) ?? keys[0], done, completed: keys.every((k) => done.includes(k)) };
@@ -581,6 +621,7 @@ function toVersion3(d) {
       delete r.lecture;
     }
   }
+  if (Array.isArray(d.mistakes)) for (const m of d.mistakes) if (m && m.tag === 'uninitialised') m.tag = 'uninitialized';
   if (d.session && typeof d.session === 'object') {
     if (d.session.mode === 'lecture') {
       d.session.mode = 'module';

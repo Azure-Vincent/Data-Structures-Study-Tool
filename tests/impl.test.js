@@ -1,4 +1,4 @@
-// The "Build it in code" programs: every case runs in the Lab without errors,
+// The complete programs (C++, Python, pseudocode): every case runs in the Lab without errors,
 // the three languages carry the same labels, every executed pseudocode line can
 // be shown in C++ and Python, and the outputs match the worked examples.
 // (tests/langs/verify.mjs additionally compiles and runs the C++ and Python.)

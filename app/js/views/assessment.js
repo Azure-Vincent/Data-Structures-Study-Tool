@@ -59,10 +59,10 @@ function overview(ctx) {
     h('h2', { class: 'section-title', style: { marginTop: '22px' } }, 'Module Assessments'),
     h(
       'div',
-      { class: 'table-wrap' },
+      { class: 'panel table-wrap assessment-wrap' },
       h(
         'table',
-        { class: 'lec-table small assessment-table' },
+        { class: 'lec-table assessment-table' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Module'), h('th', { scope: 'col' }, 'Concepts'), h('th', { scope: 'col' }, 'Latest result'), h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Action')))),
         h(
           'tbody',

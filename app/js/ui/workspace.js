@@ -97,7 +97,7 @@ export function createWorkspace(trace, opts = {}) {
       h('div', { class: 'panel-title' }, h('h3', {}, code.title || 'Code')),
       measuring && tabs ? tabs.cloneNode(true) : tabs,
       st.opLabel ? h('div', { class: 'small muted' }, `Operation: ${st.opLabel}`) : null,
-      h('ol', { 'aria-label': `code (${lang === 'c' ? 'C, as in the notes' : lang === 'py' ? 'Python' : lang === 'cpp' ? 'C++' : 'pseudocode'})` }, traceLines(code, lang).map((x) => h('li', { class: cur(x) ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': cur(x) ? 'step' : null }, codeLine(x.text)))),
+      h('ol', { 'aria-label': `code (${lang === 'c' ? 'C' : lang === 'py' ? 'Python' : lang === 'cpp' ? 'C++' : 'pseudocode'})` }, traceLines(code, lang).map((x) => h('li', { class: cur(x) ? (st.kind === 'error' ? 'cur err' : 'cur') : '', 'aria-current': cur(x) ? 'step' : null }, codeLine(x.text)))),
     ];
   }
   function varsContent(i) {
@@ -277,7 +277,7 @@ function varsView(st, prev) {
           'tr',
           { class: prev && changed(was, val) ? 'changed' : '' },
           h('td', {}, v, (st.globals || []).includes(v) ? '' : h('span', { class: 'muted small' }, ' (local)')),
-          h('td', {}, h('span', { class: 'addr' }, val === null ? 'NULL' : val === GARBAGE ? '? garbage' : String(val)), node ? h('span', { class: 'val' }, node.freed ? '  → freed block!' : `  → node with data ${node.data}`) : null),
+          h('td', {}, h('span', { class: 'addr' }, val === null ? 'NULL' : val === GARBAGE ? '? garbage' : String(val)), node ? h('span', { class: 'val' }, node.freed ? '  → freed block' : `  → node with data ${node.data}`) : null),
         ),
       );
     }
@@ -293,7 +293,7 @@ function varsView(st, prev) {
     return h(
       'table',
       { class: 'vars-table' },
-      h('tr', {}, h('td', {}, 'neighbour order'), h('td', {}, st.order === 'alpha' ? 'ascending' : 'insertion')),
+      h('tr', {}, h('td', {}, 'neighbor order'), h('td', {}, st.order === 'alpha' ? 'ascending' : 'insertion')),
       h('tr', {}, h('td', {}, 'current'), h('td', {}, st.current ?? '—')),
       h('tr', {}, h('td', {}, 'discovered'), h('td', {}, chips(st.discovered))),
       h('tr', {}, h('td', {}, st.kind === 'bfs' ? 'queue' : 'stack'), h('td', {}, chips(st.frontier, 'empty'))),
@@ -314,10 +314,10 @@ function varsView(st, prev) {
     );
   }
   if (st.type === 'astack') {
-    return h('table', { class: 'vars-table' }, h('tr', { class: prev && prev.top !== st.top ? 'changed' : '' }, h('td', {}, 'top'), h('td', {}, String(st.top))), h('tr', {}, h('td', {}, 'MAX'), h('td', {}, String(st.MAX))), h('tr', {}, h('td', {}, 'meaning of top'), h('td', {}, st.conv === 'notes' ? 'next free index = number of items' : 'index of the top item')));
+    return h('table', { class: 'vars-table' }, h('tr', { class: prev && prev.top !== st.top ? 'changed' : '' }, h('td', {}, 'top'), h('td', {}, String(st.top))), h('tr', {}, h('td', {}, 'MAX'), h('td', {}, String(st.MAX))), h('tr', {}, h('td', {}, 'meaning of top'), h('td', {}, st.conv === 'count' ? 'count convention: number of items = next free index' : 'index convention: index of the top item')));
   }
   if (st.type === 'aqueue') {
-    return h('table', { class: 'vars-table' }, h('tr', { class: prev && prev.F !== st.F ? 'changed' : '' }, h('td', {}, 'F'), h('td', {}, `${st.F} (front item)`)), h('tr', { class: prev && prev.R !== st.R ? 'changed' : '' }, h('td', {}, 'R'), h('td', {}, `${st.R} (next free slot)`)), h('tr', {}, h('td', {}, 'items'), h('td', {}, String(st.mode === 'linear' ? st.R - st.F : st.count))), h('tr', {}, h('td', {}, 'MAX'), h('td', {}, String(st.MAX))));
+    return h('table', { class: 'vars-table' }, h('tr', { class: prev && prev.F !== st.F ? 'changed' : '' }, h('td', {}, 'front'), h('td', {}, `${st.F} (index of the front item)`)), h('tr', { class: prev && prev.R !== st.R ? 'changed' : '' }, h('td', {}, 'rear'), h('td', {}, `${st.R} (next free slot)`)), h('tr', {}, h('td', {}, 'items'), h('td', {}, String(st.mode === 'linear' ? st.R - st.F : st.count))), h('tr', {}, h('td', {}, 'MAX'), h('td', {}, String(st.MAX))));
   }
   return h('div');
 }

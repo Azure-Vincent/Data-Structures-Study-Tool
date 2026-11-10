@@ -95,7 +95,7 @@ export function structureText(st) {
   if (!vals.length && c.end === 'null') return `${root} = NULL (empty)`;
   let tail = ' → NULL';
   if (c.end === 'cycle') tail = c.closedAt === c.addrs[0] ? ` → (back to ${S.circular ? 'head' : `@${c.closedAt}`})` : ` → (loops back to @${c.closedAt})`;
-  if (c.end === 'freed') tail = ` → @${c.at} (deleted!)`;
+  if (c.end === 'freed') tail = ` → @${c.at} (deleted)`;
   return `${root} → ${vals.join(' → ')}${tail}`;
 }
 

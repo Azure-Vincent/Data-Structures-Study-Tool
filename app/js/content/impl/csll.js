@@ -1,4 +1,4 @@
-// "Build it in code": circular singly linked lists (Lecture 11). See ./format.js.
+// implementation: circular singly linked lists. See ./format.js.
 
 const CPP_HEAD = `#include <iostream>
 #include <initializer_list>
@@ -59,7 +59,7 @@ const PY_SETUP = `# Setup: builds the starting circle shown in the diagram.
 const PSEUDO_HEAD = `# Nodes have data and next; the last node's next is head (one node: itself).
 # Starting circle: {{start}}`;
 
-// one lap with a do-while (Lec 11 p.4)
+// one lap with a do-while loop
 const SHOW = {
   pseudo: `@fd|function display()
 @d1|    if head == NULL then
@@ -70,7 +70,7 @@ const SHOW = {
     do
 @d5|        print temp.data
 @d6|        temp = temp.next
-@d7|    while temp != head      # stop when we are back at head
+@d7|    while temp != head      # stop when temp is back at head
 @fd_end|end function`,
   cpp: `@fd|void display() {
 @d1|    if (head == nullptr) {
@@ -81,7 +81,7 @@ const SHOW = {
     do {
 @d5|        cout << temp->data << "\\n";
 @d6|        temp = temp->next;
-@d7|    } while (temp != head);     // stop when we are back at head
+@d7|    } while (temp != head);     // stop when temp is back at head
 @fd_end|}`,
   py: `@fd,fd_end|def display():
 @d1|    if head is None:
@@ -91,7 +91,7 @@ const SHOW = {
     while True:                  # Python has no do-while: test at the bottom
 @d5|        print(temp.data)
 @d6|        temp = temp.next
-@d7|        if temp is head: break  # stop when we are back at head`,
+@d7|        if temp is head: break  # stop when temp is back at head`,
 };
 
 const SHOW_NOTES = {
@@ -106,7 +106,7 @@ export const CSLL_EXAMPLES = [
     module: 'sll',
     structure: 'csll',
     title: 'Create a circular list from scratch',
-    intro: 'Like appending to a singly linked list, except that the new last node must point back to head. Correction to the notes’ creation loop: it walks with `temp->next != NULL`, which never stops once the circle is closed; it must stop at `temp->next == head`.',
+    intro: 'Like appending to a singly linked list, except that the new last node must point back to head. The search loop must stop at `temp->next == head`: a loop that walks with `temp->next != NULL` never stops once the circle is closed.',
     params: { a: 10, b: 20, c: 30 },
     cases: [{ label: 'Build 10 → 20 → 30 → (back to 10)', setup: { values: [] } }],
     pseudo: `${PSEUDO_HEAD}
@@ -118,7 +118,7 @@ export const CSLL_EXAMPLES = [
 @a4|        new_node.next = head         # one node points to itself
     else
 @a5|        temp = head
-@a6|        while temp.next != head do  # corrected: the notes wait for NULL
+@a6|        while temp.next != head do  # the last node's next is head, never NULL
 @a7|            temp = temp.next
         end while
 @a8|        temp.next = new_node          # (1)
@@ -141,7 +141,7 @@ ${SHOW.pseudo}
 @a4|        new_node->next = head;       // one node points to itself
     } else {
 @a5|        Node* temp = head;
-@a6|        while (temp->next != head)  // corrected: the notes wait for NULL
+@a6|        while (temp->next != head)  // the last node's next is head, never nullptr
 @a7|            temp = temp->next;
 @a8|        temp->next = new_node;        // (1)
 @a9|        new_node->next = head;       // (2) close the circle again
@@ -169,7 +169,7 @@ int main() {
 @a4|        new_node.next = head         # one node points to itself
     else:
 @a5|        temp = head
-@a6|        while temp.next is not head:   # corrected: the notes wait for None
+@a6|        while temp.next is not head:   # the last node's next is head, never None
 @a7|            temp = temp.next
 @a8|        temp.next = new_node          # (1)
 @a9|        new_node.next = head         # (2) close the circle again
@@ -182,7 +182,7 @@ ${SHOW.py}
 @m4|display()`,
     notes: {
       a4: 'A one-node circle: the node’s next holds its OWN address.',
-      a6: '**Correction.** The last node is the one whose next is head. Python compares identities with `is not`.',
+      a6: '**Loop condition.** The last node is the one whose next is head. Python compares identities with `is not`.',
       a8: '**(1)** The old last node links to the new node…',
       a9: '**(2)** …and the new node links back to head, so the list is a circle again.',
       ...SHOW_NOTES,
@@ -192,7 +192,7 @@ ${SHOW.py}
         label: 'a6',
         why: 'In a circle the last node is the one whose next is head.',
         wrong: [
-          { cpp: 'while (temp->next != nullptr)', py: 'while temp.next is not None:', pseudo: 'while temp.next != NULL do', why: 'That is the notes’ loop: no next is NULL in a circle, so it never ends.', tag: 'circular-null' },
+          { cpp: 'while (temp->next != nullptr)', py: 'while temp.next is not None:', pseudo: 'while temp.next != NULL do', why: 'No next field is NULL in a circle, so this loop never ends.', tag: 'circular-null' },
           { cpp: 'while (temp != head)', py: 'while temp is not head:', pseudo: 'while temp != head do', why: 'temp starts AT head, so this loop never runs: the new node would be linked after the first node.', tag: 'loop-condition' },
         ],
       },
@@ -290,7 +290,7 @@ ${PY_SETUP}
 @m1|insert_at_beginning({{x}})
 @m2|display()`,
     notes: {
-      i5: 'The last node’s next points at the first node — after the insertion that must be the NEW first node, so we need the last node.',
+      i5: 'The last node’s next points at the first node. After the insertion that must be the NEW first node, so the last node has to be found first.',
       i8: '**(1)** new node → old first node.',
       i9: '**(2)** head → new node.',
       i10: '**(3)** last node → new first node. Without this the old first node would still be where the circle “starts”, and the new node would be outside the circle.',
@@ -398,8 +398,8 @@ ${PY_SETUP}
     id: 'csll-delete-beg',
     module: 'sll',
     structure: 'csll',
-    title: 'Delete at the beginning (free and one-node case made explicit)',
-    intro: 'Corrections to the notes: the removed node is never freed there, and the one-node case (a node pointing to itself) must empty the list.',
+    title: 'Delete at the beginning (including freeing and the one-node case)',
+    intro: 'Two details are easy to omit: the removed node must be freed explicitly, and the one-node case (a node pointing to itself) must empty the list.',
     params: {},
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -423,7 +423,7 @@ ${PY_SETUP}
     end while
 @x11|    head = temp.next                # (1)
 @x12|    last.next = head                # (2)
-@x13|    delete temp                      # correction: the notes never free it
+@x13|    delete temp                      # free the removed node explicitly
 @fx_end|end function
 
 ${SHOW.pseudo}
@@ -447,7 +447,7 @@ ${SHOW.pseudo}
 @x10|        last = last->next;
 @x11|    head = temp->next;              // (1)
 @x12|    last->next = head;              // (2)
-@x13|    delete temp;                     // correction: the notes never free it
+@x13|    delete temp;                     // free the removed node explicitly
 @fx_end|}
 
 ${SHOW.cpp}
@@ -476,7 +476,7 @@ int main() {
 @x10|        last = last.next
 @x11|    head = temp.next                # (1)
 @x12|    last.next = head                # (2)
-@x13|    del temp                         # correction: the notes never free it
+@x13|    del temp                         # drop the last reference to the removed node
 
 ${SHOW.py}
 
@@ -492,7 +492,7 @@ ${PY_SETUP}
       x8: 'temp remembers the node to remove; last will walk to the last node.',
       x11: '**(1)** head moves to the second node.',
       x12: '**(2)** The last node must point at the NEW first node to keep the circle closed.',
-      x13: '**Correction.** The notes cross temp out in the picture but never call free(temp): that leaks the node.',
+      x13: '**Free the node.** Unlinking the node does not release its memory; without free(temp) (C++ `delete temp`) the node leaks.',
       ...SHOW_NOTES,
     },
   },
@@ -500,7 +500,7 @@ ${PY_SETUP}
     id: 'csll-delete-end',
     module: 'sll',
     structure: 'csll',
-    title: 'Delete at the end (with the one-node correction)',
+    title: 'Delete at the end (including the one-node case)',
     intro: 'prev trails temp to the last node; prev then points back to head. With one node, temp == head and head must become NULL.',
     params: {},
     cases: [
@@ -586,7 +586,7 @@ ${PY_SETUP}
 @m2|display()`,
     notes: {
       x5: 'Walk until temp is the last node (its next is head).',
-      x8: '**Correction.** One node: temp == prev == head. The notes set `prev->next = head` (the node points to itself again) and free it — head is left dangling.',
+      x8: '**One-node case.** With one node, temp == prev == head. An incorrect version that omits this check sets `prev->next = head` (the node points to itself again) and frees the node, leaving head dangling.',
       x10: '**(1)** The node before the last one closes the circle.',
       ...SHOW_NOTES,
     },

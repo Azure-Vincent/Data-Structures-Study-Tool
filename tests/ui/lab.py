@@ -3,7 +3,7 @@
 import os; os.makedirs('shots', exist_ok=True)
 from playwright.sync_api import sync_playwright
 BASE = 'http://localhost:5173/'
-WRONG = 'new_node = new Node(15)\nstart.next = new_node\nnew_node.next = start.next'
+WRONG = 'new_node = new Node(15)\nhead.next = new_node\nnew_node.next = head.next'
 
 def set_code(pg, code):
     pg.evaluate("c => { const t = document.querySelector('textarea.ce-input'); t.value = c; t.dispatchEvent(new Event('input')); }", code)
@@ -27,7 +27,7 @@ with sync_playwright() as p:
     set_code(pg, WRONG)
     step = pg.locator('button:has-text("Step ▶")')
     for _ in range(3): step.click()
-    ok(pg.locator('.ce-line.cur').inner_text().strip() == 'start.next = new_node', 'current line is highlighted in the editor')
+    ok(pg.locator('.ce-line.cur').inner_text().strip() == 'head.next = new_node', 'current line is highlighted in the editor')
     ok('Lost reference' in pg.locator('.lab-problems').inner_text(), 'lost reference reported at the step it happens')
     ok(pg.locator('[data-addr="200"].lost, [data-addr="200"] .tag').count() > 0, 'unreachable node marked in the diagram')
     pg.locator('button:has-text("Show before / after")').first.click()
@@ -53,7 +53,7 @@ with sync_playwright() as p:
 
     # 3. run / pause / stop / reset and editing resets the run
     pg.goto(BASE + '#/lab/csll-traverse'); pg.wait_for_timeout(500)
-    set_code(pg, 'p = start\nwhile p != NULL do\n  print p.data\n  p = p.next\nend')
+    set_code(pg, 'p = head\nwhile p != NULL do\n    print p.data\n    p = p.next\nend while')
     pg.select_option('select[aria-label="Execution speed"]', 'turbo')
     pg.locator('button:has-text("▶ Run")').click(); pg.wait_for_timeout(700)
     pg.locator('button:has-text("Pause")').click()
@@ -68,11 +68,11 @@ with sync_playwright() as p:
     ok('instruction limit' in pg.locator('.lab-explain').inner_text(), 'endless loop stopped by the limit')
     step = pg.locator('button:has-text("Step ▶")')
     pg.locator('button:has-text("↺ Reset")').click(); step.click(); step.click()
-    set_code(pg, 'p = start')
+    set_code(pg, 'p = head')
     ok(counter(pg).startswith('Step 0') and 'restarted' in pg.locator('.lab-explain').inner_text(), 'editing the code resets the run')
 
     # 4. syntax error is shown on its line; draft survives a reload
-    set_code(pg, 'p = start\nif p == NULL\n  print 1\nend')
+    set_code(pg, 'p = head\nif p == NULL\n    print 1\nend if')
     ok('Syntax error on line 2' in pg.locator('.lab-status').inner_text(), 'syntax error in the status line')
     ok(pg.locator('.ce-line.err').count() == 1, 'syntax error line marked')
     pg.reload(); pg.wait_for_timeout(600)

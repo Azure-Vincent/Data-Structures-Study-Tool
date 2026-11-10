@@ -48,7 +48,7 @@ function referencePanel(onTry) {
     'section',
     { class: 'panel lab-ref', 'aria-label': 'Syntax reference' },
     h('div', { class: 'panel-title' }, h('h3', {}, 'Syntax reference')),
-    h('p', { class: 'small muted', style: { marginTop: 0 } }, 'Statements go one per line. Blocks open with then/do at the end of a line and close with end. Keywords are not case-sensitive; variable names are.'),
+    h('p', { class: 'small muted', style: { marginTop: 0 } }, 'One statement per line. A block opens with then or do at the end of a line and closes with end if, end while, end for or end function. Keywords are not case-sensitive; variable names are.'),
     REFERENCE.map((sec) => h('details', { class: 'lab-ref-sec', open: sec.title === 'Nodes and pointers' }, h('summary', {}, sec.title), h('table', { class: 'lab-ref-table' }, sec.rows.map(([ex, text]) => h('tr', {}, h('td', {}, codeBlock(ex)), h('td', {}, text)))))),
     h('details', { class: 'lab-ref-sec' }, h('summary', {}, 'Safety and limits'), h('ul', { class: 'small' }, LIMITS_TEXT.map((t) => h('li', {}, t)))),
     h('details', { class: 'lab-ref-sec' }, h('summary', {}, 'Not supported'), h('ul', { class: 'small' }, UNSUPPORTED.map((t) => h('li', {}, t)))),
@@ -56,7 +56,7 @@ function referencePanel(onTry) {
       'details',
       { class: 'lab-ref-sec' },
       h('summary', {}, 'Runnable examples'),
-      h('p', { class: 'small muted' }, 'Opens the example in free mode on a matching structure.'),
+      h('p', { class: 'small muted' }, 'Opens the example in free mode with a matching starting structure.'),
       h(
         'div',
         { class: 'lab-ref-examples' },
@@ -144,7 +144,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
       'div',
       { class: 'seg lab-modes', role: 'group', 'aria-label': 'Lab mode' },
       h('button', { class: 'btn', 'aria-pressed': String(mode === 'guided'), onclick: () => ctx.go(`#/lab/${(lab.lastExercise && EXERCISE_BY_ID[lab.lastExercise] ? lab.lastExercise : EXERCISES[0].id)}`) }, 'Guided exercises'),
-      h('button', { class: 'btn', 'aria-pressed': String(mode === 'free'), onclick: () => ctx.go(`#/lab/free/${lab.lastFree || structure}`) }, 'Free experiment'),
+      h('button', { class: 'btn', 'aria-pressed': String(mode === 'free'), onclick: () => ctx.go(`#/lab/free/${lab.lastFree || structure}`) }, 'Free mode'),
     ),
     refHost,
     ].filter(Boolean),
@@ -261,7 +261,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
     ctxPanel.append(
       h('div', { class: 'row' }, h('label', { class: 'inline' }, h('b', {}, 'Structure'), sSel), input, h('span', { class: 'spacer' }), exSel),
       h('p', { class: 'small muted', style: { margin: '8px 0 0' } }, S.valuesHelp, S.render === 'none' ? null : [' Pointer variables: ', S.roots.length ? S.roots.join(', ') : 'G (graph), s (start vertex)', '.']),
-      h('div', { class: 'callout', style: { marginBottom: 0 } }, h('span', { class: 'tag' }, 'Free experiment'), h('div', { class: 'small' }, 'There is no goal here, so the lab can catch errors (NULL, deleted nodes, undefined variables, endless loops) and structural problems (lost nodes, cycles, broken links) — but it can’t know whether the final result is the one you intended. Compare it with what you expected, or pick a guided exercise to be checked against test cases.')),
+      h('div', { class: 'callout', style: { marginBottom: 0 } }, h('span', { class: 'tag' }, 'Free mode'), h('div', { class: 'small' }, 'Free mode has no goal: execution errors (NULL dereferences, deleted nodes, undefined variables, nonterminating loops) and structural problems (unreachable nodes, cycles, broken links) are reported, but whether the final result is the intended one cannot be determined automatically. Compare the result with the expected one, or select a guided exercise, which is checked against test cases.')),
     );
   }
 
@@ -288,7 +288,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
       const hadProgress = exe && (exe.index > 0 || playing);
       if (playing) pause(true);
       clearTimeout(rebuildTimer);
-      rebuildTimer = setTimeout(() => rebuild(hadProgress ? 'You edited the code, so the run restarted from the beginning — the picture always matches the code in the editor.' : ''), 250);
+      rebuildTimer = setTimeout(() => rebuild(hadProgress ? 'The code was edited, so execution restarted from the beginning; the diagram always corresponds to the code in the editor.' : ''), 250);
     },
   });
   const starterCode = mode === 'guided' ? ex.starter : EXAMPLES[structure][0].code;
@@ -353,7 +353,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
     const hintBtn = hintsShown < ex.hints.length ? h('button', { class: 'btn', onclick: () => { hintsShown++; drawCheck(result); } }, `Hint ${hintsShown + 1} of ${ex.hints.length}`) : null;
     const solBtn = !revealed
       ? h('button', { class: 'btn ghost', disabled: hintsShown < ex.hints.length, title: hintsShown < ex.hints.length ? 'Use the hints first' : '', onclick: () => {
-          if (!window.confirm(drill && !reviewed ? 'Show the solution? The review is then recorded as not recalled and the exercise is scheduled again in 10 minutes.' : 'Show a corrected solution? Revealing it means this attempt won’t count as solved on your own.')) return;
+          if (!window.confirm(drill && !reviewed ? 'Show the solution? The review is then recorded as not recalled and the exercise is scheduled again in 10 minutes.' : 'Show the solution? The attempt will then not count as solved independently.')) return;
           revealed = true;
           if (drill && !reviewed) reviewed = { outcome: 'again', rec: drill.review('again') };
           drawCheck(result);
@@ -371,7 +371,7 @@ export function labView(ctx, a, b, { drill = null } = {}) {
       if (result.syntax) checkP.append(h('div', { class: 'feedback bad' }, h('b', { class: 'verdict' }, `Syntax error on line ${result.syntax.line}.`), result.syntax.message, ' ', result.syntax.hint));
       else {
         const n = result.tests.filter((t) => t.pass).length;
-        checkP.append(h('div', { class: `feedback ${result.passed ? 'ok' : 'bad'}` }, h('b', { class: 'verdict' }, result.passed ? `All ${n} test cases pass.` : `${n} of ${result.tests.length} test cases pass.`), result.passed ? (revealed ? 'Well done — next time try it before revealing the solution so it counts as independent.' : 'Solved on your own — this counts towards mastery of the topic.') : 'Open a failing test to see why. You can show that test in the visualiser and step through it.'));
+        checkP.append(h('div', { class: `feedback ${result.passed ? 'ok' : 'bad'}` }, h('b', { class: 'verdict' }, result.passed ? `All ${n} test cases pass.` : `${n} of ${result.tests.length} test cases pass.`), result.passed ? (revealed ? 'Solved after the solution was shown, so the attempt is not counted as independent.' : 'Solved independently: this counts toward mastery of the concept.') : 'Open a failing test case to see the reason. The test case can be shown on the diagram and executed step by step.'));
         checkP.append(
           h(
             'ul',

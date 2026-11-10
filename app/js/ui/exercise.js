@@ -241,7 +241,7 @@ export function renderExercise(ex, cb = {}) {
       const ins = {};
       const box = h('div', { style: { display: 'grid', gap: '6px', maxWidth: '420px' } });
       for (const l of ex.labels) {
-        ins[l] = h('input', { type: 'text', 'aria-label': `neighbours of ${l}`, placeholder: 'neighbours, e.g. B C', style: { flex: '1' } });
+        ins[l] = h('input', { type: 'text', 'aria-label': `neighbors of ${l}`, placeholder: 'neighbors, e.g. B C', style: { flex: '1' } });
         box.append(h('label', { class: 'row' }, h('span', { class: 'chip', style: { minWidth: '36px', textAlign: 'center' } }, l), '→', ins[l]));
       }
       input.append(box);
@@ -299,10 +299,10 @@ export function renderExercise(ex, cb = {}) {
       // write the operation in pseudocode; Check runs it on every test case
       redrawVisual();
       const editor = createCodeEditor({ value: ex.starter, label: 'Your pseudocode', onRun: () => check() });
-      const openLab = cb.onOpenLab ? h('button', { class: 'btn small', onclick: () => cb.onOpenLab(ex.labId, editor.getValue()) }, 'Step through it in the Pseudocode Lab') : null;
+      const openLab = cb.onOpenLab ? h('button', { class: 'btn small', onclick: () => cb.onOpenLab(ex.labId, editor.getValue()) }, 'Step through it in Pseudocode Development') : null;
       input.append(
         editor.el,
-        h('div', { class: 'row', style: { marginTop: '6px' } }, h('button', { class: 'btn small ghost', onclick: () => editor.replaceAll(ex.starter) }, 'Reset to starter'), openLab, h('span', { class: 'small muted' }, 'Pseudocode Lab syntax: one statement per line, blocks end with end. ', h('kbd', {}, 'Ctrl'), '+', h('kbd', {}, 'Enter'), ' checks.')),
+        h('div', { class: 'row', style: { marginTop: '6px' } }, h('button', { class: 'btn small ghost', onclick: () => editor.replaceAll(ex.starter) }, 'Reset to starter'), openLab, h('span', { class: 'small muted' }, 'Pseudocode Lab syntax: one statement per line; indent blocks by 4 spaces and close them with end if, end while, end for or end function. ', h('kbd', {}, 'Ctrl'), '+', h('kbd', {}, 'Enter'), ' checks.')),
       );
       getResponse = () => editor.getValue();
       break;
@@ -353,12 +353,12 @@ export function renderExercise(ex, cb = {}) {
     const details = res.details ? h('ul', { class: 'small check-details' }, res.details.map((d) => h('li', { class: d.startsWith('✓') ? 'pass' : 'fail' }, d))) : null;
     if (res.correct) {
       solved = true;
-      feedback.append(h('div', { class: 'feedback ok' }, h('b', { class: 'verdict' }, checks === 1 && !hintsUsed ? 'Correct.' : 'Correct now.'), res.message || '', details));
+      feedback.append(h('div', { class: 'feedback ok' }, h('b', { class: 'verdict' }, 'Correct.'), res.message || '', details));
       bCheck.disabled = true;
       compareWithProgram();
       endButtons(false);
     } else {
-      feedback.append(h('div', { class: 'feedback bad' }, h('b', { class: 'verdict' }, 'Not yet.'), res.message || 'Look again.', details));
+      feedback.append(h('div', { class: 'feedback bad' }, h('b', { class: 'verdict' }, 'Incorrect.'), res.message || 'Review the answer and try again.', details));
       if (ex.kind === 'rewire' && ex._editor) ex._editor.markBad(res.firstBad ?? null, res.nodes || []);
       endButtons(true);
     }
@@ -366,7 +366,7 @@ export function renderExercise(ex, cb = {}) {
 
   function endButtons(afterMistake) {
     actions.querySelectorAll('[data-end]').forEach((b) => b.remove());
-    if (afterMistake && cb.onSimilar) actions.append(h('button', { class: 'btn', 'data-end': 1, onclick: () => cb.onSimilar() }, 'Try a similar one'));
+    if (afterMistake && cb.onSimilar) actions.append(h('button', { class: 'btn', 'data-end': 1, onclick: () => cb.onSimilar() }, 'Try a similar exercise'));
     if (cb.onNext && (solved || revealed || afterMistake)) actions.append(h('button', { class: `btn ${solved || revealed ? 'primary' : ''}`, 'data-end': 1, onclick: () => cb.onNext() }, cb.nextLabel || 'Next'));
   }
 
@@ -404,7 +404,7 @@ export function renderExercise(ex, cb = {}) {
     const impl = IMPL_BY_ID[ex.implId];
     const prog = compileExample(impl, 0);
     const variants = Object.fromEntries(['cpp', 'py', 'pseudo'].map((l) => [l, readableProgram(prog[l], l, '')]));
-    root.append(h('details', { class: 'compare-program panel' }, h('summary', {}, `Compare: “${impl.title}” as a complete program in C++, Python and pseudocode`), h('p', { class: 'small muted' }, 'Translate your pseudocode into C++ or Python yourself first, then compare. The lesson’s “Build it in code” step runs this program line by line.'), langCode(variants)));
+    root.append(h('details', { class: 'compare-program panel' }, h('summary', {}, `Compare: “${impl.title}” as a complete program in C++, Python and pseudocode`), h('p', { class: 'small muted' }, 'Translate your pseudocode into C++ or Python yourself first, then compare. The module’s implementation step runs this program line by line.'), langCode(variants)));
   }
 
   return root;

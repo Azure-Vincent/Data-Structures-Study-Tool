@@ -15,48 +15,49 @@ import * as G from '../core/graph.js';
 import { problems } from '../core/invariants.js';
 
 const STRUCTS = [
-  { id: 'sll', label: 'Singly Linked List' },
-  { id: 'dll', label: 'Doubly Linked List' },
-  { id: 'csll', label: 'Circular Linked List' },
-  { id: 'astack', label: 'Array Stack' },
-  { id: 'lstack-head', label: 'Linked Stack (head)' },
-  { id: 'lstack-tail', label: 'Linked Stack (tail)' },
-  { id: 'aqueue', label: 'Array Queue' },
-  { id: 'lqueue', label: 'Linked Queue' },
-  { id: 'tree', label: 'Binary Tree' },
+  { id: 'sll', label: 'Singly linked list' },
+  { id: 'dll', label: 'Doubly linked list' },
+  { id: 'csll', label: 'Circular linked list' },
+  { id: 'astack', label: 'Array stack' },
+  { id: 'lstack-head', label: 'Linked stack (top at head)' },
+  { id: 'lstack-tail', label: 'Linked stack (top at tail)' },
+  { id: 'aqueue', label: 'Array queue' },
+  { id: 'lqueue', label: 'Linked queue' },
+  { id: 'tree', label: 'Binary tree' },
   { id: 'graph', label: 'Graph' },
 ];
 
+// [operation id, label, inputs: v = value, p = position]
 const LIST_OPS = {
   sll: [
-    ['insertBeg', 'insert at beginning', 'v'],
-    ['insertMid', 'insert at position (middle)', 'vp'],
-    ['insertEnd', 'insert at end', 'v'],
-    ['deleteBeg', 'delete at beginning', ''],
-    ['deleteMid', 'delete at position (middle)', 'p'],
-    ['deleteEnd', 'delete at end (corrected)', ''],
-    ['deleteEndNotes', 'delete at end (exactly as in notes)', ''],
-    ['traverse', 'traverse / display', ''],
+    ['insertBeg', 'Insert at beginning', 'v'],
+    ['insertMid', 'Insert at a middle position', 'vp'],
+    ['insertEnd', 'Insert at end', 'v'],
+    ['deleteBeg', 'Delete at beginning', ''],
+    ['deleteMid', 'Delete at a middle position', 'p'],
+    ['deleteEnd', 'Delete at end', ''],
+    ['deleteEndIncorrect', 'Delete at end (incorrect: omits the single-node case)', ''],
+    ['traverse', 'Traverse and display', ''],
   ],
   dll: [
-    ['insertBeg', 'insert at beginning', 'v'],
-    ['insertMid', 'insert at position (middle)', 'vp'],
-    ['insertEnd', 'insert at end', 'v'],
-    ['deleteBeg', 'delete at beginning (corrected)', ''],
-    ['deleteBegNotes', 'delete at beginning (exactly as in notes)', ''],
-    ['deleteMid', 'delete at position (middle)', 'p'],
-    ['deleteEnd', 'delete at end (corrected)', ''],
-    ['traverseFwd', 'traverse left → right', ''],
-    ['traverseBwd', 'traverse right → left', ''],
-    ['count_nodes', 'count_nodes (recursive)', ''],
+    ['insertBeg', 'Insert at beginning', 'v'],
+    ['insertMid', 'Insert at a middle position', 'vp'],
+    ['insertEnd', 'Insert at end', 'v'],
+    ['deleteBeg', 'Delete at beginning', ''],
+    ['deleteBegIncorrect', 'Delete at beginning (incorrect: omits the single-node case)', ''],
+    ['deleteMid', 'Delete at a middle position', 'p'],
+    ['deleteEnd', 'Delete at end', ''],
+    ['traverseFwd', 'Traverse forward (head to last, following next)', ''],
+    ['traverseBwd', 'Traverse backward (last to head, following prev)', ''],
+    ['count_nodes', 'Count nodes recursively (count_nodes)', ''],
   ],
   csll: [
-    ['insertBeg', 'insert at beginning', 'v'],
-    ['insertEnd', 'insert at end', 'v'],
-    ['deleteBeg', 'delete at beginning', ''],
-    ['deleteEnd', 'delete at end (corrected)', ''],
-    ['traverse', 'traverse (do-while)', ''],
-    ['traverseNullBug', 'WRONG traverse waiting for NULL', ''],
+    ['insertBeg', 'Insert at beginning', 'v'],
+    ['insertEnd', 'Insert at end', 'v'],
+    ['deleteBeg', 'Delete at beginning', ''],
+    ['deleteEnd', 'Delete at end', ''],
+    ['traverse', 'Traverse (do-while loop)', ''],
+    ['traverseNullBug', 'Traverse until NULL (incorrect: never terminates)', ''],
   ],
 };
 
@@ -113,8 +114,8 @@ function listExplorer(store, kind) {
   const opSel = h('select', { 'aria-label': 'operation' }, LIST_OPS[kind].map(([id, label]) => h('option', { value: id }, label)));
   const vIn = h('input', { type: 'number', value: 15, 'aria-label': 'value', style: { width: '80px' } });
   const pIn = h('input', { type: 'number', value: 2, 'aria-label': 'position', style: { width: '70px' } });
-  const vLab = h('label', { class: 'inline' }, 'value', vIn);
-  const pLab = h('label', { class: 'inline' }, 'pos', pIn);
+  const vLab = h('label', { class: 'inline' }, 'Value', vIn);
+  const pLab = h('label', { class: 'inline' }, 'position', pIn);
   const syncInputs = () => {
     const spec = LIST_OPS[kind].find((x) => x[0] === opSel.value)[2];
     vLab.style.display = spec.includes('v') ? '' : 'none';
@@ -126,7 +127,7 @@ function listExplorer(store, kind) {
 
   controls.append(
     h('div', { class: 'row' }, h('label', { class: 'inline' }, 'Values', valsIn), h('button', { class: 'btn', onclick: () => { const v = parseVals(valsIn.value); world = kind === 'csll' ? CSLL.build(v) : PW.buildList(kind, v); ws = null; inspected = null; draw(); } }, 'Create list'), h('button', { class: 'btn ghost', onclick: () => { world = kind === 'csll' ? CSLL.build([]) : PW.buildList(kind, []); ws = null; draw(); } }, 'Empty list')),
-    h('div', { class: 'row', style: { marginTop: '8px' } }, h('label', { class: 'inline' }, 'Operation', opSel), vLab, pLab, h('button', { class: 'btn primary', onclick: run }, 'Run step by step'), h('label', { class: 'inline small' }, predict, 'ask me to predict'), h('span', { class: 'spacer' }), h('button', { class: 'btn', 'aria-pressed': 'false', onclick: (e) => { mode = mode === 'edit' ? 'run' : 'edit'; e.target.setAttribute('aria-pressed', String(mode === 'edit')); draw(); } }, 'Edit pointers by hand')),
+    h('div', { class: 'row', style: { marginTop: '8px' } }, h('label', { class: 'inline' }, 'Operation', opSel), vLab, pLab, h('button', { class: 'btn primary', onclick: run }, 'Run step by step'), h('label', { class: 'inline small' }, predict, 'Ask me to predict'), h('span', { class: 'spacer' }), h('button', { class: 'btn', 'aria-pressed': 'false', onclick: (e) => { mode = mode === 'edit' ? 'run' : 'edit'; e.target.setAttribute('aria-pressed', String(mode === 'edit')); draw(); } }, 'Edit pointers by hand')),
   );
 
   function run() {
@@ -139,7 +140,7 @@ function listExplorer(store, kind) {
     if (ws) ws.destroy();
     ws = createWorkspace(tr, { predictKinds: predict.checked ? ['link', 'var', 'free', 'output'] : null, settings: store.data.settings });
     world = PW.clone(tr.final);
-    if (op.endsWith('Notes')) PW.sweepFreed(world);
+    if (op.endsWith('Incorrect')) PW.sweepFreed(world);
     mode = 'run';
     draw();
     ws.el.focus();
@@ -201,13 +202,13 @@ function seqExplorer(store, kind) {
   const el = h('div');
   const isQ = kind.includes('queue');
   const MAXin = h('input', { type: 'number', value: 5, min: 1, max: 10, 'aria-label': 'MAX', style: { width: '70px' } });
-  const convSel = h('select', { 'aria-label': 'convention' }, kind === 'astack' ? [h('option', { value: 'notes' }, 'top = next free slot (notes)'), h('option', { value: 'index' }, 'top = index of top item')] : [h('option', { value: 'linear' }, 'linear (notes)'), h('option', { value: 'circular' }, 'circular (supplementary)')]);
+  const convSel = h('select', { 'aria-label': 'convention' }, kind === 'astack' ? [h('option', { value: 'count' }, 'Count convention (top = number of items)'), h('option', { value: 'index' }, 'Index convention (top = index of the top item)')] : [h('option', { value: 'linear' }, 'Linear queue'), h('option', { value: 'circular' }, 'Circular queue (extension)')]);
   let state = fresh();
   let ws = null;
   const vIn = h('input', { type: 'number', value: 11, 'aria-label': 'value', style: { width: '80px' } });
   const stage = h('div');
   function fresh() {
-    if (kind === 'astack') return SQ.arrayStack(Number(MAXin?.value || 5), convSel?.value || 'notes');
+    if (kind === 'astack') return SQ.arrayStack(Number(MAXin?.value || 5), convSel?.value || 'count');
     if (kind === 'aqueue') return SQ.arrayQueue(Number(MAXin?.value || 5), convSel?.value || 'linear');
     if (kind === 'lstack-head') return SQ.linkedStackHead();
     if (kind === 'lstack-tail') return SQ.linkedStackTail();
@@ -227,8 +228,8 @@ function seqExplorer(store, kind) {
       'div',
       { class: 'panel' },
       isArr ? h('div', { class: 'row' }, h('label', { class: 'inline' }, 'MAX', MAXin), convSel, h('button', { class: 'btn', onclick: () => { state = fresh(); ws = null; clear(stage).append(h('div', { class: 'diagram-box' }, isQ ? renderArrayQueue(state) : renderArrayStack(state))); } }, 'New empty structure')) : h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { state = fresh(); clear(stage); } }, 'New empty structure')),
-      h('div', { class: 'row', style: { marginTop: '8px' } }, h('label', { class: 'inline' }, 'value', vIn), isQ ? [h('button', { class: 'btn primary', onclick: () => run('enqueue') }, 'enqueue'), h('button', { class: 'btn', onclick: () => run('dequeue') }, 'dequeue')] : [h('button', { class: 'btn primary', onclick: () => run('push') }, 'push'), h('button', { class: 'btn', onclick: () => run('pop') }, 'pop'), kind === 'astack' ? h('button', { class: 'btn', onclick: () => run('peek') }, 'peek') : null]),
-      h('p', { class: 'small muted' }, isQ ? 'front/F is where items leave; rear/R is where they enter.' : 'Try pushing past MAX (overflow) and popping an empty stack (underflow).'),
+      h('div', { class: 'row', style: { marginTop: '8px' } }, h('label', { class: 'inline' }, 'Value', vIn), isQ ? [h('button', { class: 'btn primary', onclick: () => run('enqueue') }, 'Enqueue'), h('button', { class: 'btn', onclick: () => run('dequeue') }, 'Dequeue')] : [h('button', { class: 'btn primary', onclick: () => run('push') }, 'Push'), h('button', { class: 'btn', onclick: () => run('pop') }, 'Pop'), kind === 'astack' ? h('button', { class: 'btn', onclick: () => run('peek') }, 'Peek') : null]),
+      h('p', { class: 'small muted' }, isQ ? 'Items leave at the front and enter at the rear.' : 'Push past MAX to see an overflow, and pop an empty stack to see an underflow.'),
     ),
     stage,
   );
@@ -299,11 +300,11 @@ export function treeBuilder(store, { traverse = true } = {}) {
         h('label', { class: 'inline' }, 'New node label', labIn),
         bst ? h('button', { class: 'btn primary', onclick: bstInsert }, 'BST insert') : h('button', { class: 'btn', disabled: !!t.root, onclick: () => add(null, null) }, 'Add as root'),
         h('button', { class: 'btn ghost', onclick: () => { t = T.emptyTree(); sel = null; labIn.value = bst ? '' : 'A'; draw(); } }, 'Clear'),
-        h('button', { class: 'btn ghost', onclick: () => { t = T.EXAMPLE_TREE(); sel = null; labIn.value = nextLabel(); draw(); } }, 'Lecture tree A–G'),
+        h('button', { class: 'btn ghost', onclick: () => { t = T.EXAMPLE_TREE(); sel = null; labIn.value = nextLabel(); draw(); } }, 'Example tree A–G'),
         h('span', { class: 'spacer' }),
-        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: bst, onchange: (e) => { bst = e.target.checked; t = T.emptyTree(); sel = null; labIn.value = bst ? '50' : 'A'; draw(); } }), 'BST mode (supplementary)'),
+        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: bst, onchange: (e) => { bst = e.target.checked; t = T.emptyTree(); sel = null; labIn.value = bst ? '50' : 'A'; draw(); } }), 'BST mode (extension)'),
       ),
-      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, bst ? 'Supplementary — binary SEARCH trees are not in Lectures 13–14. Smaller values go left, larger go right; inorder then prints them sorted.' : 'Click a dashed + to add the labelled node there (Tab + Enter works too). Click a node to select it.'),
+      h('p', { class: 'kbd-help', style: { margin: '6px 0 0' } }, bst ? 'Extension: in a binary SEARCH tree, smaller values go left and larger values go right, so an inorder traversal lists them in sorted order.' : 'Click a dashed + to add the labeled node there (Tab + Enter also works). Click a node to select it.'),
     );
     clear(canvas).append(renderTree(t, { addButtons: bst ? null : { onAdd: add }, onNode: (id) => { sel = id; draw(); }, mark: sel ? [sel] : [], levels: true, showArray: 0 }));
     const c = T.classify(t);
@@ -319,8 +320,8 @@ export function treeBuilder(store, { traverse = true } = {}) {
           h('tr', {}, h('td', {}, 'edges'), h('td', {}, `${T.edgesOfTree(T.size(t))} (= n − 1)`)),
           h('tr', {}, h('td', {}, 'height'), h('td', {}, `${T.height(t)} (edges; root = level 0)`)),
           h('tr', {}, h('td', {}, 'leaves'), h('td', {}, T.leaves(t).join(', ') || '—')),
-          h('tr', {}, h('td', {}, 'strictly binary'), h('td', {}, c.strict ? 'yes (books: “full/proper”)' : 'no')),
-          h('tr', {}, h('td', {}, '“full” (notes)'), h('td', {}, c.perfect ? 'yes (books: “perfect”)' : 'no')),
+          h('tr', {}, h('td', {}, 'full (strictly binary)'), h('td', {}, c.strict ? 'yes' : 'no')),
+          h('tr', {}, h('td', {}, 'perfect'), h('td', {}, c.perfect ? 'yes' : 'no')),
           h('tr', {}, h('td', {}, 'complete'), h('td', {}, c.complete ? 'yes' : 'no')),
           h('tr', {}, h('td', {}, 'array (0-based)'), h('td', {}, '[' + T.toArray(t, 0).map((x) => x ?? '—').join(', ') + ']')),
           h('tr', {}, h('td', {}, 'preorder'), h('td', {}, T.preorder(t).join(' '))),
@@ -344,7 +345,7 @@ export function treeBuilder(store, { traverse = true } = {}) {
                 h('tr', {}, h('td', {}, 'descendants'), h('td', {}, T.descendants(t, sel).join(', ') || 'none')),
                 h('tr', {}, h('td', {}, 'subtree'), h('td', {}, T.subtree(t, sel).join(', '))),
                 h('tr', {}, h('td', {}, 'level'), h('td', {}, String(T.level(t, sel)))),
-                h('tr', {}, h('td', {}, 'depth (notes: nodes on path)'), h('td', {}, String(T.depthNotes(t, sel)))),
+                h('tr', {}, h('td', {}, 'depth'), h('td', {}, `${T.level(t, sel)} (edges from the root, = level)`)),
                 h('tr', {}, h('td', {}, 'array index'), h('td', {}, `${T.arrayIndexOf(t, sel, 0)} (0-based) · ${T.arrayIndexOf(t, sel, 1)} (1-based)`)),
               ),
               h('button', { class: 'btn small danger', style: { marginTop: '6px' }, onclick: () => { T.removeSubtree(t, sel); sel = null; draw(); } }, `Remove ${sel} and its subtree`),
@@ -354,7 +355,7 @@ export function treeBuilder(store, { traverse = true } = {}) {
     );
     if (traverse) {
       clear(stage).append(
-        h('div', { class: 'row', style: { marginTop: '12px' } }, h('b', {}, 'Traverse this tree:'), ['preorder', 'inorder', 'postorder'].map((o) => h('button', { class: 'btn', disabled: !t.root, onclick: () => runTrav(o) }, o)), h('button', { class: 'btn', disabled: !t.root, onclick: () => runTrav('inorderStack') }, 'inorder with explicit stack')),
+        h('div', { class: 'row', style: { marginTop: '12px' } }, h('b', {}, 'Traverse this tree:'), [['preorder', 'Preorder'], ['inorder', 'Inorder'], ['postorder', 'Postorder']].map(([o, label]) => h('button', { class: 'btn', disabled: !t.root, onclick: () => runTrav(o) }, label)), h('button', { class: 'btn', disabled: !t.root, onclick: () => runTrav('inorderStack') }, 'Inorder with an explicit stack')),
       );
       if (ws) stage.append(ws.el);
     }
@@ -400,8 +401,8 @@ export function graphEditor(store) {
         { class: 'row' },
         h('label', { class: 'inline' }, 'Example', h('select', { onchange: (e) => { g = GRAPHS[e.target.value](); first = null; draw(); } }, [['example', 'Undirected graph (a–i)'], ['directed', 'Directed graph (1–5)'], ['weighted', 'Weighted graph (A–G)'], ['selfloop', 'Directed graph with a self-loop'], ['disconnected', 'Disconnected graph with a self-loop']].map(([k, l]) => h('option', { value: k }, l)))),
         h('button', { class: 'btn ghost', onclick: () => { g = G.createGraph({ directed: g.directed, weighted: g.weighted }); first = null; draw(); } }, 'Empty graph'),
-        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.directed, onchange: (e) => { g.directed = e.target.checked; draw(); } }), 'directed'),
-        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.weighted, onchange: (e) => { g.weighted = e.target.checked; draw(); } }), 'weighted'),
+        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.directed, onchange: (e) => { g.directed = e.target.checked; draw(); } }), 'Directed'),
+        h('label', { class: 'inline small' }, h('input', { type: 'checkbox', checked: g.weighted, onchange: (e) => { g.weighted = e.target.checked; draw(); } }), 'Weighted'),
       ),
       h(
         'div',
@@ -410,14 +411,14 @@ export function graphEditor(store) {
         h('button', { class: 'btn', onclick: () => { const v = vIn.value.trim(); if (!v) return; try { G.addVertex(g, v); G.ensureLayout(g); vIn.value = ''; draw(); } catch (e) { toast(e.message); } } }, 'Add vertex'),
         h('select', { 'aria-label': 'vertex to remove', id: 'rmv' }, g.vertices.map((v) => h('option', { value: v }, v))),
         h('button', { class: 'btn ghost', onclick: () => { const v = top.querySelector('#rmv').value; if (v) { G.removeVertex(g, v); draw(); } } }, 'Remove vertex'),
-        g.weighted ? h('label', { class: 'inline' }, 'weight', wIn) : null,
+        g.weighted ? h('label', { class: 'inline' }, 'Weight', wIn) : null,
       ),
     );
     clear(canvas).append(renderGraph(g, { onNode: (v) => { if (!first) first = v; else { toggleEdge(first, v); first = null; } draw(); }, picked: first ? [first] : [] }));
     const m = G.matrix(g);
     clear(reps).append(h('h3', {}, 'Adjacency matrix (rows = from)'), m.labels.length ? renderMatrixRO(m) : h('p', { class: 'muted small' }, 'No vertices.'), h('h3', { style: { marginTop: '10px' } }, 'Adjacency list (ascending order)'), renderAdjList({ list: G.adjList(g) }), h('p', { class: 'small muted' }, `V = ${g.vertices.length} vertices, E = ${g.edges.length} edges. The matrix has a cell for every pair of vertices; the list stores only the edges that exist.`));
     const startSel = h('select', { 'aria-label': 'start vertex' }, G.sortedVertices(g).map((v) => h('option', { value: v }, v)));
-    const orderSel = h('select', { 'aria-label': 'neighbour order' }, h('option', { value: 'alpha' }, 'ascending'), h('option', { value: 'insertion' }, 'edge insertion order'));
+    const orderSel = h('select', { 'aria-label': 'neighbor order' }, h('option', { value: 'alpha' }, 'ascending'), h('option', { value: 'insertion' }, 'edge insertion order'));
     const all = h('input', { type: 'checkbox' });
     const run = (kind) => {
       if (!g.vertices.length) return;
@@ -428,7 +429,7 @@ export function graphEditor(store) {
       clear(stage).append(ws.el);
     };
     clear(runP).append(
-      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'start', startSel), h('label', { class: 'inline' }, 'neighbour order', orderSel), h('label', { class: 'inline small' }, all, 'whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
+      h('div', { class: 'row' }, h('b', {}, 'Traverse:'), h('label', { class: 'inline' }, 'Start', startSel), h('label', { class: 'inline' }, 'Neighbor order', orderSel), h('label', { class: 'inline small' }, all, 'Whole graph (restart at undiscovered vertices)'), h('button', { class: 'btn primary', onclick: () => run('bfs') }, 'Run BFS'), h('button', { class: 'btn primary', onclick: () => run('dfs') }, 'Run DFS')),
       g.weighted ? h('p', { class: 'small muted' }, 'BFS and DFS ignore weights: BFS finds paths with the fewest EDGES, not the smallest total weight.') : null,
     );
   }

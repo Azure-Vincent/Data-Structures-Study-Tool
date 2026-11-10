@@ -1,4 +1,4 @@
-// The format of the "Build it in code" programs (content/impl/*.js).
+// The format of the implementation programs (content/impl/*.js).
 //
 // Every example is one program written three times — pseudocode, C++ and
 // Python — that does exactly the same thing. The pseudocode is what actually

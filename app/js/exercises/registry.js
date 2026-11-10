@@ -13,7 +13,7 @@ import { CONCEPT_BY_ID } from '../content/concepts.js';
 
 export const TEMPLATES = [...l07, ...l08, ...l09, ...l10, ...l11, ...l12, ...l13, ...l14, ...IMPL_TEMPLATES];
 // every template belongs to the module of its main concept; `modules` lists every
-// module whose concepts it can practise (through its variants)
+// module whose concepts it can practice (through its variants)
 const moduleOf = (c) => (CONCEPT_BY_ID[c] ? CONCEPT_BY_ID[c].module : null);
 for (const t of TEMPLATES) {
   t.module = moduleOf(t.concept);
@@ -22,17 +22,17 @@ for (const t of TEMPLATES) {
 export const TEMPLATE_BY_ID = Object.fromEntries(TEMPLATES.map((t) => [t.id, t]));
 
 export const TYPE_LABELS = {
-  predict: 'Predict',
-  rewire: 'Rewire pointers',
-  order: 'Arrange steps',
-  fill: 'Complete the code',
-  bug: 'Find & fix the bug',
-  traverse: 'Click the traversal',
-  convert: 'Convert representations',
-  choose: 'Choose a structure',
-  classify: 'Classify',
-  build: 'Build',
-  lab: 'Write the code',
+  predict: 'Prediction',
+  rewire: 'Pointer Manipulation',
+  order: 'Step Ordering',
+  fill: 'Code Completion',
+  bug: 'Error Identification',
+  traverse: 'Traversal Order',
+  convert: 'Representation Conversion',
+  choose: 'Structure Selection',
+  classify: 'Classification',
+  build: 'Structure Construction',
+  lab: 'Pseudocode Writing',
 };
 
 /**

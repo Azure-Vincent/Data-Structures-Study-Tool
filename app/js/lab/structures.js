@@ -14,8 +14,8 @@ export const STRUCTURES = {
   stack: { id: 'stack', label: 'Stack (linked)', fields: ['next'], aliases: {}, roots: ['top'], forward: 'next', render: 'list', listKind: 'sll', valuesHelp: 'Values from the top down, e.g. 30 20 10 (30 is on top).' },
   queue: { id: 'queue', label: 'Queue (linked)', fields: ['next'], aliases: {}, roots: ['front', 'rear'], forward: 'next', render: 'list', listKind: 'sll', valuesHelp: 'Values from front to rear, e.g. 10 20 30 (10 leaves first).' },
   tree: { id: 'tree', label: 'Binary tree', fields: ['left', 'right'], aliases: {}, roots: ['root'], render: 'tree', valuesHelp: 'Level order with - for an empty spot, e.g. A B C D E - G or 50 30 70 20 40 60 80.' },
-  graph: { id: 'graph', label: 'Graph', fields: ['next'], aliases: {}, roots: [], render: 'graph', valuesHelp: 'Choose one of the lecture graphs. G is the graph, s the start vertex.' },
-  // no starting nodes: for programs that work with arrays (Lec 07, the array stack and queue of Lec 12)
+  graph: { id: 'graph', label: 'Graph', fields: ['next'], aliases: {}, roots: [], render: 'graph', valuesHelp: 'Choose one of the example graphs. G is the graph, s the start vertex.' },
+  // no starting nodes: for programs that work with arrays (array insertion and deletion, the array stack and the array queue)
   arrays: { id: 'arrays', label: 'Arrays only (no nodes)', fields: ['next'], aliases: {}, roots: [], render: 'none', valuesHelp: 'Nothing is set up: the program creates its own arrays with new Array(n).' },
 };
 

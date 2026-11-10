@@ -1,4 +1,4 @@
-// Circular singly linked list algorithms (Lecture 11).
+// Circular singly linked list algorithms, traced step by step.
 // In a non-empty circular list the last node's next holds the address of the
 // first node, so NO node's next is ever NULL.
 import { Tracer, keyCodes } from './trace.js';
@@ -52,7 +52,7 @@ export const CSLL_CODE = {
       '    last = last->next;',
       'head = temp->next;             // (1)',
       'last->next = head;             // (2)',
-      'free(temp);                     // the notes cross temp out; free it explicitly',
+      'free(temp);                     // release the removed node explicitly',
     ],
   },
   deleteEnd: {
@@ -83,10 +83,10 @@ export const CSLL_CODE = {
     ],
   },
   traverseNullBug: {
-    title: 'WRONG traverse(): waiting for NULL',
+    title: 'Incorrect traverse(): waiting for NULL',
     lines: [
       'temp = head;',
-      'while (temp != NULL) {          // never false in a circle!',
+      'while (temp != NULL) {          // never false in a circle',
       '    printf("%d ", temp->data);',
       '    temp = temp->next;',
       '}',
@@ -109,7 +109,7 @@ export function insertBeg(world, value, opts = {}) {
     setLink(t, 3, a, 'next', a, `new_node->next = head: the only node points to ITSELF (${a} → ${a}). This is a valid circle of length 1.`);
     return endScope(t, ['new_node']);
   }
-  setVar(t, 5, 'last', w.vars.head, `last = head. We need the last node because its next must be updated.`);
+  setVar(t, 5, 'last', w.vars.head, `last = head. The last node is needed because its next must be updated.`);
   while (true) {
     const ln = w.nodes[w.vars.last];
     if (!cond(t, 6, ln.next !== w.vars.head, `last->next != head? (${ln.next} vs ${w.vars.head})`, { nodes: [ln.addr] })) break;
@@ -194,7 +194,7 @@ export function deleteEnd(world) {
     setVar(t, 4, 'temp', tn.next, `temp = temp->next → ${tn.next}.`);
   }
   if (cond(t, 6, w.vars.temp === w.vars.head, 'temp == head? (only one node)')) {
-    setVar(t, 7, 'head', null, 'head = NULL: list becomes empty.');
+    setVar(t, 7, 'head', null, 'head = NULL: the list becomes empty.');
   } else {
     setLink(t, 9, w.vars.prev, 'next', w.vars.head, `(1) prev->next = head: node ${w.vars.prev} becomes the last node and points back to the first.`);
   }
@@ -215,7 +215,7 @@ export function traverse(world) {
     const n = w.nodes[w.vars.temp];
     t.output.push(n.data);
     t.count('visits');
-    t.step(3, 'output', `prints ${n.data}. (do-while: the body runs BEFORE the first test, so we do not stop immediately at head.)`, { nodes: [n.addr], visit: n.addr });
+    t.step(3, 'output', `prints ${n.data}. (do-while: the body runs BEFORE the first test, so the loop does not stop immediately at head.)`, { nodes: [n.addr], visit: n.addr });
     t.count('moves');
     setVar(t, 4, 'temp', n.next, `temp = temp->next → ${n.next}.`);
     if (++guard > 200) break;
@@ -238,7 +238,7 @@ export function traverseNullBug(world, cap) {
     }
     const n = w.nodes[w.vars.temp];
     t.output.push(n.data);
-    t.step(2, 'output', `prints ${n.data}${it >= n0 ? ' — AGAIN, we are on the second lap' : ''}.`, { nodes: [n.addr], visit: n.addr });
+    t.step(2, 'output', `prints ${n.data}${it >= n0 ? ' AGAIN: temp is on the second lap' : ''}.`, { nodes: [n.addr], visit: n.addr });
     setVar(t, 3, 'temp', n.next, `temp = temp->next → ${n.next}.`);
     it++;
   }

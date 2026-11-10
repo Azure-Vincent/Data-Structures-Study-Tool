@@ -84,7 +84,7 @@ test('sessions: every due card first (earliest first), then at most the daily nu
   assert.ok(sessionCards(d, t1).length > 0, 'no topic chosen means every topic');
 });
 
-test('practise ahead, forecast, status and "when" text', () => {
+test('review ahead of schedule, forecast, status and "when" text', () => {
   const d = blankDrills();
   const ids = DRILL_DECK.slice(0, 3).map((c) => c.id);
   d.cards[ids[0]] = applyReview(null, 'good', T0); // due tomorrow

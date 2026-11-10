@@ -1,4 +1,4 @@
-// Graphs (Lectures 13 and 14): representation, BFS and DFS traces.
+// Graphs: representation, BFS and DFS traces.
 import { Tracer, keyCodes } from './trace.js';
 
 export function createGraph({ directed = false, weighted = false } = {}) {
@@ -40,7 +40,7 @@ export function weight(g, u, v) {
   return e ? e.w : null;
 }
 
-/** Neighbour list of v. order 'alpha' (ascending labels, numeric aware) or 'insertion'. */
+/** Neighbor list of v. order 'alpha' (ascending labels, numeric aware) or 'insertion'. */
 export function neighbors(g, v, order = 'alpha') {
   const out = [];
   for (const e of g.edges) {
@@ -61,7 +61,7 @@ export function sortedVertices(g, order = 'alpha') {
   return order === 'alpha' ? [...g.vertices].sort(cmpLabel) : [...g.vertices];
 }
 
-/** Adjacency matrix in vertex order. Unweighted: 1/0. Weighted: weight, 0 on the diagonal, Infinity for "no edge" (as in Lec 13 p.6). */
+/** Adjacency matrix in vertex order. Unweighted: 1/0. Weighted: weight, 0 on the diagonal, Infinity for "no edge". */
 export function matrix(g, order = 'alpha') {
   const vs = sortedVertices(g, order);
   return {
@@ -92,7 +92,7 @@ export function fromMatrix(labels, m, { directed = false, weighted = false } = {
       const x = m[i][j];
       const present = weighted ? x !== Infinity && x !== 0 && x != null : x === 1;
       if (!present) return;
-      if (!directed && j < i) return; // undirected: use the upper triangle (incl. diagonal)
+      if (!directed && j < i) return; // undirected: use the upper triangle (including the diagonal)
       if (!hasEdge(g, u, v)) addEdge(g, u, v, weighted ? x : 1);
     }),
   );
@@ -199,7 +199,7 @@ export function pathWeight(g, path) {
   return s;
 }
 
-/** Dijkstra (supplementary) — used only to contrast with BFS on weighted graphs. */
+/** Dijkstra's algorithm (an extension topic) — used only to contrast with BFS on weighted graphs. */
 export function lightestPath(g, s, t) {
   const dist = Object.fromEntries(g.vertices.map((v) => [v, Infinity]));
   const parent = {};
@@ -226,11 +226,11 @@ export function lightestPath(g, s, t) {
 export const GRAPH_CODE = {
   bfs: {
     title: 'BFS(s)  — queue',
-    lines: ['mark s discovered;  enqueue(Q, s);', 'while (!isEmpty(Q)) {', '    v = dequeue(Q);  output(v);', '    for each neighbour u of v (in the stated order) {', '        if (u is not discovered) {', '            mark u discovered;  enqueue(Q, u);', '        }', '    }', '    mark v processed;', '}'],
+    lines: ['mark s discovered;  enqueue(Q, s);', 'while (!isEmpty(Q)) {', '    v = dequeue(Q);  output(v);', '    for each neighbor u of v (in the stated order) {', '        if (u is not discovered) {', '            mark u discovered;  enqueue(Q, u);', '        }', '    }', '    mark v processed;', '}'],
   },
   dfs: {
     title: 'DFS(v)  — recursion (call stack)',
-    lines: ['void DFS(v) {', '    mark v discovered;  output(v);', '    for each neighbour u of v (in the stated order) {', '        if (u is not discovered)', '            DFS(u);           // go deeper', '    }', '    mark v processed;     // backtrack', '}'],
+    lines: ['void DFS(v) {', '    mark v discovered;  output(v);', '    for each neighbor u of v (in the stated order) {', '        if (u is not discovered)', '            DFS(u);           // go deeper', '    }', '    mark v processed;     // backtrack', '}'],
   },
   full: {
     title: 'traverse the WHOLE graph',
@@ -260,7 +260,7 @@ function gstate(g, kind, opts) {
 }
 
 function scan(t, g, v, rep, order) {
-  // Returns neighbours in order and counts the work of finding them.
+  // Returns neighbors in order and counts the work of finding them.
   if (rep === 'matrix') {
     const vs = sortedVertices(g, order);
     t.count('neighborChecks', vs.length);
@@ -303,14 +303,14 @@ export function traceBFS(g, s, opts = {}) {
           S.discovered.push(u);
           S.frontier.push(u);
           S.treeEdges.push([v, u]);
-          t.step(5, 'discover', `Neighbour ${u} is new → discover and enqueue. Queue: [${S.frontier.join(', ')}].`, { vertex: u, edge: [v, u] });
+          t.step(5, 'discover', `Neighbor ${u} is new → discover and enqueue. Queue: [${S.frontier.join(', ')}].`, { vertex: u, edge: [v, u] });
         } else {
-          t.step(4, 'check', `Neighbour ${u} ${u === v ? 'is v itself (self-loop)' : 'was already discovered'} → skip.`, { vertex: u, edge: [v, u] });
+          t.step(4, 'check', `Neighbor ${u} ${u === v ? 'is v itself (self-loop)' : 'was already discovered'} → skip.`, { vertex: u, edge: [v, u] });
         }
       }
       S.checking = null;
       S.processed.push(v);
-      t.step(8, 'process', `All neighbours of ${v} examined → ${v} is processed.`, { vertex: v });
+      t.step(8, 'process', `All neighbors of ${v} examined → ${v} is processed.`, { vertex: v });
     }
     S.current = null;
   }
@@ -340,19 +340,19 @@ export function traceDFS(g, s, opts = {}) {
       t.count('comparisons');
       S.current = v;
       if (!S.discovered.includes(u)) {
-        t.step(4, 'recurse', `${v}: neighbour ${u} is not discovered → go deeper with DFS(${u}).`, { vertex: u, edge: [v, u] });
+        t.step(4, 'recurse', `${v}: neighbor ${u} is not discovered → go deeper with DFS(${u}).`, { vertex: u, edge: [v, u] });
         S.checking = null;
         rec(u, v);
         S.current = v;
         t.step(2, 'return', `Back in DFS(${v}) after finishing ${u} (backtracking). Stack: [${S.frontier.join(', ')}].`, { vertex: v });
       } else {
-        t.step(3, 'check', `${v}: neighbour ${u} ${u === v ? 'is v itself (self-loop)' : 'already discovered'} → skip.`, { vertex: u, edge: [v, u] });
+        t.step(3, 'check', `${v}: neighbor ${u} ${u === v ? 'is v itself (self-loop)' : 'already discovered'} → skip.`, { vertex: u, edge: [v, u] });
       }
     }
     S.checking = null;
     S.frontier.pop();
     S.processed.push(v);
-    t.step(6, 'process', `${v} has no undiscovered neighbours left → processed; pop it. Stack: [${S.frontier.join(', ')}].`, { vertex: v });
+    t.step(6, 'process', `${v} has no undiscovered neighbors left → processed; pop it. Stack: [${S.frontier.join(', ')}].`, { vertex: v });
   }
   const starts = opts.all ? sortedVertices(g, S.order) : [s];
   for (const src of starts) {
@@ -368,7 +368,7 @@ export function traceDFS(g, s, opts = {}) {
   return t.finish(`DFS output: ${S.output.join(' ')}.${msg}`, S.output);
 }
 
-// ---------------------------------------------------------------- lecture graphs
+// ---------------------------------------------------------------- example graphs
 export function exampleGraph() {
   const g = fromEdgeList(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'], [
     ['a', 'b'], ['a', 'e'], ['a', 'f'], ['b', 'c'], ['b', 'd'], ['b', 'e'], ['c', 'g'], ['d', 'g'], ['e', 'g'], ['e', 'f'], ['e', 'i'], ['f', 'i'], ['g', 'h'], ['h', 'i'],
@@ -392,7 +392,7 @@ export function weightedGraph() {
 }
 
 export function selfLoopGraph() {
-  // the 3x3 matrix on Lec 13 p.6: 1→1,1→2,1→3, 2→3, 3→2
+  // a 3x3 adjacency matrix with a self-loop: 1→1, 1→2, 1→3, 2→3, 3→2
   const g = fromMatrix(['1', '2', '3'], [[1, 1, 1], [0, 0, 1], [0, 1, 0]], { directed: true });
   g.pos = { 1: [0.2, 0.25], 2: [0.75, 0.2], 3: [0.55, 0.8] };
   return g;

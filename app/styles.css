@@ -652,12 +652,12 @@ label.inline {
   border-radius: var(--radius-s);
   margin: 10px 0;
 }
-.callout.correction {
+.callout.technical {
   border-color: color-mix(in srgb, var(--warn) 30%, transparent);
   border-left-color: var(--warn);
   background: var(--warn-soft);
 }
-.callout.supplementary {
+.callout.extension {
   border-color: color-mix(in srgb, var(--violet) 30%, transparent);
   border-left-color: var(--violet);
   background: var(--violet-soft);
@@ -3384,6 +3384,16 @@ button.linkish:hover {
   }
 }
 .assessment-table th[scope='row'] {
+  font-size: inherit;
   font-weight: 600;
+  color: var(--ink);
   text-align: left;
+  vertical-align: middle;
+}
+.assessment-table tr:last-child th {
+  border-bottom: 0;
+}
+.assessment-wrap {
+  margin: 0;
+  padding: 4px 18px 8px;
 }

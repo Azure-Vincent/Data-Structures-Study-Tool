@@ -1,5 +1,5 @@
-// "Build it in code": doubly linked lists (Lecture 10). See ./format.js.
-// The notes call the links prev (previous) and next (next).
+// implementation: doubly linked lists. See ./format.js.
+// Each node has two links: prev (the previous node) and next (the next node).
 
 const CPP_HEAD = `#include <iostream>
 #include <initializer_list>
@@ -54,7 +54,7 @@ const PY_SETUP = `# Setup: builds the starting list shown in the diagram (both d
 @setup|            last.next = n
 @setup|        last = n`;
 
-const PSEUDO_HEAD = `# Nodes have three fields: prev, data, next (prev = previous, next = next).
+const PSEUDO_HEAD = `# Nodes have three fields: prev (previous node), data and next (next node).
 # Starting list: {{start}}`;
 
 // forward and backward display
@@ -119,8 +119,8 @@ const SHOW = {
 const SHOW_NOTES = {
   f1: 'Forward traversal follows the next links, exactly like a singly linked list.',
   f4: 'temp moves to the next node.',
-  b4: 'To go backwards we first need the last node.',
-  b8: 'Backward traversal follows the LEFT links. If any prev link were wrong, the backward output would differ from the reversed forward output — a quick way to test a doubly linked list.',
+  b4: 'Backward traversal starts at the last node, so temp first walks forward to it.',
+  b8: 'Backward traversal follows the prev links. If any prev link were wrong, the backward output would differ from the reversed forward output — a quick way to test a doubly linked list.',
 };
 
 const MAIN_SHOW = { pseudo: `@m8|show_forward()\n@m9|show_backward()`, cpp: `@m8|    show_forward();\n@m9|    show_backward();`, py: `@m8|show_forward()\n@m9|show_backward()` };
@@ -409,7 +409,7 @@ ${MAIN_SHOW.py}`,
     module: 'dll',
     structure: 'dll',
     title: 'Insert at a middle position (4 links)',
-    intro: 'The new node goes between prev and temp. Four links change: the new node’s two links first (they don’t disturb the list), then the neighbours’ links to it.',
+    intro: 'The new node goes between prev and temp. Four links change: the new node’s two links first (they do not disturb the list), then the neighbors’ links to it.',
     params: { x: 40 },
     cases: [
       { label: 'pos = 2', setup: { values: [10, 20, 30] }, params: { pos: 2 } },
@@ -522,11 +522,11 @@ ${PY_SETUP}
 @m1|insert_at_position({{x}}, {{pos}})
 ${MAIN_SHOW.py}`,
     notes: {
-      i2: 'Middle positions are 2 … node_count; the check comes before allocating (no leak on a bad position).',
+      i2: 'Middle positions are 2 … node_count; the check comes before allocation (no leak on an invalid position).',
       i9: '**(1)** new node ← prev. The list itself is unchanged so far.',
       i10: '**(2)** new node → temp.',
       i11: '**(3)** prev → new node: the forward chain now goes through the new node.',
-      i12: '**(4)** temp ← new node: the backward chain too. Any order works as long as (1)/(2) are not written after the neighbours have lost track of each other — try the “Which orders are valid?” exercise.',
+      i12: '**(4)** temp ← new node: the backward chain now goes through the new node as well. Any order works as long as (1) and (2) are not written after the neighbors have lost track of each other; the “Which orders are valid?” exercise explores this.',
       ...SHOW_NOTES,
     },
     blanks: [
@@ -544,8 +544,8 @@ ${MAIN_SHOW.py}`,
     id: 'dll-delete-beg',
     module: 'dll',
     structure: 'dll',
-    title: 'Delete at the beginning (with the one-node correction)',
-    intro: 'temp = head; head = temp.next; then the new first node’s prev becomes NULL — but only if there IS a new first node. The notes write `head->prev = NULL` unconditionally, which follows NULL when the only node is deleted.',
+    title: 'Delete at the beginning (including the one-node case)',
+    intro: 'temp = head; head = temp.next; then the new first node’s prev becomes NULL, but only if there IS a new first node. An incorrect version that writes `head->prev = NULL` unconditionally dereferences NULL when the only node is deleted.',
     params: {},
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -560,7 +560,7 @@ ${MAIN_SHOW.py}`,
     end if
 @x4|    temp = head                 # (1)
 @x5|    head = temp.next           # (2)
-@x6|    if head != NULL then        # correction: the list may now be empty
+@x6|    if head != NULL then        # the list may now be empty
 @x7|        head.prev = NULL        # (3)
     end if
 @x8|    delete temp                  # (4)
@@ -579,7 +579,7 @@ ${MAIN_SHOW.pseudo}`,
     }
 @x4|    Node* temp = head;          // (1)
 @x5|    head = temp->next;         // (2)
-@x6|    if (head != nullptr)        // correction: the list may now be empty
+@x6|    if (head != nullptr)        // the list may now be empty
 @x7|        head->prev = nullptr;   // (3)
 @x8|    delete temp;                 // (4)
 @fx_end|}
@@ -603,7 +603,7 @@ ${MAIN_SHOW.cpp}
 @x3|        return
 @x4|    temp = head                 # (1)
 @x5|    head = temp.next           # (2)
-@x6|    if head is not None:        # correction: the list may now be empty
+@x6|    if head is not None:        # the list may now be empty
 @x7|        head.prev = None        # (3)
 @x8|    del temp                     # (4)
 
@@ -616,7 +616,7 @@ ${PY_SETUP}
 ${MAIN_SHOW.py}`,
     notes: {
       x5: 'head moves to the second node (NULL if there was only one).',
-      x6: '**Correction.** Only a non-empty list has a new first node whose prev link must be cleared.',
+      x6: '**One-node case.** Only a non-empty list has a new first node whose prev link must be cleared.',
       x7: 'The new first node no longer has a node before it.',
       x8: 'Free the removed node (Python: the last reference disappears and the object is reclaimed).',
       ...SHOW_NOTES,
@@ -626,8 +626,8 @@ ${MAIN_SHOW.py}`,
     id: 'dll-delete-end',
     module: 'dll',
     structure: 'dll',
-    title: 'Delete at the end (with the one-node correction)',
-    intro: 'No prev pointer is needed: the node before the last one is `temp.prev`. The correction: with one node, `temp.prev` is NULL, so head must become NULL instead.',
+    title: 'Delete at the end (including the one-node case)',
+    intro: 'No separate prev pointer is needed: the node before the last one is `temp.prev`. With one node, `temp.prev` is NULL, so head must become NULL instead.',
     params: {},
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -644,7 +644,7 @@ ${MAIN_SHOW.py}`,
 @x5|    while temp.next != NULL do
 @x6|        temp = temp.next
     end while
-@x7|    if temp.prev == NULL then    # correction: the only node
+@x7|    if temp.prev == NULL then    # one-node list: temp is the only node
 @x8|        head = NULL
     else
 @x9|        temp.prev.next = NULL   # the previous node becomes the last
@@ -666,7 +666,7 @@ ${MAIN_SHOW.pseudo}`,
 @x4|    Node* temp = head;
 @x5|    while (temp->next != nullptr)
 @x6|        temp = temp->next;
-@x7|    if (temp->prev == nullptr)   // correction: the only node
+@x7|    if (temp->prev == nullptr)   // one-node list: temp is the only node
 @x8|        head = nullptr;
     else
 @x9|        temp->prev->next = nullptr;   // the previous node becomes the last
@@ -693,7 +693,7 @@ ${MAIN_SHOW.cpp}
 @x4|    temp = head
 @x5|    while temp.next is not None:
 @x6|        temp = temp.next
-@x7|    if temp.prev is None:        # correction: the only node
+@x7|    if temp.prev is None:        # one-node list: temp is the only node
 @x8|        head = None
     else:
 @x9|        temp.prev.next = None   # the previous node becomes the last
@@ -707,7 +707,7 @@ ${PY_SETUP}
 @m1|delete_at_end()
 ${MAIN_SHOW.py}`,
     notes: {
-      x7: '**Correction.** The notes write `temp->prev->next = NULL` directly; with one node temp.prev is NULL and that line follows NULL (a crash in C++, an AttributeError in Python, a runtime error in the Lab).',
+      x7: '**One-node case.** An incorrect version writes `temp->prev->next = NULL` without this check; with one node temp.prev is NULL and that line dereferences NULL (a crash in C++, an AttributeError in Python, a runtime error in the Lab).',
       x9: '`temp.prev` is the node before the last one: two hops in one expression — first to the previous node, then its next field.',
       ...SHOW_NOTES,
     },
@@ -717,7 +717,7 @@ ${MAIN_SHOW.py}`,
     module: 'dll',
     structure: 'dll',
     title: 'Delete at a middle position',
-    intro: 'For a middle node both neighbours exist, so two links change: the next node’s prev skips back over temp, and the previous node’s next skips forward over it.',
+    intro: 'For a middle node both neighbors exist, so two links change: the next node’s prev skips back over temp, and the previous node’s next skips forward over it.',
     params: {},
     cases: [
       { label: 'pos = 2', setup: { values: [10, 20, 30, 40] }, params: { pos: 2 } },

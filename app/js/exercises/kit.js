@@ -183,7 +183,7 @@ export function orderCode(items, cases, reference, { explain = '' } = {}) {
         }
       }
       const same = ids.join() === reference.join();
-      return { correct: true, message: `${same ? '' : 'Your order differs from the lecture order but it is equally valid — the simulator verified it on every test list. '}${explain}`.trim() };
+      return { correct: true, message: `${same ? '' : 'Your order differs from the reference order but it is equally valid: the simulator verified it on every test list. '}${explain}`.trim() };
     },
     solutionText: `${reference.map((id) => items.find((i) => i.id === id).label || items.find((i) => i.id === id).code).join('\n')}\n${explain}`,
   };
@@ -324,7 +324,7 @@ export function tagFor(code) {
       'broken-circle': 'circle-not-closed',
       'bad-cycle': 'circle-not-closed',
       'last-var': 'tail-rear',
-      garbage: 'uninitialised',
+      garbage: 'uninitialized',
     }[code] || 'wrong-result'
   );
 }

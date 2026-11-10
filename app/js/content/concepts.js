@@ -46,7 +46,7 @@ export const CONCEPTS = [
   { id: 'l12.linked-queue', module: 'queue', name: 'Linked queue: front and rear pointers' },
   { id: 'l13.tree-terms', module: 'tree', name: 'Tree terminology' },
   { id: 'l13.tree-measures', module: 'tree', name: 'Levels, height, depth and node counts' },
-  { id: 'l13.tree-classify', module: 'tree', name: 'Strictly binary, full, perfect and complete trees' },
+  { id: 'l13.tree-classify', module: 'tree', name: 'Full, perfect and complete binary trees' },
   { id: 'l13.tree-repr', module: 'tree', name: 'Array and linked tree representation' },
   { id: 'l13.graph-repr', module: 'graph', name: 'Adjacency matrix and adjacency list' },
   { id: 'l14.tree-traversal', module: 'tree', name: 'Preorder, inorder and postorder traversal' },
@@ -60,6 +60,7 @@ export const CONCEPT_BY_ID = Object.fromEntries(CONCEPTS.map((c) => [c.id, c]));
 export const MISTAKE_LABELS = {
   'lost-access': 'Overwrote the only pointer to the rest of the list',
   'undefined-var': 'Used a variable before assigning it a value',
+  uninitialized: 'Followed a pointer field that was never initialized',
   runtime: 'Runtime error in pseudocode',
   'free-before-unlink': 'Deallocated a node that was still linked',
   dangling: 'Left a dangling pointer to deallocated memory',

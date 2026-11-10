@@ -1,4 +1,4 @@
-// Lecture 08 — Singly linked lists part 1: nodes, head, temp, creation, insertion.
+// Singly linked lists, part 1: nodes, head, temp, creation, insertion.
 import { opts, mcq, multi, numeric, sequenceText, orderCode, fillCode, rewire, reflect, keep } from './kit.js';
 import { values, randList, listText, rewireSpec, withNewnode, withPointers, addrs, vals, guide, emptyWorld, linkChoices } from './helpers.js';
 import * as SLL from '../core/sll.js';
@@ -33,7 +33,7 @@ export const l08 = [
       const list = linkChoices(w, after).map((o) => ({ ...o, why: o.correct ? 'this pointer gets a new value' : 'this pointer keeps its value', tag: 'which-links' }));
       const what = op === 'ins' ? `insert ${v} ${kind === 'beg' ? 'at the beginning' : kind === 'end' ? 'at the end' : `at position ${pos} (after ${vs[pos - 2]})`}` : `delete ${kind === 'beg' ? 'the first node' : kind === 'end' ? 'the last node' : `node ${pos} (${vs[pos - 1]})`}`;
       return {
-        prompt: `You will **${what}**. Before doing it, select EVERY pointer whose value changes (ignore temporary variables like temp/prev).`,
+        prompt: `You will **${what}**. Before doing it, select EVERY pointer whose value changes (ignore temporary variables such as temp and prev).`,
         visual: { type: 'list', world: w },
         edge: vs.length === 1,
         ...multi(keep(list), { explain: `Before: ${listText(vs)}. After: ${listText(vals(after))}. ${op === 'ins' ? 'Insertion touches only the links around the gap — the nodes themselves never move.' : 'Deletion only redirects the link that pointed INTO the removed node (and head/NULL in the end cases); the removed node’s own fields do not matter once it is freed.'}` }),
@@ -186,7 +186,7 @@ export const l08 = [
         prompt: `Put the statements in a valid order to **${desc}**. Use the arrows or drag. The simulator runs your order on test lists.`,
         visual: { type: 'list', world: cases[0].world },
         ...orderCode(shuffled, cases, items.map((i) => i.id), {
-          explain: kind === 'mid' ? 'Because temp saved the address of the rest, the two link assignments can be done in either order (Lec 08 p.7).' : kind === 'mid2' ? 'Without temp, new_node->next must copy prev->next BEFORE prev->next is overwritten; otherwise the rest of the list is lost.' : kind === 'beg' ? 'new_node->next = head must come before head = new_node; the reverse order makes the new node point to itself and loses the old list.' : 'The walk must finish before the last node is linked to the new node.',
+          explain: kind === 'mid' ? 'Because temp saved the address of the rest of the list, the two link assignments can be done in either order.' : kind === 'mid2' ? 'Without temp, new_node->next must copy prev->next BEFORE prev->next is overwritten; otherwise the rest of the list is lost.' : kind === 'beg' ? 'new_node->next = head must come before head = new_node; the reverse order makes the new node point to itself and loses the old list.' : 'The walk must finish before the last node is linked to the new node.',
         }),
         hints: ['Which assignment would destroy the only copy of an address if done too early?', { text: 'Find the arrow that is overwritten.' }, kind === 'beg' ? 'Link new_node first, move head last.' : kind === 'end' ? 'Allocate, walk to the end, then link.' : 'create_node() must come first, since the other lines use new_node.'],
         params: { kind: kind.startsWith('mid') ? 'mid' : kind },
@@ -225,7 +225,7 @@ export const l08 = [
         return {
           prompt: `Complete \`insert_at_beginning\` for a non-empty list (new value ${val}).`,
           visual: { type: 'list', world: cases[1].world },
-          ...fillCode('new_node = create_node();\n____;\nhead = new_node;', cases, 'new_node->next = head', { explain: 'The new node must remember the old first node before head is moved (Lec 08 p.4, step c-1).', placeholder: 'one assignment' }),
+          ...fillCode('new_node = create_node();\n____;\nhead = new_node;', cases, 'new_node->next = head', { explain: 'The new node must store the address of the old first node before head is moved.', placeholder: 'one assignment' }),
           hints: ['After the last line, head will no longer remember the old first node.', { text: 'The new node needs an arrow to the current first node.' }, 'Assign the new node’s next field.'],
           params: { kind: 'beg' },
         };

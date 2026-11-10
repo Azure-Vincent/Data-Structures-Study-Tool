@@ -23,7 +23,7 @@ LAB = {
     'output': '.lab-panels > :nth-child(2)', 'problems': '.lab-problems', 'history': '.lab-history',
 }
 MEASURE = """(sel) => { const o = {}; for (const [k, s] of Object.entries(sel)) { const e = document.querySelector(s); if (!e) continue; const r = e.getBoundingClientRect(); o[k] = [Math.round(r.width), Math.round(r.height), Math.round(r.top + scrollY)]; } return o; }"""
-LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/lesson/' + l.lecture + '/' + i; } return null; })"
+LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/module/' + l.id + '/' + i; } return null; })"
 
 results = []
 def check(name, ok, detail=''):

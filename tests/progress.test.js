@@ -5,9 +5,10 @@ import { buildSession, followUpItem, nextActivity, conceptTemplates } from '../a
 import { CONCEPTS } from '../app/js/content/concepts.js';
 import { generateExercise, TEMPLATE_BY_ID } from '../app/js/exercises/registry.js';
 import { LESSONS, LESSON_BY_ID } from '../app/js/content/lessons.js';
-import { migrateProgress, OLD_LESSON_KEYS, V2_LESSON_KEYS, REMOVED_TEMPLATES, REMOVED_CONCEPTS, CONTENT_VERSION } from '../app/js/progress/migrate.js';
+import { migrateProgress, OLD_LESSON_KEYS, V2_LESSON_KEYS, KEY_RENAMES, REMOVED_TEMPLATES, REMOVED_CONCEPTS, CONTENT_VERSION } from '../app/js/progress/migrate.js';
 
 const ALL_KEYS = new Set(LESSONS.flatMap((l) => l.sections.map((s) => s.key)));
+const renamed = (k) => KEY_RENAMES[k] || k;
 const moduleOfKey = (k) => LESSONS.find((l) => l.sections.some((s) => s.key === k))?.id;
 
 function clock(start = 1_700_000_000_000) {
@@ -59,7 +60,7 @@ test('mistakes, recurring tags, due and weak concepts', () => {
   assert.deepEqual(s.recurringMistakes()[0], { tag: 'lost-access', count: 2 });
   assert.ok(s.dueConcepts().includes('l08.insert-mid'));
   assert.ok(s.weakConcepts().includes('l08.insert-beg'));
-  s.recordAttempt(attempt({ concept: 'l07.tradeoffs', templateId: 'l07-choose', type: 'choose', lecture: 7 }));
+  s.recordAttempt(attempt({ concept: 'l07.tradeoffs', templateId: 'l07-choose', type: 'choose', module: 'memory' }));
   assert.ok(!s.dueConcepts().includes('l07.tradeoffs'));
   now.advance(3 * 24 * 3600 * 1000);
   assert.ok(s.dueConcepts().includes('l07.tradeoffs'));
@@ -105,7 +106,7 @@ test('sessions: size, regeneration from seeds, weak concepts first, follow-ups',
   // serialisable
   assert.deepEqual(JSON.parse(JSON.stringify(sess)), sess);
   // weak concept shows up in a review session
-  s.recordAttempt(attempt({ concept: 'l12.lifo-fifo', templateId: 'l12-choose', type: 'choose', lecture: 12, correct: false, tag: 'lifo-fifo' }));
+  s.recordAttempt(attempt({ concept: 'l12.lifo-fifo', templateId: 'l12-choose', type: 'choose', module: 'stack', correct: false, tag: 'lifo-fifo' }));
   const rev = buildSession(s, { mode: 'review', size: 4, seed: 7 });
   assert.ok(rev.items.some((x) => x.concept === 'l12.lifo-fifo'));
   const f = followUpItem(sess.items[0]);
@@ -173,9 +174,11 @@ test('every lesson section has a unique stable key, and retained version-1 keys 
     assert.ok(keys.every((k) => typeof k === 'string' && k.length > 2), `${l.id}: missing keys`);
   }
   const removed = ['r:cost-finding-the-position-vs-changing-links', 'e:count-the-pointer-moves', 'r:head-only-vs-head-tail', 's:deleting-the-tail-even-though-tail-is-known', 'e:count-the-work', 'r:cost-of-the-circle', 'e:count-the-moves', 'e:which-end-is-cheaper', 'r:cost-of-traversals', 'e:list-vs-matrix', 'p:write-your-own-pseudocode-insert-at-the-end', 'p:write-your-own-pseudocode-delete-the-node-at-pos', 'p:write-your-own-pseudocode-delete-node-t-from-a-d'];
-  for (const [id, old] of Object.entries(OLD_LESSON_KEYS)) for (const k of old) if (!removed.includes(k)) assert.ok(ALL_KEYS.has(k), `${id}: retained section ${k} lost its key`);
+  for (const [id, old] of Object.entries(OLD_LESSON_KEYS)) for (const k of old) if (!removed.includes(k)) assert.ok(ALL_KEYS.has(renamed(k)), `${id}: retained section ${k} lost its key`);
   // every version-2 section still exists in one of the modules
-  for (const [id, keys] of Object.entries(V2_LESSON_KEYS)) for (const k of keys) assert.ok(ALL_KEYS.has(k), `${id}: section ${k} lost its key`);
+  for (const [id, keys] of Object.entries(V2_LESSON_KEYS)) for (const k of keys) assert.ok(ALL_KEYS.has(renamed(k)), `${id}: section ${k} lost its key`);
+  // renamed keys are new names, never reused
+  for (const [a, b] of Object.entries(KEY_RENAMES)) assert.ok(!ALL_KEYS.has(a) && ALL_KEYS.has(b), `${a} → ${b}`);
 });
 
 test('version-1 progress migrates: lesson steps by key, time-complexity data removed, the rest kept', () => {
@@ -186,9 +189,9 @@ test('version-1 progress migrates: lesson steps by key, time-complexity data rem
   assert.equal(d.contentVersion, CONTENT_VERSION);
   // lessons: indices became keys, removed sections are dropped, and the steps moved to their modules
   const k8 = OLD_LESSON_KEYS.l08;
-  assert.deepEqual(d.lessons.sll.done, [0, 1, 2, 17, 18, 20].map((i) => k8[i]).filter((k) => ALL_KEYS.has(k)));
+  assert.deepEqual(d.lessons.sll.done, [0, 1, 2, 17, 18, 20].map((i) => renamed(k8[i])).filter((k) => ALL_KEYS.has(k)));
   assert.ok(!d.lessons.sll.done.includes(k8[17]) && !d.lessons.sll.done.includes(k8[18]), 'the two cost sections are gone');
-  assert.equal(d.lessons.sll.at, k8[19], 'old step 18 (a cost exercise) is gone, so it reopens at the next retained step');
+  assert.equal(d.lessons.sll.at, renamed(k8[19]), 'old step 18 (a cost exercise) is gone, so it reopens at the next retained step');
   assert.equal(d.lessons.stack.done.length + d.lessons.queue.done.length, 18, 'l12: the cost exercise was dropped; the rest is split between stacks and queues');
   assert.ok(d.lessons.stack.done.every((k) => moduleOfKey(k) === 'stack') && d.lessons.queue.done.every((k) => moduleOfKey(k) === 'queue'));
   assert.equal(d.lessons.l08, undefined);
@@ -262,8 +265,8 @@ test('version-2 progress migrates to the learning modules', () => {
   // Module 1 holds exactly the old first lesson, so it stays completed
   assert.equal(d.lessons.memory.completed, true);
   // three old lessons form the singly linked list module; the earliest unfinished one decides where it reopens
-  assert.deepEqual(d.lessons.sll.done, [...V2_LESSON_KEYS.l08.slice(0, 3), V2_LESSON_KEYS.l11[0]]);
-  assert.equal(d.lessons.sll.at, V2_LESSON_KEYS.l08[3]);
+  assert.deepEqual(d.lessons.sll.done, [...V2_LESSON_KEYS.l08.slice(0, 3), V2_LESSON_KEYS.l11[0]].map(renamed));
+  assert.equal(d.lessons.sll.at, renamed(V2_LESSON_KEYS.l08[3]));
   assert.equal(d.lessons.sll.completed, false);
   // the stack and queue lesson is split
   assert.ok(d.lessons.stack.done.length > 0 && d.lessons.queue.done.length > 0);
@@ -281,6 +284,6 @@ test('version-2 progress migrates to the learning modules', () => {
   // the store loads it, and migrating again changes nothing
   const storage = memoryStorage();
   storage.setItem(STORAGE_KEY, JSON.stringify(v2));
-  assert.equal(new ProgressStore(storage, { now: clock() }).data.lessons.sll.at, V2_LESSON_KEYS.l08[3]);
+  assert.equal(new ProgressStore(storage, { now: clock() }).data.lessons.sll.at, renamed(V2_LESSON_KEYS.l08[3]));
   assert.deepEqual(migrateProgress(d), d);
 });

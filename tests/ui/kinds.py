@@ -58,7 +58,7 @@ with sync_playwright() as p:
               for j,v in enumerate(row):
                 if v==1: task.locator('table.matrix tr').nth(i+1).locator('button').nth(j).click()
           elif k=='adjlist':
-            for lab,v in a.items(): task.locator(f'input[aria-label="neighbours of {lab}"]').fill(v)
+            for lab,v in a.items(): task.locator(f'input[aria-label="neighbors of {lab}"]').fill(v)
           elif k=='graphdraw':
             for u,v in a:
               task.locator(f'.diagram-box g[data-node="{u}"]').last.click(); task.locator(f'.diagram-box g[data-node="{v}"]').last.click()

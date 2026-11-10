@@ -1,4 +1,4 @@
-// Turns a small, serialisable description ("spec") into a full trace.
+// Turns a small, serializable description ("spec") into a full trace.
 // Used by lessons, exercise solutions and the exploration workspace.
 import * as PW from '../core/pointerWorld.js';
 import * as SLL from '../core/sll.js';
@@ -10,8 +10,8 @@ import * as G from '../core/graph.js';
 import { runLines } from '../core/interp.js';
 
 export const OPS = {
-  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndNotes: (w) => SLL.deleteEnd(w, { notesVersion: true }), deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
-  dll: { insertBeg: DLL.insertBeg, insertEnd: DLL.insertEnd, insertMid: DLL.insertMid, deleteBeg: DLL.deleteBeg, deleteBegNotes: (w) => DLL.deleteBeg(w, { notesVersion: true }), deleteEnd: DLL.deleteEnd, deleteMid: DLL.deleteMid, traverseFwd: DLL.traverseFwd, traverseBwd: DLL.traverseBwd, count_nodes: DLL.count_nodes },
+  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndIncorrect: (w) => SLL.deleteEnd(w, { incorrectVersion: true }), deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
+  dll: { insertBeg: DLL.insertBeg, insertEnd: DLL.insertEnd, insertMid: DLL.insertMid, deleteBeg: DLL.deleteBeg, deleteBegIncorrect: (w) => DLL.deleteBeg(w, { incorrectVersion: true }), deleteEnd: DLL.deleteEnd, deleteMid: DLL.deleteMid, traverseFwd: DLL.traverseFwd, traverseBwd: DLL.traverseBwd, count_nodes: DLL.count_nodes },
   csll: { insertBeg: CSLL.insertBeg, insertEnd: CSLL.insertEnd, deleteBeg: CSLL.deleteBeg, deleteEnd: CSLL.deleteEnd, traverse: CSLL.traverse, traverseNullBug: CSLL.traverseNullBug },
 };
 
@@ -39,7 +39,7 @@ export function worldFromSetup(struct, setup = {}) {
 function seqStart(struct, setup) {
   switch (struct) {
     case 'astack':
-      return SQ.arrayStack(setup.MAX || 5, setup.conv || 'notes');
+      return SQ.arrayStack(setup.MAX || 5, setup.conv || 'count');
     case 'aqueue':
       return SQ.arrayQueue(setup.MAX || 5, setup.mode || 'linear');
     case 'lstack-head':

@@ -1,10 +1,10 @@
-// Cross-language check of the "Build it in code" programs.
+// Cross-language check of the complete programs.
 //
 // For every program and every case: run the pseudocode in the Pseudocode Lab
 // interpreter, compile and run the C++ (g++ / clang++ / c++), run the Python 3
 // version, and require the three outputs to be identical line by line.
 // Lesson code sections marked `check: true` are complete programs too: their
-// C (notes), C++, Python and pseudocode versions must print the same.
+// C, C++, Python and pseudocode versions must print the same.
 // Works on Windows, macOS and Linux; a missing compiler or Python is reported
 // and makes the run fail unless --allow-missing is given.
 //

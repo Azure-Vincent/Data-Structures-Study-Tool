@@ -1,4 +1,4 @@
-// Lecture 11 — Circular singly linked lists.
+// Circular singly linked lists.
 import { opts, mcq, numeric, sequenceClick, orderCode, fillCode, rewire } from './kit.js';
 import { values, randList, listText, rewireSpec, vals, addrs, guide, emptyWorld } from './helpers.js';
 import * as CSLL from '../core/csll.js';
@@ -26,10 +26,10 @@ export const l11 = [
         { text: 'It crashes immediately (NULL dereference)', correct: false, why: 'The loop tests temp before using it.', tag: 'circular-null' },
       ]);
       return {
-        prompt: `This loop works for ordinary lists (Lec 09 p.5). What happens on the circular list shown${n === 0 ? ' (empty: head = NULL)' : ''}?`,
+        prompt: `This loop works for non-circular lists. What happens on the circular list shown${n === 0 ? ' (empty: head = NULL)' : ''}?`,
         visual: { type: 'list', world: w, code: ['temp = head;', 'while (temp != NULL) {', '    print(temp->data);', '    temp = temp->next;', '}'] },
         edge: n <= 1,
-        ...mcq(o, { explain: 'Use the do-while from Lec 11 p.4 and stop when temp comes back to head.' }),
+        ...mcq(o, { explain: 'Use a do-while loop instead and stop when temp comes back to head.' }),
         hints: ['Look at the last node’s next field.', { text: 'Is any next field NULL in this circle?' }, 'If no field is NULL, temp can never become NULL.'],
         solutionTrace: n > 0 ? { struct: 'csll', op: 'traverseNullBug', world: w, args: [] } : null,
       };
@@ -118,9 +118,9 @@ export const l11 = [
       let sh = rng.shuffle(items);
       if (sh.map((i) => i.id).join() === 'a,b,c,d,e') sh = [...sh].reverse();
       return {
-        prompt: 'Arrange the statements to delete the FIRST node of a circular list (at least 2 nodes) and free it (Lec 11 p.3).',
+        prompt: 'Arrange the statements to delete the FIRST node of a circular list (at least 2 nodes) and free it.',
         visual: { type: 'list', world: cases[0].world },
-        ...orderCode(sh, cases, ['a', 'b', 'c', 'd', 'e'], { explain: 'The walk compares with head, so it must run BEFORE head moves; free(temp) comes last. The notes cross temp out — free(temp) makes the release explicit.' }),
+        ...orderCode(sh, cases, ['a', 'b', 'c', 'd', 'e'], { explain: 'The walk compares with head, so it must run BEFORE head moves; free(temp) comes last, because unlinking a node does not release its memory.' }),
         hints: ['The loop condition mentions head — what if head has already moved?', { text: 'last must end on the node before the old first node.' }, 'Find last first, then move head, then close the circle, then free.'],
       };
     },

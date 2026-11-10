@@ -85,7 +85,7 @@ test('code sections: the pseudocode is valid Pseudocode Lab syntax, and complete
   }
 });
 
-test('every "Build it in code" program is taught in a lesson, and every walkthrough names a program', async () => {
+test('every complete program is taught in its module, and every walkthrough names a program', async () => {
   const { IMPLEMENTATIONS, IMPL_BY_ID } = await import('../app/js/content/impl/index.js');
   const used = new Set();
   for (const l of LESSONS) for (const s of l.sections) {
@@ -108,7 +108,7 @@ test('every module ends its new material with the predict → complete → write
       if (s.type !== 'exercise' || !/-(predict-output|complete-code|write-code)$/.test(s.templateId)) continue;
       for (const seed of [1, 2, 3, 4, 5]) {
         const ex = generateExercise(s.templateId, seed, { guidance: s.guidance, params: s.params || {} });
-        assert.equal(CONCEPT_BY_ID[ex.concept].module, l.id, `${l.id} "${s.title}" (seed ${seed}) practises ${ex.concept}`);
+        assert.equal(CONCEPT_BY_ID[ex.concept].module, l.id, `${l.id} "${s.title}" (seed ${seed}) practices ${ex.concept}`);
       }
     }
   }
