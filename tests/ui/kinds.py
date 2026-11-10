@@ -42,7 +42,7 @@ with sync_playwright() as p:
           elif k=='rewire':
             sol = pg.evaluate("import('./js/exercises/solver.js').then(m=>m.solveRewire(window.__dslabExercise).actions)")
             for act in sol:
-              if act['type']=='alloc': task.locator('button:has-text("getnode")').click()
+              if act['type']=='alloc': task.locator('button:has-text("create_node")').click()
               elif act['type']=='free':
                 sel=task.locator('select[aria-label="pointer to free"]')
                 opts=sel.locator('option').all()
@@ -58,7 +58,7 @@ with sync_playwright() as p:
               for j,v in enumerate(row):
                 if v==1: task.locator('table.matrix tr').nth(i+1).locator('button').nth(j).click()
           elif k=='adjlist':
-            for lab,v in a.items(): task.locator(f'input[aria-label="neighbours of {lab}"]').fill(v)
+            for lab,v in a.items(): task.locator(f'input[aria-label="neighbors of {lab}"]').fill(v)
           elif k=='graphdraw':
             for u,v in a:
               task.locator(f'.diagram-box g[data-node="{u}"]').last.click(); task.locator(f'.diagram-box g[data-node="{v}"]').last.click()

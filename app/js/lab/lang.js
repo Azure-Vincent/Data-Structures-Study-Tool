@@ -2,8 +2,10 @@
 // Pure functions, no DOM. The grammar is documented in docs/PSEUDOCODE.md and
 // in the in-app syntax reference (lab/reference.js).
 //
-// Statements end at a newline (or ';'). Blocks are closed with `end`
-// (optionally `end if`, `end while`, `end for`, `end function`).
+// Statements end at a newline (or ';'). Blocks are closed with `end if`,
+// `end while`, `end for` or `end function` (the convention used throughout the
+// app; a bare `end` is also accepted). A loop that tests at the bottom is written
+// `do … while condition` (`repeat … until condition` is also accepted).
 
 export class LabError extends Error {
   /**
@@ -87,7 +89,7 @@ export function tokenize(src) {
       }
       const op = OPS.find((o) => text.startsWith(o, i));
       if (!op) throw new LabError('syntax', `Unexpected character “${ch}”.`, { line, col, hint: 'Only letters, digits, quotes and the operators listed in the syntax reference are allowed.' });
-      if (op === '{' || op === '}') throw new LabError('syntax', `Braces “${op}” are not used in this pseudocode.`, { line, col, hint: 'Open a block with then/do at the end of the line and close it with end on its own line.' });
+      if (op === '{' || op === '}') throw new LabError('syntax', `Braces “${op}” are not used in this pseudocode.`, { line, col, hint: 'Open a block with then or do at the end of the line, and close it on its own line with end if, end while, end for or end function.' });
       if (op === ';') toks.push({ t: 'nl', v: ';', line, col });
       else toks.push({ t: 'op', v: op === '<>' ? '!=' : op === '&&' ? 'and' : op === '||' ? 'or' : op, line, col, raw: op });
       i += op.length;
@@ -172,14 +174,14 @@ class Parser {
     while (true) {
       const tok = this.peek();
       if (tok.t === 'eof') {
-        this.err(`The ${BLOCK_NAMES[open.kind]} on line ${open.line} is never closed.`, tok, open.kind === 'repeat' ? 'Finish it with a line “until condition”.' : open.kind === 'do' ? 'Finish it with a line “while condition”.' : 'Add a line with just “end” after its body.');
+        this.err(`The ${BLOCK_NAMES[open.kind]} on line ${open.line} is never closed.`, tok, open.kind === 'repeat' ? 'Finish it with a line “until condition”.' : open.kind === 'do' ? 'Finish it with a line “while condition”.' : `Close it with a line “end ${BLOCK_NAMES[open.kind]}” after its body.`);
       }
       if (tok.t === 'kw' && terminators.includes(tok.v)) return body;
       if (tok.t === 'kw' && ['endif', 'endwhile', 'endfor', 'endfunction'].includes(tok.v) && terminators.includes('end')) return body;
       // a `while cond` line without `do` closes a do-block
       if (open.kind === 'do' && tok.t === 'kw' && tok.v === 'while' && !this.lineEndsWith('do')) return body;
       if (tok.t === 'kw' && ['end', 'endif', 'endwhile', 'endfor', 'endfunction', 'else', 'elif', 'elseif', 'until'].includes(tok.v)) {
-        this.err(`“${tok.raw || tok.v}” doesn’t match the open ${BLOCK_NAMES[open.kind]} from line ${open.line}.`, tok, open.kind === 'repeat' ? 'A repeat block ends with “until condition”.' : open.kind === 'do' ? 'A do block ends with “while condition”.' : 'Check that every if/while/for has exactly one end.');
+        this.err(`“${tok.raw || tok.v}” doesn’t match the open ${BLOCK_NAMES[open.kind]} from line ${open.line}.`, tok, open.kind === 'repeat' ? 'A repeat block ends with “until condition”.' : open.kind === 'do' ? 'A do block ends with “while condition”.' : 'Check that every if, while, for and function is closed exactly once (end if, end while, end for, end function).');
       }
       if (tok.t === 'kw' && tok.v === 'function') this.err('Functions must be defined at the top level, not inside another block.', tok);
       body.push(this.statement());
@@ -201,7 +203,7 @@ class Parser {
     let word = null;
     if (tok.v !== 'end') word = tok.v.slice(3);
     else if ((this.is('kw') || this.is('name')) && ['if', 'while', 'for', 'function'].includes(String(this.peek().v).toLowerCase())) word = String(this.next().v).toLowerCase();
-    if (word && word !== want) this.err(`This “end ${word}” closes the ${want} that started on line ${open.line}.`, tok, `Write “end ${want}” (or just “end”).`);
+    if (word && word !== want) this.err(`This “end ${word}” closes the ${want} that started on line ${open.line}.`, tok, `Write “end ${want}”.`);
     this.endOfStatement('end');
     return tok.line;
   }
@@ -371,7 +373,7 @@ class Parser {
     const arms = [];
     let cond = this.expr();
     this.needWord('then', 'if', 'if cur == NULL then');
-    if (!this.is('nl') && !this.is('eof')) this.err('Put the body of the if on the following lines and close it with end.', this.peek());
+    if (!this.is('nl') && !this.is('eof')) this.err('Put the body of the if on the following lines and close it with end if.', this.peek());
     let body = this.block(open, ['else', 'elif', 'elseif', 'end']);
     arms.push({ cond, body, line: kw.line });
     let elseBody = null;
@@ -700,10 +702,11 @@ export function exprText(e) {
 
 // ---------------------------------------------------------------- editor helpers
 
-const OPENERS = /^(if\b.*\bthen|while\b.*\bdo|for\b.*\bdo|function\b|repeat|do)\s*$/i;
+// a line that opens a block (a function header opens one whatever its parameters)
+const OPENERS = /^(if\b.*\bthen|while\b.*\bdo|for\b.*\bdo|function\b.*|repeat|do)\s*$/i;
 
-/** Re-indent the whole program by block structure (2 spaces per level). */
-export function reindent(src, unit = '  ') {
+/** Re-indent the whole program by block structure (4 spaces per level by default). */
+export function reindent(src, unit = '    ') {
   const out = [];
   const stack = [];
   for (const raw of String(src).replace(/\r\n?/g, '\n').split('\n')) {
@@ -722,8 +725,8 @@ export function reindent(src, unit = '  ') {
   return out.join('\n');
 }
 
-/** Indentation to use after pressing Enter at the end of `line`. */
-export function nextIndent(line, unit = '  ') {
+/** Indentation to use after pressing Enter at the end of `line` (one more 4-space level after a block opener). */
+export function nextIndent(line, unit = '    ') {
   const cur = /^\s*/.exec(line)[0];
   const code = line.replace(/(#|\/\/).*$/, '').trim();
   if (OPENERS.test(code) || /^(else|elif\b.*then|elseif\b.*then|else\s+if\b.*then)$/i.test(code)) return cur + unit;

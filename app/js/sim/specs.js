@@ -1,4 +1,4 @@
-// Turns a small, serialisable description ("spec") into a full trace.
+// Turns a small, serializable description ("spec") into a full trace.
 // Used by lessons, exercise solutions and the exploration workspace.
 import * as PW from '../core/pointerWorld.js';
 import * as SLL from '../core/sll.js';
@@ -10,16 +10,16 @@ import * as G from '../core/graph.js';
 import { runLines } from '../core/interp.js';
 
 export const OPS = {
-  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndNotes: (w) => SLL.deleteEnd(w, { notesVersion: true }), deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
-  dll: { insertBeg: DLL.insertBeg, insertEnd: DLL.insertEnd, insertMid: DLL.insertMid, deleteBeg: DLL.deleteBeg, deleteBegNotes: (w) => DLL.deleteBeg(w, { notesVersion: true }), deleteEnd: DLL.deleteEnd, deleteMid: DLL.deleteMid, traverseFwd: DLL.traverseFwd, traverseBwd: DLL.traverseBwd, countnode: DLL.countnode },
+  sll: { insertBeg: SLL.insertBeg, insertEnd: SLL.insertEnd, insertMid: SLL.insertMid, deleteBeg: SLL.deleteBeg, deleteEnd: SLL.deleteEnd, deleteEndIncorrect: (w) => SLL.deleteEnd(w, { incorrectVersion: true }), deleteMid: SLL.deleteMid, traverse: SLL.traverse, createList: (w, vals) => SLL.createList(vals, { detail: false }) },
+  dll: { insertBeg: DLL.insertBeg, insertEnd: DLL.insertEnd, insertMid: DLL.insertMid, deleteBeg: DLL.deleteBeg, deleteBegIncorrect: (w) => DLL.deleteBeg(w, { incorrectVersion: true }), deleteEnd: DLL.deleteEnd, deleteMid: DLL.deleteMid, traverseFwd: DLL.traverseFwd, traverseBwd: DLL.traverseBwd, count_nodes: DLL.count_nodes },
   csll: { insertBeg: CSLL.insertBeg, insertEnd: CSLL.insertEnd, deleteBeg: CSLL.deleteBeg, deleteEnd: CSLL.deleteEnd, traverse: CSLL.traverse, traverseNullBug: CSLL.traverseNullBug },
 };
 
 export const GRAPHS = {
-  lec14: G.lec14Graph,
-  lec13directed: G.lec13Directed,
-  lec13weighted: G.lec13Weighted,
-  lec13loop: G.lec13SelfLoop,
+  example: G.exampleGraph,
+  directed: G.directedGraph,
+  weighted: G.weightedGraph,
+  selfloop: G.selfLoopGraph,
   disconnected: () => {
     const g = G.fromEdgeList(['A', 'B', 'C', 'D', 'E', 'F', 'G'], [['A', 'B'], ['B', 'C'], ['C', 'A'], ['D', 'E'], ['E', 'E'], ['F', 'D']]);
     g.pos = { A: [0.12, 0.25], B: [0.35, 0.1], C: [0.3, 0.45], D: [0.62, 0.3], E: [0.85, 0.15], F: [0.75, 0.6], G: [0.2, 0.85] };
@@ -39,7 +39,7 @@ export function worldFromSetup(struct, setup = {}) {
 function seqStart(struct, setup) {
   switch (struct) {
     case 'astack':
-      return SQ.arrayStack(setup.MAX || 5, setup.conv || 'notes');
+      return SQ.arrayStack(setup.MAX || 5, setup.conv || 'count');
     case 'aqueue':
       return SQ.arrayQueue(setup.MAX || 5, setup.mode || 'linear');
     case 'lstack-head':
@@ -92,7 +92,7 @@ function sumCounters(a, b) {
 }
 
 export function treeFrom(spec) {
-  if (!spec || spec === 'lecture') return T.LECTURE_TREE();
+  if (!spec || spec === 'example') return T.EXAMPLE_TREE();
   if (spec.nodes) return T.clone(spec);
   return T.fromSpec(spec);
 }
@@ -113,7 +113,7 @@ export function buildTrace(spec) {
   }
   if (s.struct === 'code') {
     const w = s.world ? PW.clone(s.world) : worldFromSetup(s.kind || 'sll', s.setup);
-    return runLines(w, s.lines, { title: s.title, newValue: s.newValue, ref: s.ref, langs: s.langs });
+    return runLines(w, s.lines, { title: s.title, newValue: s.newValue, langs: s.langs });
   }
   if (['astack', 'aqueue', 'lstack-head', 'lstack-tail', 'lqueue'].includes(s.struct)) return chain(s.struct, s.ops || [], s.setup || {});
   if (s.struct === 'lqueue1') {

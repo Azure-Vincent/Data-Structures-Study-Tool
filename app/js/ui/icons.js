@@ -16,6 +16,8 @@ const PATHS = {
   book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   check: '<path d="m5 12 5 5L20 7"/>',
+  braces: '<path d="M8 4c-2 0-3 1-3 3v2c0 1.5-1 2.5-2 3 1 .5 2 1.5 2 3v2c0 2 1 3 3 3"/><path d="M16 4c2 0 3 1 3 3v2c0 1.5 1 2.5 2 3-1 .5-2 1.5-2 3v2c0 2-1 3-3 3"/>',
+  assess: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 13 2 2 4-4"/>',
   brand: '<rect x="1.5" y="7" width="9" height="10" rx="2"/><rect x="13.5" y="7" width="9" height="10" rx="2"/><path d="M7.5 12h8"/><path d="m13.5 9.5 2.5 2.5-2.5 2.5"/>',
 };
 

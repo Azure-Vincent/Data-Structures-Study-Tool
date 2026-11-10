@@ -1,4 +1,4 @@
-// Lecture 11 — Circular singly linked lists.
+// Circular singly linked lists.
 import { opts, mcq, numeric, sequenceClick, orderCode, fillCode, rewire } from './kit.js';
 import { values, randList, listText, rewireSpec, vals, addrs, guide, emptyWorld } from './helpers.js';
 import * as CSLL from '../core/csll.js';
@@ -11,7 +11,6 @@ const cvals = (w) => CSLL.traverse(w).output.filter((x) => x !== 'Empty list');
 export const l11 = [
   {
     id: 'l11-null-loop',
-    lecture: 11,
     concept: 'l11.csll-traverse',
     type: 'predict',
     title: 'Why waiting for NULL fails',
@@ -22,15 +21,15 @@ export const l11 = [
       const infinite = n > 0;
       const o = opts(rng, [
         { text: 'It prints every value once and stops', correct: false, why: infinite ? 'temp never becomes NULL: after the last node it returns to the first node.' : 'Nothing is printed at all.', tag: 'circular-null' },
-        { text: 'It never stops: it keeps printing the values around the circle', correct: infinite, why: infinite ? `In a non-empty circular list no next field is NULL (the last node points back to ${addrs(w)[0]}), so “temp != NULL” is always true.` : 'With start = NULL the loop condition is false immediately.', tag: 'circular-null' },
-        { text: 'It prints nothing', correct: !infinite, why: !infinite ? 'The list is empty: temp = start = NULL, so the loop body never runs. The bug only shows on NON-empty circles.' : 'temp starts on the first node, which is not NULL.', tag: 'circular-null' },
+        { text: 'It never stops: it keeps printing the values around the circle', correct: infinite, why: infinite ? `In a non-empty circular list no next field is NULL (the last node points back to ${addrs(w)[0]}), so “temp != NULL” is always true.` : 'With head = NULL the loop condition is false immediately.', tag: 'circular-null' },
+        { text: 'It prints nothing', correct: !infinite, why: !infinite ? 'The list is empty: temp = head = NULL, so the loop body never runs. The bug only shows on NON-empty circles.' : 'temp starts on the first node, which is not NULL.', tag: 'circular-null' },
         { text: 'It crashes immediately (NULL dereference)', correct: false, why: 'The loop tests temp before using it.', tag: 'circular-null' },
       ]);
       return {
-        prompt: `This loop works for ordinary lists (Lec 09 p.5). What happens on the circular list shown${n === 0 ? ' (empty: start = NULL)' : ''}?`,
-        visual: { type: 'list', world: w, code: ['temp = start;', 'while (temp != NULL) {', '    print(temp->data);', '    temp = temp->next;', '}'] },
+        prompt: `This loop works for non-circular lists. What happens on the circular list shown${n === 0 ? ' (empty: head = NULL)' : ''}?`,
+        visual: { type: 'list', world: w, code: ['temp = head;', 'while (temp != NULL) {', '    print(temp->data);', '    temp = temp->next;', '}'] },
         edge: n <= 1,
-        ...mcq(o, { explain: 'Use the do-while from Lec 11 p.4 and stop when temp comes back to start.' }),
+        ...mcq(o, { explain: 'Use a do-while loop instead and stop when temp comes back to head.' }),
         hints: ['Look at the last node’s next field.', { text: 'Is any next field NULL in this circle?' }, 'If no field is NULL, temp can never become NULL.'],
         solutionTrace: n > 0 ? { struct: 'csll', op: 'traverseNullBug', world: w, args: [] } : null,
       };
@@ -38,7 +37,6 @@ export const l11 = [
   },
   {
     id: 'l11-fill-dowhile',
-    lecture: 11,
     concept: 'l11.csll-traverse',
     type: 'fill',
     title: 'Stop after exactly one lap',
@@ -49,14 +47,13 @@ export const l11 = [
         prompt: 'Complete the condition so that every node is printed exactly once (the list is not empty).',
         visual: { type: 'list', world: cases[1].world },
         edge: true,
-        ...fillCode('temp = start;\ndo {\n    print(temp->data);\n    temp = temp->next;\n} while (____);', cases, 'temp != start', { explain: 'do-while runs the body once BEFORE testing, so starting at start does not stop immediately. It works for a one-node circle too (that node points to itself).' }),
-        hints: ['Where does temp end up after visiting the last node?', { text: 'The last node’s next is the first node.' }, 'Stop when temp is back at start.'],
+        ...fillCode('temp = head;\ndo {\n    print(temp->data);\n    temp = temp->next;\n} while (____);', cases, 'temp != head', { explain: 'do-while runs the body once BEFORE testing, so starting at head does not stop immediately. It works for a one-node circle too (that node points to itself).' }),
+        hints: ['Where does temp end up after visiting the last node?', { text: 'The last node’s next is the first node.' }, 'Stop when temp is back at head.'],
       };
     },
   },
   {
     id: 'l11-rewire-insert',
-    lecture: 11,
     concept: 'l11.csll-insert',
     type: 'rewire',
     title: 'Insert into a circular list',
@@ -66,12 +63,12 @@ export const l11 = [
       const w = csl(rng, vs);
       const v = params.value ?? rng.int(1, 99);
       const op = kind === 'beg' ? (x) => CSLL.insertBeg(x, v, { detail: false }) : (x) => CSLL.insertEnd(x, v, { detail: false });
-      const spec = rewireSpec(w, op, { vars: ['start', 'temp', 'last', 'newnode'], newValue: v });
+      const spec = rewireSpec(w, op, { vars: ['head', 'temp', 'last', 'new_node'], newValue: v });
       return {
-        prompt: `Insert **${v}** at the ${kind === 'beg' ? 'beginning' : 'end'} and keep the list circular. Goal (one lap): ${listText(cvals(spec.goal))}.\n\n${guide(guidance, vs.length === 0 ? 'Empty list: the single new node must point to ITSELF, and start points to it.' : kind === 'beg' ? 'The LAST node must be updated too: it has to point to the new first node.' : 'The new last node must point back to start.', '')}`,
+        prompt: `Insert **${v}** at the ${kind === 'beg' ? 'beginning' : 'end'} and keep the list circular. Goal (one lap): ${listText(cvals(spec.goal))}.\n\n${guide(guidance, vs.length === 0 ? 'Empty list: the single new node must point to ITSELF, and head points to it.' : kind === 'beg' ? 'The LAST node must be updated too: it has to point to the new first node.' : 'The new last node must point back to head.', '')}`,
         edge: vs.length <= 1,
-        ...rewire(spec, { explain: 'The circle is closed: following next from start returns to start after one lap.' }),
-        hints: [vs.length === 0 ? 'A one-node circle points to itself.' : 'In a circle the last node’s next is always the first node.', { text: 'Find the node whose next is start.', hl: { pos: [vs.length || 1] } }, kind === 'beg' ? 'new->next = start; last->next = new; start = new.' : 'last->next = new; new->next = start.'],
+        ...rewire(spec, { explain: 'The circle is closed: following next from head returns to head after one lap.' }),
+        hints: [vs.length === 0 ? 'A one-node circle points to itself.' : 'In a circle the last node’s next is always the first node.', { text: 'Find the node whose next is head.', hl: { pos: [vs.length || 1] } }, kind === 'beg' ? 'new->next = head; last->next = new; head = new.' : 'last->next = new; new->next = head.'],
         solutionTrace: { struct: 'csll', op: kind === 'beg' ? 'insertBeg' : 'insertEnd', world: w, args: [v] },
         params: { kind },
       };
@@ -79,7 +76,6 @@ export const l11 = [
   },
   {
     id: 'l11-rewire-delete',
-    lecture: 11,
     concept: 'l11.csll-delete',
     conceptBy: (p) => (p.single ? 'l11.csll-edge' : 'l11.csll-delete'),
     type: 'rewire',
@@ -90,12 +86,12 @@ export const l11 = [
       const vs = params.values || values(rng, single ? 1 : rng.int(2, 4));
       const w = csl(rng, vs);
       const op = kind === 'beg' ? CSLL.deleteBeg : CSLL.deleteEnd;
-      const spec = rewireSpec(w, (x) => op(x), { vars: ['start', 'temp', 'last'] });
+      const spec = rewireSpec(w, (x) => op(x), { vars: ['head', 'temp', 'last'] });
       return {
-        prompt: `Delete the ${kind === 'beg' ? 'first' : 'last'} node${vs.length === 1 ? ' — it is the ONLY node' : ''} and free it. Goal: ${vs.length === 1 ? 'empty list (start = NULL)' : listText(cvals(spec.goal)) + ', still circular'}.\n\n${guide(guidance, vs.length === 1 ? 'Keep the node in temp, set start = NULL, then free it. Do not leave start pointing at freed memory.' : kind === 'beg' ? 'The last node must skip the removed first node and point to the new first node.' : 'The second-to-last node becomes the last: it must point to start.', '')}`,
+        prompt: `Delete the ${kind === 'beg' ? 'first' : 'last'} node${vs.length === 1 ? ' — it is the ONLY node' : ''} and free it. Goal: ${vs.length === 1 ? 'empty list (head = NULL)' : listText(cvals(spec.goal)) + ', still circular'}.\n\n${guide(guidance, vs.length === 1 ? 'Keep the node in temp, set head = NULL, then free it. Do not leave head pointing at freed memory.' : kind === 'beg' ? 'The last node must skip the removed first node and point to the new first node.' : 'The second-to-last node becomes the last: it must point to head.', '')}`,
         edge: vs.length === 1,
-        ...rewire(spec, { explain: vs.length === 1 ? 'start is NULL and the node was freed: no dangling pointer.' : 'The circle is still closed.' }),
-        hints: [vs.length === 1 ? 'After removing the only node, the list is empty.' : 'Which node points INTO the node you remove?', { text: vs.length === 1 ? 'start must not keep the freed address.' : 'Find the node whose next is the node being removed.' }, vs.length === 1 ? 'temp = start; start = NULL; free(temp).' : kind === 'beg' ? 'temp = start; start = second node; last->next = start; free(temp).' : 'temp = last node; second-to-last->next = start; free(temp).'],
+        ...rewire(spec, { explain: vs.length === 1 ? 'head is NULL and the node was freed: no dangling pointer.' : 'The circle is still closed.' }),
+        hints: [vs.length === 1 ? 'After removing the only node, the list is empty.' : 'Which node points INTO the node you remove?', { text: vs.length === 1 ? 'head must not keep the freed address.' : 'Find the node whose next is the node being removed.' }, vs.length === 1 ? 'temp = head; head = NULL; free(temp).' : kind === 'beg' ? 'temp = head; head = second node; last->next = head; free(temp).' : 'temp = last node; second-to-last->next = head; free(temp).'],
         solutionTrace: { struct: 'csll', op: kind === 'beg' ? 'deleteBeg' : 'deleteEnd', world: w, args: [] },
         params: { kind, single: vs.length === 1 },
       };
@@ -103,16 +99,15 @@ export const l11 = [
   },
   {
     id: 'l11-order-delbeg',
-    lecture: 11,
     concept: 'l11.csll-delete',
     type: 'order',
     title: 'Order the circular delete-at-beginning',
     generate(rng) {
       const items = [
-        { id: 'a', code: 'last = temp = start;' },
-        { id: 'b', code: 'while (last->next != start) last = last->next;', label: 'while (last->next != start)\n    last = last->next;' },
-        { id: 'c', code: 'start = temp->next;' },
-        { id: 'd', code: 'last->next = start;' },
+        { id: 'a', code: 'last = temp = head;' },
+        { id: 'b', code: 'while (last->next != head) last = last->next;', label: 'while (last->next != head)\n    last = last->next;' },
+        { id: 'c', code: 'head = temp->next;' },
+        { id: 'd', code: 'last->next = head;' },
         { id: 'e', code: 'free(temp);' },
       ];
       const lists = [values(rng, rng.int(2, 3)), values(rng, rng.int(4, 5))];
@@ -123,16 +118,15 @@ export const l11 = [
       let sh = rng.shuffle(items);
       if (sh.map((i) => i.id).join() === 'a,b,c,d,e') sh = [...sh].reverse();
       return {
-        prompt: 'Arrange the statements to delete the FIRST node of a circular list (at least 2 nodes) and free it (Lec 11 p.3).',
+        prompt: 'Arrange the statements to delete the FIRST node of a circular list (at least 2 nodes) and free it.',
         visual: { type: 'list', world: cases[0].world },
-        ...orderCode(sh, cases, ['a', 'b', 'c', 'd', 'e'], { explain: 'The walk compares with start, so it must run BEFORE start moves; free(temp) comes last. The notes cross temp out — free(temp) makes the release explicit.' }),
-        hints: ['The loop condition mentions start — what if start has already moved?', { text: 'last must end on the node before the old first node.' }, 'Find last first, then move start, then close the circle, then free.'],
+        ...orderCode(sh, cases, ['a', 'b', 'c', 'd', 'e'], { explain: 'The walk compares with head, so it must run BEFORE head moves; free(temp) comes last, because unlinking a node does not release its memory.' }),
+        hints: ['The loop condition mentions head — what if head has already moved?', { text: 'last must end on the node before the old first node.' }, 'Find last first, then move head, then close the circle, then free.'],
       };
     },
   },
   {
     id: 'l11-one-lap',
-    lecture: 11,
     concept: 'l11.circular-links',
     type: 'traverse',
     title: 'Click exactly one lap',
@@ -142,14 +136,14 @@ export const l11 = [
       const w = csl(rng, vs);
       const as = addrs(w).map(String);
       return {
-        prompt: `Click the nodes in the order the do-while traversal visits them, starting at start. Stop after **exactly one lap**, then press Check.`,
+        prompt: `Click the nodes in the order the do-while traversal visits them, starting at head. Stop after **exactly one lap**, then press Check.`,
         visual: { type: 'list', world: w, clickable: true },
         edge: n === 1,
         ...sequenceClick(as, {
           explain: `One lap visits ${n} node(s): ${listText(vs)}.`,
-          diagnose: (got) => (got.length > as.length && got[as.length] === as[0] ? { msg: 'You came back to start — that begins a second lap.', tag: 'circular-lap' } : null),
+          diagnose: (got) => (got.length > as.length && got[as.length] === as[0] ? { msg: 'You came back to head — that begins a second lap.', tag: 'circular-lap' } : null),
         }),
-        hints: ['Follow next from start.', { text: 'The lap ends when the next node would be start again.', hl: { vars: ['start'] } }, `Click ${n} node(s) in total.`],
+        hints: ['Follow next from head.', { text: 'The lap ends when the next node would be head again.', hl: { vars: ['head'] } }, `Click ${n} node(s) in total.`],
       };
     },
   },

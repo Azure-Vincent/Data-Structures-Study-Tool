@@ -1,4 +1,4 @@
-// Lecture 08 — Singly linked lists part 1: nodes, start, temp, creation, insertion.
+// Singly linked lists, part 1: nodes, head, temp, creation, insertion.
 import { opts, mcq, multi, numeric, sequenceText, orderCode, fillCode, rewire, reflect, keep } from './kit.js';
 import { values, randList, listText, rewireSpec, withNewnode, withPointers, addrs, vals, guide, emptyWorld, linkChoices } from './helpers.js';
 import * as SLL from '../core/sll.js';
@@ -16,7 +16,6 @@ export function insertGoal(kind, world, value, pos) {
 export const l08 = [
   {
     id: 'l08-which-links',
-    lecture: 8,
     concept: 'l08.insert-mid',
     conceptBy: (p) => (p.op === 'ins' ? `l08.insert-${p.kind}` : `l09.delete-${p.kind}`),
     variants: { 'l08.insert-beg': { op: 'ins', kind: 'beg' }, 'l08.insert-mid': { op: 'ins', kind: 'mid' }, 'l08.insert-end': { op: 'ins', kind: 'end' } },
@@ -34,10 +33,10 @@ export const l08 = [
       const list = linkChoices(w, after).map((o) => ({ ...o, why: o.correct ? 'this pointer gets a new value' : 'this pointer keeps its value', tag: 'which-links' }));
       const what = op === 'ins' ? `insert ${v} ${kind === 'beg' ? 'at the beginning' : kind === 'end' ? 'at the end' : `at position ${pos} (after ${vs[pos - 2]})`}` : `delete ${kind === 'beg' ? 'the first node' : kind === 'end' ? 'the last node' : `node ${pos} (${vs[pos - 1]})`}`;
       return {
-        prompt: `You will **${what}**. Before doing it, select EVERY pointer whose value changes (ignore temporary variables like temp/prev).`,
+        prompt: `You will **${what}**. Before doing it, select EVERY pointer whose value changes (ignore temporary variables such as temp and prev).`,
         visual: { type: 'list', world: w },
         edge: vs.length === 1,
-        ...multi(keep(list), { explain: `Before: ${listText(vs)}. After: ${listText(vals(after))}. ${op === 'ins' ? 'Insertion touches only the links around the gap — the nodes themselves never move.' : 'Deletion only redirects the link that pointed INTO the removed node (and start/NULL in the end cases); the removed node’s own fields do not matter once it is freed.'}` }),
+        ...multi(keep(list), { explain: `Before: ${listText(vs)}. After: ${listText(vals(after))}. ${op === 'ins' ? 'Insertion touches only the links around the gap — the nodes themselves never move.' : 'Deletion only redirects the link that pointed INTO the removed node (and head/NULL in the end cases); the removed node’s own fields do not matter once it is freed.'}` }),
         hints: ['Compare the picture before and after: which arrows move?', { text: 'Only arrows next to the changed spot can move.' }, op === 'ins' ? 'Count: the new node gets a next, and ONE existing pointer is redirected to it.' : 'Exactly one existing pointer is redirected (or set to NULL).'],
         params: { op, kind },
       };
@@ -45,7 +44,6 @@ export const l08 = [
   },
   {
     id: 'l08-predict-temp',
-    lecture: 8,
     concept: 'l08.traversal-pointer',
     conceptBy: (p) => (p.ask === 'temp' ? 'l08.traversal-pointer' : 'l08.node-anatomy'),
     type: 'predict',
@@ -87,13 +85,13 @@ export const l08 = [
         tag: t === String(vs[Math.min(k, n - 1)]) && ask !== 'temp->data' ? 'value-vs-address' : 'pointer-walk',
       }));
       return {
-        prompt: `Run \`temp = start;\` and then \`temp = temp->next;\` **${k}** time(s).\n\nWhat is \`${ask}\` now?`,
+        prompt: `Run \`temp = head;\` and then \`temp = temp->next;\` **${k}** time(s).\n\nWhat is \`${ask}\` now?`,
         visual: { type: 'list', world: w },
         edge,
         ...mcq(opts(rng, list)),
         hints: [
           'A pointer variable stores an address (the number under a node), never the data inside it.',
-          { text: 'Follow the arrows from start, one per move.', hl: { vars: ['start'] } },
+          { text: 'Follow the arrows from head, one per move.', hl: { vars: ['head'] } },
           `Node 1 is at ${as[0]}. Each move copies that node's next field into temp.`,
         ],
         params: { ask },
@@ -102,7 +100,6 @@ export const l08 = [
   },
   {
     id: 'l08-rewire-insert',
-    lecture: 8,
     concept: 'l08.insert-mid',
     conceptBy: (p) => `l08.insert-${p.kind}`,
     type: 'rewire',
@@ -118,9 +115,9 @@ export const l08 = [
       const goalList = vals(spec.goal);
       const what = kind === 'beg' ? 'at the beginning' : kind === 'end' ? 'at the end' : `at position ${pos} (after ${vs[pos - 2]})`;
       const steps = {
-        beg: ['getnode() to allocate the new node (it starts with next = NULL).', 'newnode->next = start  (link the new node to the old first node).', 'start = newnode.'],
-        end: ['getnode().', 'Set temp = start and move temp until temp->next is NULL.', 'temp->next = newnode.'],
-        mid: ['getnode().', `Place prev on node ${pos - 1} and temp on node ${pos}.`, 'prev->next = newnode, then newnode->next = temp (temp remembers the rest).'],
+        beg: ['create_node() to allocate the new node (it starts with next = NULL).', 'new_node->next = head  (link the new node to the old first node).', 'head = new_node.'],
+        end: ['create_node().', 'Set temp = head and move temp until temp->next is NULL.', 'temp->next = new_node.'],
+        mid: ['create_node().', `Place prev on node ${pos - 1} and temp on node ${pos}.`, 'prev->next = new_node, then new_node->next = temp (temp remembers the rest).'],
       }[kind];
       const edge = n <= 1;
       return {
@@ -128,9 +125,9 @@ export const l08 = [
         edge,
         ...rewire(spec, { explain: 'Every link was changed without losing access to any node.' }),
         hints: [
-          kind === 'beg' ? 'The new node must point at the old first node BEFORE start moves.' : kind === 'end' ? 'Only the last node’s next changes (from NULL to the new node).' : 'Two links change: the one INTO the new node and the one OUT of it.',
-          { text: kind === 'beg' ? 'Look at start and the new node.' : kind === 'end' ? 'Look at the node whose next is NULL.' : `Look at node ${pos - 1} (${vs[pos - 2]}) and node ${pos} (${vs[pos - 1]}).`, hl: { pos: kind === 'mid' ? [pos - 1, pos] : kind === 'end' ? [n] : [1] } },
-          kind === 'beg' ? 'Click “getnode()”, then click the new node’s next field and then the old first node.' : kind === 'end' ? (n ? 'After getnode(), set the last node’s next to the new node.' : 'The list is empty: after getnode(), just set start = newnode.') : 'After getnode(), set newnode->next to node ' + pos + ' first; then node ' + (pos - 1) + '->next to the new node.',
+          kind === 'beg' ? 'The new node must point at the old first node BEFORE head moves.' : kind === 'end' ? 'Only the last node’s next changes (from NULL to the new node).' : 'Two links change: the one INTO the new node and the one OUT of it.',
+          { text: kind === 'beg' ? 'Look at head and the new node.' : kind === 'end' ? 'Look at the node whose next is NULL.' : `Look at node ${pos - 1} (${vs[pos - 2]}) and node ${pos} (${vs[pos - 1]}).`, hl: { pos: kind === 'mid' ? [pos - 1, pos] : kind === 'end' ? [n] : [1] } },
+          kind === 'beg' ? 'Click “create_node()”, then click the new node’s next field and then the old first node.' : kind === 'end' ? (n ? 'After create_node(), set the last node’s next to the new node.' : 'The list is empty: after create_node(), just set head = new_node.') : 'After create_node(), set new_node->next to node ' + pos + ' first; then node ' + (pos - 1) + '->next to the new node.',
         ],
         solutionTrace: { struct: 'sll', op: kind === 'beg' ? 'insertBeg' : kind === 'end' ? 'insertEnd' : 'insertMid', world: w, args: kind === 'mid' ? [val, pos] : [val] },
         params: { kind },
@@ -139,7 +136,6 @@ export const l08 = [
   },
   {
     id: 'l08-order-insert',
-    lecture: 8,
     concept: 'l08.insert-beg',
     conceptBy: (p) => `l08.insert-${p.kind}`,
     type: 'order',
@@ -152,35 +148,35 @@ export const l08 = [
       let mk;
       if (kind === 'beg') {
         items = [
-          { id: 'a', code: 'newnode = getnode();' },
-          { id: 'b', code: 'newnode->next = start;' },
-          { id: 'c', code: 'start = newnode;' },
+          { id: 'a', code: 'new_node = create_node();' },
+          { id: 'b', code: 'new_node->next = head;' },
+          { id: 'c', code: 'head = new_node;' },
         ];
-        mk = (w) => ({ world: w, goal: SLL.insertBeg(w, val, { detail: false }).final, newValue: val, opts: { locals: ['newnode'] } });
+        mk = (w) => ({ world: w, goal: SLL.insertBeg(w, val, { detail: false }).final, newValue: val, opts: { locals: ['new_node'] } });
       } else if (kind === 'end') {
         items = [
-          { id: 'a', code: 'newnode = getnode();' },
-          { id: 'b', code: 'temp = start;' },
+          { id: 'a', code: 'new_node = create_node();' },
+          { id: 'b', code: 'temp = head;' },
           { id: 'c', code: 'while (temp->next != NULL) temp = temp->next;', label: 'while (temp->next != NULL)\n    temp = temp->next;' },
-          { id: 'd', code: 'temp->next = newnode;' },
+          { id: 'd', code: 'temp->next = new_node;' },
         ];
-        mk = (w) => ({ world: w, goal: SLL.insertEnd(w, val, { detail: false }).final, newValue: val, opts: { locals: ['newnode', 'temp'] } });
+        mk = (w) => ({ world: w, goal: SLL.insertEnd(w, val, { detail: false }).final, newValue: val, opts: { locals: ['new_node', 'temp'] } });
       } else {
         // prev/temp already placed by the search loop
         const pos = 2;
         items =
           kind === 'mid'
             ? [
-                { id: 'a', code: 'newnode = getnode();' },
-                { id: 'b', code: 'prev->next = newnode;' },
-                { id: 'c', code: 'newnode->next = temp;' },
+                { id: 'a', code: 'new_node = create_node();' },
+                { id: 'b', code: 'prev->next = new_node;' },
+                { id: 'c', code: 'new_node->next = temp;' },
               ]
             : [
-                { id: 'a', code: 'newnode = getnode();' },
-                { id: 'b', code: 'newnode->next = prev->next;' },
-                { id: 'c', code: 'prev->next = newnode;' },
+                { id: 'a', code: 'new_node = create_node();' },
+                { id: 'b', code: 'new_node->next = prev->next;' },
+                { id: 'c', code: 'prev->next = new_node;' },
               ];
-        mk = (w) => ({ world: kind === 'mid' ? withPointers(w, { prev: pos - 1, temp: pos }) : withPointers(w, { prev: pos - 1 }), goal: SLL.insertMid(w, val, pos, { detail: false }).final, newValue: val, opts: { locals: ['newnode', 'temp', 'prev'] } });
+        mk = (w) => ({ world: kind === 'mid' ? withPointers(w, { prev: pos - 1, temp: pos }) : withPointers(w, { prev: pos - 1 }), goal: SLL.insertMid(w, val, pos, { detail: false }).final, newValue: val, opts: { locals: ['new_node', 'temp', 'prev'] } });
       }
       const cases = lists.map((vs) => mk(randList(rng, 'sll', vs)));
       const shuffled = rng.shuffle(items);
@@ -190,16 +186,15 @@ export const l08 = [
         prompt: `Put the statements in a valid order to **${desc}**. Use the arrows or drag. The simulator runs your order on test lists.`,
         visual: { type: 'list', world: cases[0].world },
         ...orderCode(shuffled, cases, items.map((i) => i.id), {
-          explain: kind === 'mid' ? 'Because temp saved the address of the rest, the two link assignments can be done in either order (Lec 08 p.7).' : kind === 'mid2' ? 'Without temp, newnode->next must copy prev->next BEFORE prev->next is overwritten; otherwise the rest of the list is lost.' : kind === 'beg' ? 'newnode->next = start must come before start = newnode; the reverse order makes the new node point to itself and loses the old list.' : 'The walk must finish before the last node is linked to the new node.',
+          explain: kind === 'mid' ? 'Because temp saved the address of the rest of the list, the two link assignments can be done in either order.' : kind === 'mid2' ? 'Without temp, new_node->next must copy prev->next BEFORE prev->next is overwritten; otherwise the rest of the list is lost.' : kind === 'beg' ? 'new_node->next = head must come before head = new_node; the reverse order makes the new node point to itself and loses the old list.' : 'The walk must finish before the last node is linked to the new node.',
         }),
-        hints: ['Which assignment would destroy the only copy of an address if done too early?', { text: 'Find the arrow that is overwritten.' }, kind === 'beg' ? 'Link newnode first, move start last.' : kind === 'end' ? 'Allocate, walk to the end, then link.' : 'getnode() must come first, since the other lines use newnode.'],
+        hints: ['Which assignment would destroy the only copy of an address if done too early?', { text: 'Find the arrow that is overwritten.' }, kind === 'beg' ? 'Link new_node first, move head last.' : kind === 'end' ? 'Allocate, walk to the end, then link.' : 'create_node() must come first, since the other lines use new_node.'],
         params: { kind: kind.startsWith('mid') ? 'mid' : kind },
       };
     },
   },
   {
     id: 'l08-fill',
-    lecture: 8,
     concept: 'l08.insert-end',
     conceptBy: (p) => `l08.insert-${p.kind}`,
     type: 'fill',
@@ -211,13 +206,13 @@ export const l08 = [
       if (kind === 'endcond') {
         const cases = lists.map((vs) => {
           const w = randList(rng, 'sll', vs);
-          return { world: withNewnode(w, val), goal: SLL.insertEnd(w, val, { detail: false }).final, opts: { locals: ['newnode', 'temp'] }, label: `the list ${listText(vs)}` };
+          return { world: withNewnode(w, val), goal: SLL.insertEnd(w, val, { detail: false }).final, opts: { locals: ['new_node', 'temp'] }, label: `the list ${listText(vs)}` };
         });
         return {
-          prompt: `\`newnode\` already holds a new node (data ${val}). Complete the loop condition so that temp stops on the LAST node.`,
+          prompt: `\`new_node\` already holds a new node (data ${val}). Complete the loop condition so that temp stops on the LAST node.`,
           visual: { type: 'list', world: cases[1].world },
           edge: true,
-          ...fillCode('temp = start;\nwhile (____)\n    temp = temp->next;\ntemp->next = newnode;', cases, 'temp->next != NULL', { explain: 'Stop when the CURRENT node has no next. Testing temp != NULL would walk past the last node and then crash on temp->next = newnode.', placeholder: 'condition' }),
+          ...fillCode('temp = head;\nwhile (____)\n    temp = temp->next;\ntemp->next = new_node;', cases, 'temp->next != NULL', { explain: 'Stop when the CURRENT node has no next. Testing temp != NULL would walk past the last node and then crash on temp->next = new_node.', placeholder: 'condition' }),
           hints: ['You want temp to stand ON the last node when the loop ends.', { text: 'Which field is NULL only on the last node?' }, 'The last node is the one whose next is NULL.'],
           params: { kind: 'end' },
         };
@@ -225,24 +220,24 @@ export const l08 = [
       if (kind === 'beg') {
         const cases = lists.map((vs) => {
           const w = randList(rng, 'sll', vs);
-          return { world: w, newValue: val, goal: SLL.insertBeg(w, val, { detail: false }).final, opts: { locals: ['newnode'] }, label: `the list ${listText(vs)}` };
+          return { world: w, newValue: val, goal: SLL.insertBeg(w, val, { detail: false }).final, opts: { locals: ['new_node'] }, label: `the list ${listText(vs)}` };
         });
         return {
-          prompt: `Complete \`insert_at_beg\` for a non-empty list (new value ${val}).`,
+          prompt: `Complete \`insert_at_beginning\` for a non-empty list (new value ${val}).`,
           visual: { type: 'list', world: cases[1].world },
-          ...fillCode('newnode = getnode();\n____;\nstart = newnode;', cases, 'newnode->next = start', { explain: 'The new node must remember the old first node before start is moved (Lec 08 p.4, step c-1).', placeholder: 'one assignment' }),
-          hints: ['After the last line, start will no longer remember the old first node.', { text: 'The new node needs an arrow to the current first node.' }, 'Assign the new node’s next field.'],
+          ...fillCode('new_node = create_node();\n____;\nhead = new_node;', cases, 'new_node->next = head', { explain: 'The new node must store the address of the old first node before head is moved.', placeholder: 'one assignment' }),
+          hints: ['After the last line, head will no longer remember the old first node.', { text: 'The new node needs an arrow to the current first node.' }, 'Assign the new node’s next field.'],
           params: { kind: 'beg' },
         };
       }
       const cases = lists.slice(1).map((vs) => {
         const w = randList(rng, 'sll', vs);
-        return { world: withPointers(withNewnode(w, val), { prev: 1, temp: 2 }), goal: SLL.insertMid(w, val, 2, { detail: false }).final, opts: { locals: ['newnode', 'temp', 'prev'] }, label: `the list ${listText(vs)}` };
+        return { world: withPointers(withNewnode(w, val), { prev: 1, temp: 2 }), goal: SLL.insertMid(w, val, 2, { detail: false }).final, opts: { locals: ['new_node', 'temp', 'prev'] }, label: `the list ${listText(vs)}` };
       });
       return {
-        prompt: `prev is on node 1, temp on node 2, newnode holds a new node (${val}). Complete the insertion between them.`,
+        prompt: `prev is on node 1, temp on node 2, new_node holds a new node (${val}). Complete the insertion between them.`,
         visual: { type: 'list', world: cases[0].world },
-        ...fillCode('prev->next = newnode;\n____;', cases, 'newnode->next = temp', { explain: 'temp kept the address of node 2, so it is still available after prev->next was overwritten.', placeholder: 'one assignment' }),
+        ...fillCode('prev->next = new_node;\n____;', cases, 'new_node->next = temp', { explain: 'temp kept the address of node 2, so it is still available after prev->next was overwritten.', placeholder: 'one assignment' }),
         hints: ['After line 1, prev->next no longer leads to node 2.', { text: 'Which pointer still remembers node 2?', hl: { vars: ['temp'] } }, 'Link the new node to the node temp points at.'],
         params: { kind: 'mid' },
       };
@@ -250,7 +245,6 @@ export const l08 = [
   },
   {
     id: 'l08-bug',
-    lecture: 8,
     concept: 'l08.insert-beg',
     type: 'bug',
     title: 'Find the bug with a failing example',
@@ -259,10 +253,10 @@ export const l08 = [
       const vs = values(rng, 3);
       const w = randList(rng, 'sll', vs, { scatter: false });
       const bugs = [
-        { lines: ['newnode = getnode();', 'start = newnode;', 'newnode->next = start;'], bad: 1, world: w, concept: 'l08.insert-beg', why: 'start was overwritten while it held the only address of the old first node. The next line then makes the new node point to ITSELF (a cycle) and the old nodes are lost.' },
-        { lines: ['newnode = getnode();', 'prev->next = newnode;', 'newnode->next = prev->next;'], bad: 2, world: withPointers(w, { prev: 1 }), concept: 'l08.insert-mid', why: 'After line 2, prev->next already IS newnode, so line 3 makes newnode point to itself. Nodes after prev are lost. Fix: save prev->next in temp first (or swap the two lines).' },
-        { lines: ['newnode = getnode();', 'temp = start;', 'while (temp != NULL)', '    temp = temp->next;', 'temp->next = newnode;'], bad: 2, world: w, concept: 'l08.insert-end', why: 'The loop runs until temp is NULL — one step past the last node — so temp->next dereferences NULL and the program crashes. Test temp->next != NULL instead.' },
-        { lines: ['while (start != NULL) {', '    print(start->data);', '    start = start->next;', '}'], bad: 2, world: w, concept: 'l08.traversal-pointer', why: 'Moving start itself walks it off the list: after printing, start is NULL and every node is lost (memory leak). Use a temporary pointer: temp = start; and move temp.' },
+        { lines: ['new_node = create_node();', 'head = new_node;', 'new_node->next = head;'], bad: 1, world: w, concept: 'l08.insert-beg', why: 'head was overwritten while it held the only address of the old first node. The next line then makes the new node point to ITSELF (a cycle) and the old nodes are lost.' },
+        { lines: ['new_node = create_node();', 'prev->next = new_node;', 'new_node->next = prev->next;'], bad: 2, world: withPointers(w, { prev: 1 }), concept: 'l08.insert-mid', why: 'After line 2, prev->next already IS new_node, so line 3 makes new_node point to itself. Nodes after prev are lost. Fix: save prev->next in temp first (or swap the two lines).' },
+        { lines: ['new_node = create_node();', 'temp = head;', 'while (temp != NULL)', '    temp = temp->next;', 'temp->next = new_node;'], bad: 2, world: w, concept: 'l08.insert-end', why: 'The loop runs until temp is NULL — one step past the last node — so temp->next dereferences NULL and the program crashes. Test temp->next != NULL instead.' },
+        { lines: ['while (head != NULL) {', '    print(head->data);', '    head = head->next;', '}'], bad: 2, world: w, concept: 'l08.traversal-pointer', why: 'Moving head itself walks it off the list: after printing, head is NULL and every node is lost (memory leak). Use a temporary pointer: temp = head; and move temp.' },
       ];
       const b = rng.pick(bugs);
       const r = run(b.world, b.lines.join('\n'), { newValue: val });
@@ -286,7 +280,6 @@ export const l08 = [
   },
   {
     id: 'l08-predict-state',
-    lecture: 8,
     concept: 'l08.insert-end',
     type: 'predict',
     title: 'Predict the list after several insertions',
@@ -297,10 +290,10 @@ export const l08 = [
 function buildPredictState(rng, n, ops, finalWorld) {
   const answer = vals(finalWorld);
   return {
-    prompt: `The list starts as shown${n === 0 ? ' (empty: start = NULL)' : ''}. Then these run in order:\n\n${ops.map((o, i) => `${i + 1}. \`${o}\``).join('\n')}\n\nType the final list from start (values separated by spaces).`,
+    prompt: `The list starts as shown${n === 0 ? ' (empty: head = NULL)' : ''}. Then these run in order:\n\n${ops.map((o, i) => `${i + 1}. \`${o}\``).join('\n')}\n\nType the final list from head (values separated by spaces).`,
     edge: n === 0,
     ...sequenceText(answer, { explain: `Final list: ${listText(answer)}. Position p means the new node becomes node p.` }),
-    hints: ['Apply one operation at a time and write the list down after each.', { text: 'insert_at_mid(x, pos=p) makes x the p-th node.' }, `After operation 1: apply ${ops[0]} to the starting list.`],
+    hints: ['Apply one operation at a time and write the list down after each.', { text: 'insert_at_position(x, pos=p) makes x the p-th node.' }, `After operation 1: apply ${ops[0]} to the starting list.`],
   };
 }
 
@@ -315,7 +308,7 @@ function generatePredictState(rng) {
     const kind = len >= 2 ? rng.pick(INSERT_KINDS) : rng.pick(['beg', 'end']);
     const v = rng.int(1, 99);
     const pos = kind === 'mid' ? rng.int(2, len) : null;
-    ops.push(kind === 'beg' ? `insert_at_beg(${v})` : kind === 'end' ? `insert_at_end(${v})` : `insert_at_mid(${v}, pos = ${pos})`);
+    ops.push(kind === 'beg' ? `insert_at_beginning(${v})` : kind === 'end' ? `insert_at_end(${v})` : `insert_at_position(${v}, pos = ${pos})`);
     w = insertGoal(kind, w, v, pos)(w).final;
   }
   return { visual: { type: 'list', world: w0 }, ...buildPredictState(rng, n, ops, w) };

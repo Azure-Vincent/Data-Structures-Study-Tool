@@ -1,7 +1,7 @@
 // The programming language code is shown in. There is ONE choice for the whole
 // app: picking C++, Python or Pseudocode in any code panel (or in Settings)
 // switches every panel, so the same example can be compared language by
-// language. The notes' original C is offered where it exists.
+// language. A C version is also offered where one exists.
 import { h, clear } from './dom.js';
 import { TRANSLATIONS } from '../content/translations.js';
 
@@ -9,7 +9,7 @@ export const CODE_LANGS = [
   { id: 'cpp', label: 'C++' },
   { id: 'py', label: 'Python' },
   { id: 'pseudo', label: 'Pseudocode' },
-  { id: 'c', label: 'C (notes)' },
+  { id: 'c', label: 'C' },
 ];
 export const LANG_LABEL = Object.fromEntries(CODE_LANGS.map((l) => [l.id, l.label]));
 const ORDER = CODE_LANGS.map((l) => l.id);

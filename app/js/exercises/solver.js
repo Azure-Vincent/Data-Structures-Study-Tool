@@ -16,12 +16,12 @@ export function solveRewire(spec) {
     return r;
   };
   const holdVar = ['temp', 'prev', 'last', 'old'].find((v) => v in w.vars) || null;
-  const newVar = ['newnode'].find((v) => v in w.vars) || null;
+  const newVar = ['new_node'].find((v) => v in w.vars) || null;
 
   // 1. nodes that exist in the goal but not yet: allocate them
   for (const n of Object.values(goal.nodes)) {
     if (!w.nodes[n.addr]) {
-      const r = push({ type: 'alloc', data: n.data, var: newVar }, `getnode() allocates a node for ${n.data}; it starts with every link = NULL.`);
+      const r = push({ type: 'alloc', data: n.data, var: newVar }, `create_node() allocates a node for ${n.data}; it starts with every link = NULL.`);
       if (r.addr !== n.addr) throw new Error(`solver: alloc gave ${r.addr}, expected ${n.addr}`);
     }
   }

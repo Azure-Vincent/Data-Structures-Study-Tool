@@ -6,14 +6,14 @@ with sync_playwright() as p:
     b=p.chromium.launch(executable_path=os.environ.get('CHROMIUM') or None); pg=b.new_page(viewport={'width':1300,'height':900})
     errs=[]; pg.on('pageerror', lambda e: errs.append((pg.url,str(e)))); pg.on('console', lambda m: errs.append((pg.url,m.text)) if m.type=='error' else None)
     pg.goto('http://localhost:5173/'); pg.wait_for_timeout(300)
-    counts = pg.evaluate("import('./js/content/lessons.js').then(m=>m.LESSONS.map(l=>[l.lecture,l.sections.length]))")
+    counts = pg.evaluate("import('./js/content/lessons.js').then(m=>m.LESSONS.map(l=>[l.id,l.sections.length]))")
     total=0
     for lec,n in counts:
         for i in range(n):
-            pg.goto(f'http://localhost:5173/#/lesson/{lec}/{i}'); pg.wait_for_timeout(120)
+            pg.goto(f'http://localhost:5173/#/module/{lec}/{i}'); pg.wait_for_timeout(120)
             if pg.locator('.section-card').count()!=1: errs.append((lec,i,'no section'))
             # click continue to mark done
-            pg.locator('button:has-text("Continue"), button:has-text("Finish lesson")').first.click()
+            pg.locator('button:has-text("Continue"), button:has-text("Finish module")').first.click()
             total+=1
     pg.goto('http://localhost:5173/#/'); pg.wait_for_timeout(300)
     print(total,'sections opened; dashboard next:', pg.locator('.next-card p').inner_text())

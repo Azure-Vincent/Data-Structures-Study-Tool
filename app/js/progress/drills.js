@@ -1,4 +1,4 @@
-// Pseudocode drills: spaced repetition for writing pseudocode from memory.
+// Cumulative Review: spaced repetition for writing pseudocode from memory.
 //
 // Every graded Pseudocode Lab exercise is a card. Reviewing a card means
 // writing the operation in pseudocode and checking it on all of its test
@@ -10,6 +10,7 @@
 //           10 minutes (and once more at the end of the current session)
 // Pure functions over the progress data; the store applies them.
 import { EXERCISES } from '../lab/exercises.js';
+import { MODULES, moduleOrder } from '../content/concepts.js';
 
 const MIN = 60 * 1000;
 const DAY = 24 * 60 * MIN;
@@ -21,23 +22,19 @@ export const NEW_PER_DAY = 5;
 /** A card counts as remembered from this box on (its interval is a week or more). */
 export const REMEMBERED_BOX = 3;
 
-export const DRILL_TOPICS = [
-  { id: 'lists', label: 'Linked lists', structures: ['sll', 'dll', 'csll'] },
-  { id: 'stacks-queues', label: 'Stacks & queues', structures: ['stack', 'queue'], extra: ['astack-push-pop', 'aqueue-enqueue-dequeue'] },
-  { id: 'trees', label: 'Trees', structures: ['tree'] },
-  { id: 'graphs', label: 'Graphs', structures: ['graph'], extra: ['graph-matrix-build'] },
-  { id: 'arrays', label: 'Arrays', structures: [], extra: ['array-insert', 'array-delete'] },
-];
+/** Review topics are the learning modules. */
+export const DRILL_TOPICS = MODULES.map((m) => ({ id: m.id, label: m.title, short: m.short }));
+/** Topic ids used before the modules existed → the modules that replace them. */
+export const OLD_DRILL_TOPICS = { lists: ['sll', 'dll'], 'stacks-queues': ['stack', 'queue'], trees: ['tree'], graphs: ['graph'], arrays: ['memory'] };
 
 export function topicOf(ex) {
-  const t = DRILL_TOPICS.find((x) => (x.extra || []).includes(ex.id)) || DRILL_TOPICS.find((x) => x.structures.includes(ex.structure));
-  return t ? t.id : 'arrays';
+  return ex.module;
 }
 
-/** The cards, in lecture order: every graded Lab exercise of the main course. */
-export const DRILL_DECK = EXERCISES.filter((ex) => !ex.supplementary)
+/** The cards, in module order: every graded Lab exercise except the extension exercises. */
+export const DRILL_DECK = EXERCISES.filter((ex) => !ex.extension)
   .map((ex, i) => ({ id: ex.id, ex, topic: topicOf(ex), order: i }))
-  .sort((a, b) => a.ex.lecture - b.ex.lecture || a.order - b.order);
+  .sort((a, b) => moduleOrder(a.ex.module) - moduleOrder(b.ex.module) || a.order - b.order);
 export const DRILL_BY_ID = Object.fromEntries(DRILL_DECK.map((c) => [c.id, c]));
 
 export function blankDrills() {
@@ -86,7 +83,7 @@ export function newLeftToday(drills, now) {
   return Math.max(0, (drills.newPerDay ?? NEW_PER_DAY) - started);
 }
 
-/** Never-reviewed cards in lecture order. */
+/** Never-reviewed cards in module order. */
 export function newCards(drills) {
   return DRILL_DECK.filter((c) => inTopics(drills, c) && !drills.cards[c.id]);
 }

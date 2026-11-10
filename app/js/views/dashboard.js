@@ -1,6 +1,6 @@
 import { h } from '../ui/dom.js';
-import { LECTURES, CONCEPTS, CONCEPT_BY_ID, MISTAKE_LABELS } from '../content/concepts.js';
-import { LESSON_BY_LECTURE } from '../content/lessons.js';
+import { MODULES, CONCEPTS, CONCEPT_BY_ID, MISTAKE_LABELS } from '../content/concepts.js';
+import { LESSON_BY_ID } from '../content/lessons.js';
 import { nextActivity } from '../progress/scheduler.js';
 import { icon } from '../ui/icons.js';
 import { dueCards } from '../progress/drills.js';
@@ -12,14 +12,15 @@ export function levelBadge(store, id) {
 
 function ago(t) {
   const m = Math.round((Date.now() - t) / 60000);
-  if (m < 1) return 'just now';
+  if (m < 1) return 'less than a minute ago';
   if (m < 60) return `${m} min ago`;
   const hh = Math.round(m / 60);
   if (hh < 24) return `${hh} h ago`;
-  return `${Math.round(hh / 24)} d ago`;
+  const d = Math.round(hh / 24);
+  return `${d} day${d === 1 ? '' : 's'} ago`;
 }
 
-const EYEBROW = { resume: 'Pick up where you left off', review: 'Worth a review', lesson: 'Up next', mixed: 'Keep it fresh' };
+const EYEBROW = { resume: 'Unfinished session', review: 'Recommended review', lesson: 'Recommended next module', mixed: 'Recommended practice' };
 
 function stat(label, value, total, barPct) {
   return h('div', { class: 'stat' }, h('div', { class: 'k' }, label), h('div', { class: 'v' }, String(value), total != null ? h('small', {}, `/ ${total}`) : null), barPct != null ? h('div', { class: 'bar', role: 'img', 'aria-label': `${Math.round(barPct)}%` }, h('span', { style: { width: barPct + '%' } })) : null);
@@ -33,9 +34,9 @@ export function dashboardView(ctx) {
   const { store } = ctx;
   const next = nextActivity(store);
   const go = () => {
-    if (next.kind === 'resume') ctx.go('#/practice/resume');
+    if (next.kind === 'resume') ctx.go(next.assessment ? '#/assessment/resume' : '#/practice/resume');
     else if (next.kind === 'review') ctx.go('#/practice/new/review');
-    else if (next.kind === 'lesson') ctx.go(`#/lesson/${next.lecture}`);
+    else if (next.kind === 'lesson') ctx.go(`#/module/${next.module}`);
     else ctx.go('#/practice/new/mixed');
   };
   const due = store.dueConcepts();
@@ -46,11 +47,11 @@ export function dashboardView(ctx) {
   let stepsDone = 0;
   let stepsTotal = 0;
   let lessonsDone = 0;
-  for (const L of LECTURES) {
-    const lesson = LESSON_BY_LECTURE[L.n];
-    const rec = store.data.lessons[L.id];
+  for (const M of MODULES) {
+    const lesson = LESSON_BY_ID[M.id];
+    const rec = store.data.lessons[M.id];
     stepsTotal += lesson.sections.length;
-    stepsDone += store.lessonDoneCount(L.id, lesson.sections.map((s) => s.key));
+    stepsDone += store.lessonDoneCount(M.id, lesson.sections.map((s) => s.key));
     if (rec && rec.completed) lessonsDone++;
   }
   const attempts = Object.values(store.data.concepts).reduce((a, c) => a + (c.attempts || 0), 0);
@@ -58,45 +59,46 @@ export function dashboardView(ctx) {
   return h(
     'div',
     {},
-    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Your study desk'), h('div', { class: 'subtitle' }, 'Linked lists, stacks, queues, trees and graphs — step by step.')), h('span', { class: 'muted small' }, `${mastered} of ${CONCEPTS.length} topics mastered · progress is saved on this computer`)),
-    h('section', { class: 'next-card', 'aria-label': 'Suggested next activity' }, h('div', { class: 'next-text' }, h('div', { class: 'eyebrow' }, EYEBROW[next.kind] || 'Up next'), h('p', {}, next.label)), h('button', { class: 'btn primary', onclick: go }, next.kind === 'resume' ? 'Resume' : next.kind === 'lesson' ? 'Open lesson' : 'Start', ' →')),
+    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Data Structures and Algorithms'), h('h1', {}, 'Learning Dashboard'), h('div', { class: 'subtitle' }, 'Memory management, linked lists, stacks, queues, trees and graphs: concepts, visualizations, pseudocode and C++ implementation.')), h('span', { class: 'muted small' }, `${mastered} of ${CONCEPTS.length} concepts mastered · progress is stored on this device`)),
+    h('section', { class: 'next-card', 'aria-label': 'Suggested next activity' }, h('div', { class: 'next-text' }, h('div', { class: 'eyebrow' }, EYEBROW[next.kind] || 'Up next'), h('p', {}, next.label)), h('button', { class: 'btn primary', onclick: go }, next.kind === 'resume' ? 'Resume' : next.kind === 'lesson' ? 'Open module' : 'Start', ' →')),
     h(
       'div',
       { class: 'quick' },
-      quick('shuffle', 'Mixed practice', 'Eight short tasks, weakest topics first', () => ctx.go('#/practice/new/mixed')),
-      quick('target', 'Review missed concepts', due.length ? `${due.length} topic${due.length > 1 ? 's' : ''} due now` : 'Revisit what you got wrong', () => ctx.go('#/practice/new/review')),
-      quick('cards', 'Pseudocode drills', drillsDue ? `${drillsDue} card${drillsDue > 1 ? 's' : ''} due — write them from memory` : 'Spaced repetition for writing pseudocode', () => ctx.go('#/drills')),
-      quick('code', 'Pseudocode Lab', 'Write pseudocode and watch it run', () => ctx.go('#/lab')),
-      quick('explore', 'Free exploration', 'Build structures and run operations', () => ctx.go('#/explore')),
+      quick('shuffle', 'Practice Exercises', 'Eight exercises, concepts that need review first', () => ctx.go('#/practice/new/mixed')),
+      quick('target', 'Targeted Review', due.length ? `${due.length} concept${due.length > 1 ? 's' : ''} due for review` : 'Concepts answered incorrectly recently', () => ctx.go('#/practice/new/review')),
+      quick('cards', 'Cumulative Review', drillsDue ? `${drillsDue} pseudocode exercise${drillsDue > 1 ? 's' : ''} due for review` : 'Spaced review of pseudocode from every module', () => ctx.go('#/review')),
+      quick('code', 'Pseudocode Development', 'Write pseudocode and execute it step by step', () => ctx.go('#/lab')),
+      quick('explore', 'Interactive Visualizations', 'Build structures and run operations', () => ctx.go('#/explore')),
+      quick('assess', 'Knowledge Assessment', 'Assess each module without hints', () => ctx.go('#/assessment')),
     ),
-    h('div', { class: 'stats' }, stat('Topics mastered', mastered, CONCEPTS.length, (mastered / CONCEPTS.length) * 100), stat('Lesson steps done', stepsDone, stepsTotal, stepsTotal ? (stepsDone / stepsTotal) * 100 : 0), stat('Lessons finished', lessonsDone, LECTURES.length), stat('Answers checked', attempts)),
+    h('div', { class: 'stats' }, stat('Concepts mastered', mastered, CONCEPTS.length, (mastered / CONCEPTS.length) * 100), stat('Module steps completed', stepsDone, stepsTotal, stepsTotal ? (stepsDone / stepsTotal) * 100 : 0), stat('Modules completed', lessonsDone, MODULES.length), stat('Answers submitted', attempts)),
     h(
       'div',
       { class: 'dash-grid' },
       h(
         'section',
-        { 'aria-label': 'Lectures' },
-        h('div', { class: 'section-title' }, h('h2', {}, 'Lectures'), h('a', { href: '#/progress', class: 'small' }, 'Detailed progress →')),
+        { 'aria-label': 'Learning Modules' },
+        h('div', { class: 'section-title' }, h('h2', {}, 'Learning Modules'), h('a', { href: '#/progress', class: 'small' }, 'Learning Progress →')),
         h(
           'div',
           { class: 'lec-cards' },
-          LECTURES.map((L) => {
-            const lesson = LESSON_BY_LECTURE[L.n];
-            const rec = store.data.lessons[L.id];
-            const nDone = store.lessonDoneCount(L.id, lesson.sections.map((s) => s.key));
+          MODULES.map((M) => {
+            const lesson = LESSON_BY_ID[M.id];
+            const rec = store.data.lessons[M.id];
+            const nDone = store.lessonDoneCount(M.id, lesson.sections.map((s) => s.key));
             const pct = Math.round((nDone / lesson.sections.length) * 100);
-            const cs = CONCEPTS.filter((c) => c.lecture === L.n);
+            const cs = CONCEPTS.filter((c) => c.module === M.id);
             const m = cs.filter((c) => store.level(c.id) === 'mastered').length;
             return h(
               'article',
               { class: ['lec-card', rec && rec.completed ? 'done' : nDone ? 'started' : ''] },
-              h('div', { class: 'lec-top' }, h('span', { class: 'num' }, String(L.n).padStart(2, '0')), h('div', {}, h('a', { class: 'title', href: `#/lesson/${L.n}` }, L.title))),
-              h('div', {}, h('div', { class: 'meta' }, h('span', {}, `Lesson ${nDone}/${lesson.sections.length} steps`), h('span', {}, `${pct}%`)), h('div', { class: 'bar', role: 'img', 'aria-label': `lesson ${pct}% complete` }, h('span', { style: { width: pct + '%' } }))),
-              h('div', { class: 'foot' }, h('div', { class: 'dots', 'aria-label': 'topics' }, cs.map((c) => h('a', { class: `dot ${store.level(c.id)}`, href: `#/practice/new/concept/${c.id}`, title: `${c.name} — ${store.level(c.id)} (click to practise)`, 'aria-label': `Practise ${c.name} (${store.level(c.id)})` }))), h('span', { class: 'small muted' }, `${m}/${cs.length} mastered`)),
+              h('div', { class: 'lec-top' }, h('span', { class: 'num' }, String(M.n)), h('div', {}, h('a', { class: 'title', href: `#/module/${M.id}` }, M.title))),
+              h('div', {}, h('div', { class: 'meta' }, h('span', {}, `${nDone} of ${lesson.sections.length} steps`), h('span', {}, `${pct}%`)), h('div', { class: 'bar', role: 'img', 'aria-label': `module ${pct}% complete` }, h('span', { style: { width: pct + '%' } }))),
+              h('div', { class: 'foot' }, h('div', { class: 'dots', 'aria-label': 'concepts' }, cs.map((c) => h('a', { class: `dot ${store.level(c.id)}`, href: `#/practice/new/concept/${c.id}`, title: `${c.name} — ${store.level(c.id)} (select to practice)`, 'aria-label': `Practice ${c.name} (${store.level(c.id)})` }))), h('span', { class: 'small muted' }, `${m}/${cs.length} mastered`)),
             );
           }),
         ),
-        h('div', { class: 'legend' }, h('span', {}, 'Each dot is one topic:'), ['new', 'learning', 'practicing', 'mastered'].map((l) => h('span', {}, h('span', { class: `dot ${l}` }), l === 'practicing' ? 'practising' : l)), h('span', {}, 'Click a dot to practise that topic.')),
+        h('div', { class: 'legend' }, h('span', {}, 'Each dot is one concept:'), ['new', 'learning', 'practicing', 'mastered'].map((l) => h('span', {}, h('span', { class: `dot ${l}` }), l)), h('span', {}, 'Select a dot to practice that concept.')),
       ),
       h(
         'aside',
@@ -105,16 +107,16 @@ export function dashboardView(ctx) {
           'section',
           { class: 'panel' },
           h('div', { class: 'panel-title' }, h('h3', {}, 'Due for review'), due.length ? h('button', { class: 'btn small', onclick: () => ctx.go('#/practice/new/review') }, 'Review now') : null),
-          due.length ? h('ul', { class: 'list-plain' }, due.slice(0, 8).map((id) => h('li', {}, h('a', { href: `#/practice/new/concept/${id}` }, CONCEPT_BY_ID[id].name), levelBadge(store, id)))) : h('div', { class: 'empty' }, h('span', { class: 'big', 'aria-hidden': 'true' }, '✓'), 'Nothing is due. Topics come back here after a mistake and at growing intervals after correct answers.'),
+          due.length ? h('ul', { class: 'list-plain' }, due.slice(0, 8).map((id) => h('li', {}, h('a', { href: `#/practice/new/concept/${id}` }, CONCEPT_BY_ID[id].name), levelBadge(store, id)))) : h('div', { class: 'empty' }, h('span', { class: 'big', 'aria-hidden': 'true' }, '✓'), 'No concepts are due. A concept is scheduled for review after an incorrect answer and at increasing intervals after correct answers.'),
         ),
         h(
           'section',
           { class: 'panel' },
-          h('div', { class: 'panel-title' }, h('h3', {}, 'Recent mistakes')),
+          h('div', { class: 'panel-title' }, h('h3', {}, 'Recent errors')),
           mistakes.length
-            ? mistakes.map((m) => h('div', { class: 'mistake' }, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('b', {}, CONCEPT_BY_ID[m.concept]?.name || m.concept), h('span', { class: 'when' }, ago(m.t))), h('div', {}, m.message), h('a', { href: `#/practice/new/concept/${m.concept}`, class: 'small' }, 'Practise this again →')))
-            : h('div', { class: 'empty' }, 'No mistakes recorded yet.'),
-          recurring.length ? h('div', { class: 'row', style: { marginTop: '10px' } }, h('b', { class: 'small' }, 'Recurring:'), recurring.map((r) => h('span', { class: 'pill edge' }, `${MISTAKE_LABELS[r.tag] || r.tag} ×${r.count}`))) : null,
+            ? mistakes.map((m) => h('div', { class: 'mistake' }, h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('b', {}, CONCEPT_BY_ID[m.concept]?.name || m.concept), h('span', { class: 'when' }, ago(m.t))), h('div', {}, m.message), h('a', { href: `#/practice/new/concept/${m.concept}`, class: 'small' }, 'Practice this concept →')))
+            : h('div', { class: 'empty' }, 'No errors recorded.'),
+          recurring.length ? h('div', { class: 'row', style: { marginTop: '10px' } }, h('b', { class: 'small' }, 'Recurring errors:'), recurring.map((r) => h('span', { class: 'pill edge' }, `${MISTAKE_LABELS[r.tag] || r.tag} (${r.count})`))) : null,
         ),
       ),
     ),

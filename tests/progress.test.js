@@ -4,8 +4,12 @@ import { ProgressStore, memoryStorage, STORAGE_KEY } from '../app/js/progress/st
 import { buildSession, followUpItem, nextActivity, conceptTemplates } from '../app/js/progress/scheduler.js';
 import { CONCEPTS } from '../app/js/content/concepts.js';
 import { generateExercise, TEMPLATE_BY_ID } from '../app/js/exercises/registry.js';
-import { LESSONS, LESSON_BY_LECTURE } from '../app/js/content/lessons.js';
-import { migrateProgress, OLD_LESSON_KEYS, REMOVED_TEMPLATES, REMOVED_CONCEPTS, CONTENT_VERSION } from '../app/js/progress/migrate.js';
+import { LESSONS, LESSON_BY_ID } from '../app/js/content/lessons.js';
+import { migrateProgress, OLD_LESSON_KEYS, V2_LESSON_KEYS, KEY_RENAMES, REMOVED_TEMPLATES, REMOVED_CONCEPTS, CONTENT_VERSION } from '../app/js/progress/migrate.js';
+
+const ALL_KEYS = new Set(LESSONS.flatMap((l) => l.sections.map((s) => s.key)));
+const renamed = (k) => KEY_RENAMES[k] || k;
+const moduleOfKey = (k) => LESSONS.find((l) => l.sections.some((s) => s.key === k))?.id;
 
 function clock(start = 1_700_000_000_000) {
   let t = start;
@@ -14,20 +18,20 @@ function clock(start = 1_700_000_000_000) {
   return f;
 }
 
-const attempt = (over = {}) => ({ templateId: 'l08-rewire-insert', seed: 1, concept: 'l08.insert-mid', type: 'rewire', lecture: 8, correct: true, hints: 0, revealed: false, guidance: 'less', ...over });
+const attempt = (over = {}) => ({ templateId: 'l08-rewire-insert', seed: 1, concept: 'l08.insert-mid', type: 'rewire', module: 'sll', correct: true, hints: 0, revealed: false, guidance: 'less', ...over });
 
 test('progress survives a reload (same storage)', () => {
   const storage = memoryStorage();
   const now = clock();
   const a = new ProgressStore(storage, { now });
   a.recordAttempt(attempt());
-  const keys = LESSON_BY_LECTURE[8].sections.map((x) => x.key);
-  a.markLessonStep('l08', keys[0], keys);
+  const keys = LESSON_BY_ID.sll.sections.map((x) => x.key);
+  a.markLessonStep('sll', keys[0], keys);
   a.setSession({ id: 's1', items: [{ templateId: 'l08-fill', seed: 3, status: 'pending' }], index: 0, mode: 'mixed', finished: false });
   const b = new ProgressStore(storage, { now });
   assert.equal(b.data.concepts['l08.insert-mid'].attempts, 1);
-  assert.deepEqual(b.data.lessons.l08.done, [keys[0]]);
-  assert.equal(b.data.lessons.l08.at, keys[1]);
+  assert.deepEqual(b.data.lessons.sll.done, [keys[0]]);
+  assert.equal(b.data.lessons.sll.at, keys[1]);
   assert.equal(b.data.session.id, 's1');
 });
 
@@ -56,7 +60,7 @@ test('mistakes, recurring tags, due and weak concepts', () => {
   assert.deepEqual(s.recurringMistakes()[0], { tag: 'lost-access', count: 2 });
   assert.ok(s.dueConcepts().includes('l08.insert-mid'));
   assert.ok(s.weakConcepts().includes('l08.insert-beg'));
-  s.recordAttempt(attempt({ concept: 'l07.tradeoffs', templateId: 'l07-choose', type: 'choose', lecture: 7 }));
+  s.recordAttempt(attempt({ concept: 'l07.tradeoffs', templateId: 'l07-choose', type: 'choose', module: 'memory' }));
   assert.ok(!s.dueConcepts().includes('l07.tradeoffs'));
   now.advance(3 * 24 * 3600 * 1000);
   assert.ok(s.dueConcepts().includes('l07.tradeoffs'));
@@ -102,7 +106,7 @@ test('sessions: size, regeneration from seeds, weak concepts first, follow-ups',
   // serialisable
   assert.deepEqual(JSON.parse(JSON.stringify(sess)), sess);
   // weak concept shows up in a review session
-  s.recordAttempt(attempt({ concept: 'l12.lifo-fifo', templateId: 'l12-choose', type: 'choose', lecture: 12, correct: false, tag: 'lifo-fifo' }));
+  s.recordAttempt(attempt({ concept: 'l12.lifo-fifo', templateId: 'l12-choose', type: 'choose', module: 'stack', correct: false, tag: 'lifo-fifo' }));
   const rev = buildSession(s, { mode: 'review', size: 4, seed: 7 });
   assert.ok(rev.items.some((x) => x.concept === 'l12.lifo-fifo'));
   const f = followUpItem(sess.items[0]);
@@ -170,10 +174,11 @@ test('every lesson section has a unique stable key, and retained version-1 keys 
     assert.ok(keys.every((k) => typeof k === 'string' && k.length > 2), `${l.id}: missing keys`);
   }
   const removed = ['r:cost-finding-the-position-vs-changing-links', 'e:count-the-pointer-moves', 'r:head-only-vs-head-tail', 's:deleting-the-tail-even-though-tail-is-known', 'e:count-the-work', 'r:cost-of-the-circle', 'e:count-the-moves', 'e:which-end-is-cheaper', 'r:cost-of-traversals', 'e:list-vs-matrix', 'p:write-your-own-pseudocode-insert-at-the-end', 'p:write-your-own-pseudocode-delete-the-node-at-pos', 'p:write-your-own-pseudocode-delete-node-t-from-a-d'];
-  for (const [id, old] of Object.entries(OLD_LESSON_KEYS)) {
-    const now = new Set(LESSONS.find((l) => l.id === id).sections.map((s) => s.key));
-    for (const k of old) if (!removed.includes(k)) assert.ok(now.has(k), `${id}: retained section ${k} lost its key`);
-  }
+  for (const [id, old] of Object.entries(OLD_LESSON_KEYS)) for (const k of old) if (!removed.includes(k)) assert.ok(ALL_KEYS.has(renamed(k)), `${id}: retained section ${k} lost its key`);
+  // every version-2 section still exists in one of the modules
+  for (const [id, keys] of Object.entries(V2_LESSON_KEYS)) for (const k of keys) assert.ok(ALL_KEYS.has(renamed(k)), `${id}: section ${k} lost its key`);
+  // renamed keys are new names, never reused
+  for (const [a, b] of Object.entries(KEY_RENAMES)) assert.ok(!ALL_KEYS.has(a) && ALL_KEYS.has(b), `${a} → ${b}`);
 });
 
 test('version-1 progress migrates: lesson steps by key, time-complexity data removed, the rest kept', () => {
@@ -182,14 +187,15 @@ test('version-1 progress migrates: lesson steps by key, time-complexity data rem
   const s = new ProgressStore(storage, { now: clock() });
   const d = s.data;
   assert.equal(d.contentVersion, CONTENT_VERSION);
-  // lessons: indices became keys; removed sections are dropped
+  // lessons: indices became keys, removed sections are dropped, and the steps moved to their modules
   const k8 = OLD_LESSON_KEYS.l08;
-  const now8 = new Set(LESSON_BY_LECTURE[8].sections.map((x) => x.key));
-  assert.deepEqual(d.lessons.l08.done, [0, 1, 2, 17, 18, 20].map((i) => k8[i]).filter((k) => now8.has(k)));
-  assert.ok(!d.lessons.l08.done.includes(k8[17]) && !d.lessons.l08.done.includes(k8[18]), 'the two cost sections are gone');
-  assert.equal(d.lessons.l08.at, k8[19], 'old step 18 (a cost exercise) is gone, so it reopens at the next retained step');
-  assert.equal(d.lessons.l12.done.length, 18, 'l12: the cost exercise was dropped');
-  assert.equal(d.lessons.l12.completed, LESSON_BY_LECTURE[12].sections.every((x) => d.lessons.l12.done.includes(x.key)));
+  assert.deepEqual(d.lessons.sll.done, [0, 1, 2, 17, 18, 20].map((i) => renamed(k8[i])).filter((k) => ALL_KEYS.has(k)));
+  assert.ok(!d.lessons.sll.done.includes(k8[17]) && !d.lessons.sll.done.includes(k8[18]), 'the two cost sections are gone');
+  assert.equal(d.lessons.sll.at, renamed(k8[19]), 'old step 18 (a cost exercise) is gone, so it reopens at the next retained step');
+  assert.equal(d.lessons.stack.done.length + d.lessons.queue.done.length, 18, 'l12: the cost exercise was dropped; the rest is split between stacks and queues');
+  assert.ok(d.lessons.stack.done.every((k) => moduleOfKey(k) === 'stack') && d.lessons.queue.done.every((k) => moduleOfKey(k) === 'queue'));
+  assert.equal(d.lessons.l08, undefined);
+  assert.equal(d.lessons.l12, undefined);
   // topics
   assert.equal(d.concepts['cx.list-costs'], undefined);
   const arr = d.concepts['l07.arrays-vs-lists'];
@@ -209,7 +215,9 @@ test('version-1 progress migrates: lesson steps by key, time-complexity data rem
   // session keeps only retained exercises
   assert.deepEqual(d.session.items.map((x) => x.templateId), ['l08-fill']);
   // untouched parts
-  assert.equal(d.lab.drafts['ex:sll-traverse'], 'cur = start');
+  assert.equal(d.lab.drafts['ex:sll-traverse'], 'cur = head', 'the list head pointer is now called head');
+  assert.ok(d.attempts.every((a) => a.module && !('lecture' in a)));
+  assert.equal(d.attempts[0].module, 'tree');
   assert.equal(d.settings.theme, 'dark');
   // every remaining reference resolves
   for (const a of d.attempts) assert.ok(!REMOVED_TEMPLATES.includes(a.templateId));
@@ -225,5 +233,57 @@ test('importing a version-1 export migrates it too', () => {
   assert.equal(r.ok, true);
   assert.equal(s.data.contentVersion, CONTENT_VERSION);
   assert.equal(s.data.concepts['cx.list-costs'], undefined);
-  assert.ok(s.data.lessons.l08.done.every((k) => typeof k === 'string'));
+  assert.ok(s.data.lessons.sll.done.every((k) => typeof k === 'string'));
+});
+
+// ---------------------------------------------------------------- content version 3 migration (lessons → modules)
+test('version-2 progress migrates to the learning modules', () => {
+  const t = 1_700_000_000_000;
+  const v2 = {
+    version: 1,
+    contentVersion: 2,
+    createdAt: t,
+    updatedAt: t,
+    concepts: {},
+    types: {},
+    templates: {},
+    attempts: [{ t, templateId: 'l12-choose', seed: 1, concept: 'l12.array-queue', type: 'choose', lecture: 12, correct: true, independent: true, hints: 0, revealed: false, tag: null }],
+    mistakes: [],
+    lessons: {
+      l07: { at: V2_LESSON_KEYS.l07[0], done: [...V2_LESSON_KEYS.l07], completed: true },
+      l08: { at: V2_LESSON_KEYS.l08[3], done: V2_LESSON_KEYS.l08.slice(0, 3), completed: false },
+      l11: { at: V2_LESSON_KEYS.l11[1], done: [V2_LESSON_KEYS.l11[0]], completed: false },
+      l12: { at: V2_LESSON_KEYS.l12[14], done: V2_LESSON_KEYS.l12.slice(0, 14), completed: false },
+    },
+    session: { id: 's1', mode: 'lecture', lecture: 12, index: 0, items: [{ templateId: 'l12-choose', seed: 3, concept: 'l12.lifo-fifo', status: 'pending' }], finished: false },
+    lab: { drafts: { 'free:dll': 'p = start', 'free:graph': 'start = s', 'drill:aqueue-enqueue-dequeue': 'F = 0' }, solved: {}, last: null, freeValues: { graph: { graph: 'lec14', s: 'a' } } },
+    drills: { cards: {}, topics: ['stacks-queues', 'arrays'], newPerDay: 5, session: null },
+    settings: { theme: 'dark' },
+  };
+  const d = migrateProgress(v2);
+  assert.equal(d.contentVersion, CONTENT_VERSION);
+  // Module 1 holds exactly the old first lesson, so it stays completed
+  assert.equal(d.lessons.memory.completed, true);
+  // three old lessons form the singly linked list module; the earliest unfinished one decides where it reopens
+  assert.deepEqual(d.lessons.sll.done, [...V2_LESSON_KEYS.l08.slice(0, 3), V2_LESSON_KEYS.l11[0]].map(renamed));
+  assert.equal(d.lessons.sll.at, renamed(V2_LESSON_KEYS.l08[3]));
+  assert.equal(d.lessons.sll.completed, false);
+  // the stack and queue lesson is split
+  assert.ok(d.lessons.stack.done.length > 0 && d.lessons.queue.done.length > 0);
+  assert.equal(d.lessons.stack.done.length + d.lessons.queue.done.length, 14);
+  for (const id of ['l07', 'l08', 'l11', 'l12']) assert.equal(d.lessons[id], undefined);
+  // sessions, attempts, review topics, drafts and the saved example graph
+  assert.equal(d.session.mode, 'module');
+  assert.equal(d.session.module, 'stack');
+  assert.equal(d.attempts[0].module, 'queue');
+  assert.deepEqual(d.drills.topics, ['stack', 'queue', 'memory']);
+  assert.equal(d.lab.drafts['free:dll'], 'p = head');
+  assert.equal(d.lab.drafts['free:graph'], 'start = s', 'only list structures had a start pointer');
+  assert.equal(d.lab.drafts['drill:aqueue-enqueue-dequeue'], 'F = 0');
+  assert.equal(d.lab.freeValues.graph.graph, 'example');
+  // the store loads it, and migrating again changes nothing
+  const storage = memoryStorage();
+  storage.setItem(STORAGE_KEY, JSON.stringify(v2));
+  assert.equal(new ProgressStore(storage, { now: clock() }).data.lessons.sll.at, renamed(V2_LESSON_KEYS.l08[3]));
+  assert.deepEqual(migrateProgress(d), d);
 });

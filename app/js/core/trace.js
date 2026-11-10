@@ -21,7 +21,7 @@ export function keyCodes(table, prefix) {
 export class Tracer {
   /**
    * @param {object} state  initial state (will be cloned)
-   * @param {object} code   {title, lines:[string], cpp?:string, notesRef?:string}
+   * @param {object} code   {title, lines:[string], cpp?:string, ref?:string}
    */
   constructor(state, code) {
     this.state = JSON.parse(JSON.stringify(state));

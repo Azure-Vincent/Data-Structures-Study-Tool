@@ -78,7 +78,7 @@ export function globalVal(st, name) {
   return st.frames[0].vars[name];
 }
 
-/** "start → 10 → 20 → NULL" style summary of the structure. */
+/** "head → 10 → 20 → NULL" style summary of the structure. */
 export function structureText(st) {
   const S = structureOf(st);
   if (S.render === 'graph') return 'graph G';
@@ -94,8 +94,8 @@ export function structureText(st) {
   const vals = c.addrs.map((a) => dataText(st.nodes[a].data));
   if (!vals.length && c.end === 'null') return `${root} = NULL (empty)`;
   let tail = ' → NULL';
-  if (c.end === 'cycle') tail = c.closedAt === c.addrs[0] ? ` → (back to ${S.circular ? 'start' : `@${c.closedAt}`})` : ` → (loops back to @${c.closedAt})`;
-  if (c.end === 'freed') tail = ` → @${c.at} (deleted!)`;
+  if (c.end === 'cycle') tail = c.closedAt === c.addrs[0] ? ` → (back to ${S.circular ? 'head' : `@${c.closedAt}`})` : ` → (loops back to @${c.closedAt})`;
+  if (c.end === 'freed') tail = ` → @${c.at} (deleted)`;
   return `${root} → ${vals.join(' → ')}${tail}`;
 }
 
@@ -221,7 +221,7 @@ export function stepIssues(prev, st, ev, prevLost) {
       category: 'logic',
       title: 'Lost reference',
       message: `${newly.length === 1 ? 'Node' : 'Nodes'} ${names} can no longer be reached from any variable. ${cause}`.trim(),
-      hint: ev && ev.change && ev.change.type === 'field' ? 'Order matters: before overwriting a pointer, make sure something else (a variable or another node) still points to what it pointed at — for example set newnode.next first, then change the old link.' : 'Keep a variable on a node until it is linked into the structure or deleted.',
+      hint: ev && ev.change && ev.change.type === 'field' ? 'Order matters: before overwriting a pointer, make sure something else (a variable or another node) still points to what it pointed at — for example set new_node.next first, then change the old link.' : 'Keep a variable on a node until it is linked into the structure or deleted.',
       tag: 'lost-access',
       line: ev ? ev.line : null,
       addrs: newly,
@@ -272,20 +272,20 @@ export function finalIssues(st) {
   if (S.render === 'list') {
     const rv = globalVal(st, S.roots[0]);
     const c = chain(st, rv, S.forward);
-    if (c.end === 'freed') warn('Broken link', `The ${S.forward === 'right' ? 'right' : 'next'} pointers from ${S.roots[0]} lead into deleted node @${c.at}${c.addrs.length ? ` (from @${c.addrs[c.addrs.length - 1]})` : ''}.`, 'dangling', [c.at], 'Unlink a node before deleting it, or set the pointer to NULL afterwards.');
+    if (c.end === 'freed') warn('Broken link', `The ${S.forward} pointers from ${S.roots[0]} lead into deleted node @${c.at}${c.addrs.length ? ` (from @${c.addrs[c.addrs.length - 1]})` : ''}.`, 'dangling', [c.at], 'Unlink a node before deleting it, or set the pointer to NULL afterwards.');
     if (S.circular) {
-      if (c.addrs.length && c.end === 'null') warn('Circle not closed', `The last node ${nodeTxt(st, c.addrs[c.addrs.length - 1])} has next = NULL, so the list is no longer circular.`, 'circle-not-closed', [c.addrs[c.addrs.length - 1]], 'In a circular list the last node’s next must point back to start.');
-      if (c.end === 'cycle' && c.closedAt !== c.addrs[0]) warn('Circle closes in the wrong place', `Following next from start loops back to @${c.closedAt}, not to start (@${c.addrs[0]}), so some nodes are never revisited.`, 'circle-not-closed', [c.closedAt]);
+      if (c.addrs.length && c.end === 'null') warn('Circle not closed', `The last node ${nodeTxt(st, c.addrs[c.addrs.length - 1])} has next = NULL, so the list is no longer circular.`, 'circle-not-closed', [c.addrs[c.addrs.length - 1]], 'In a circular list the last node’s next must point back to head.');
+      if (c.end === 'cycle' && c.closedAt !== c.addrs[0]) warn('Circle closes in the wrong place', `Following next from head loops back to @${c.closedAt}, not to head (@${c.addrs[0]}), so some nodes are never revisited.`, 'circle-not-closed', [c.closedAt]);
     } else if (c.end === 'cycle') {
       warn('Unintended cycle', `Following ${S.forward} from ${S.roots[0]} never reaches NULL: it loops back to @${c.closedAt}. Any traversal of this ${S.label.toLowerCase()} would run forever.`, 'pointer-walk', [c.closedAt], 'Check which node should have NULL in its link.');
     }
     if (S.id === 'dll' && c.addrs.length && c.end !== 'freed') {
       const first = st.nodes[c.addrs[0]];
-      if (first.left !== null) warn('Broken back link', `The first node ${nodeTxt(st, first.addr)} should have left = NULL, but left is @${first.left}.`, 'back-link', [first.addr]);
+      if (first.prev !== null) warn('Broken back link', `The first node ${nodeTxt(st, first.addr)} should have prev = NULL, but prev is @${first.prev}.`, 'back-link', [first.addr]);
       for (let i = 1; i < c.addrs.length; i++) {
         const a = st.nodes[c.addrs[i]];
-        if (a.left !== c.addrs[i - 1]) {
-          warn('Broken back link', `${nodeTxt(st, a.addr)}.left should point back to @${c.addrs[i - 1]} (the node before it) but is ${a.left === null ? 'NULL' : `@${a.left}`}.`, 'back-link', [a.addr], 'In a doubly linked list every insert/delete updates both directions: the right link of one node and the left link of the next.');
+        if (a.prev !== c.addrs[i - 1]) {
+          warn('Broken back link', `${nodeTxt(st, a.addr)}.prev should point back to @${c.addrs[i - 1]} (the node before it) but is ${a.prev === null ? 'NULL' : `@${a.prev}`}.`, 'back-link', [a.addr], 'In a doubly linked list every insertion and deletion updates both directions: the next pointer of one node and the prev pointer of the following node.');
           break;
         }
       }

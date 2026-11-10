@@ -1,4 +1,4 @@
-// "Build it in code" walkthrough: one program shown in C++, Python or
+// implementation walkthrough: one program shown in C++, Python or
 // pseudocode, executed step by step. The pseudocode is what runs (the
 // Pseudocode Lab interpreter); the C++ and Python lines carrying the same label
 // are highlighted, so each statement is tied to the change it makes in the
@@ -55,7 +55,7 @@ export function createWalkthrough(ex, opts = {}) {
   const tabs = langTabs(LANGS);
   const codeTitle = h('h3', {});
   const codeOl = h('ol');
-  const codeP = h('div', { class: 'panel code-panel walk-code' }, h('div', { class: 'panel-title' }, codeTitle, ex.ref ? h('span', { class: 'pill' }, ex.ref) : null), tabs, codeOl);
+  const codeP = h('div', { class: 'panel code-panel walk-code' }, h('div', { class: 'panel-title' }, codeTitle), tabs, codeOl);
   const explainP = h('div', { class: 'panel ws-explain walk-explain', 'aria-live': 'polite' });
   const diagram = h('div', { class: 'diagram-box walk-diagram' });
   const varsP = h('div', { class: 'panel walk-vars' });

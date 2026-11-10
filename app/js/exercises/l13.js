@@ -1,4 +1,4 @@
-// Lecture 13 — Trees and graphs: terminology, properties, representations.
+// Trees and graphs: terminology, properties, representations.
 import { opts, multi, numeric, nodePick } from './kit.js';
 import * as T from '../core/tree.js';
 import * as G from '../core/graph.js';
@@ -20,7 +20,6 @@ function smallTree(rng, lo = 5, hi = 9) {
 export const l13 = [
   {
     id: 'l13-relations',
-    lecture: 13,
     concept: 'l13.tree-terms',
     type: 'classify',
     title: 'Tree relationships',
@@ -33,7 +32,7 @@ export const l13 = [
         return {
           prompt: `Select every **${kind === 'leaves' ? 'leaf' : 'internal (non-leaf)'}** node.`,
           visual: { type: 'tree', tree: t, clickable: true },
-          ...nodePick(ans, { explain: 'A leaf has no children (Lec 13 p.2); every other node is internal — including the root when it has children.' }),
+          ...nodePick(ans, { explain: 'A leaf has no children; every other node is internal, including the root when it has children.' }),
           hints: ['Count each node’s children.', { text: 'Leaves are at the bottom of their branches.' }, kind === 'leaves' ? 'Pick the nodes with 0 children.' : 'Pick the nodes with 1 or 2 children.'],
         };
       }
@@ -53,16 +52,15 @@ export const l13 = [
             siblings: 'Siblings share the same parent; the root and an only child have none.',
             ancestors: 'Ancestors lie on the path from the root down to the node (not including the node itself).',
             descendants: 'Descendants are all nodes below it, at any depth.',
-            subtree: 'The subtree is the node itself plus all of its descendants (Lec 13 p.2).',
+            subtree: 'The subtree rooted at a node is the node itself plus all of its descendants.',
           }[kind],
         }),
-        hints: ['Use the definitions on Lec 13 p.1–2.', { text: `Start from ${x}.`, hl: { nodes: [x] } }, kind === 'ancestors' ? `Walk upward from ${x} to the root.` : kind === 'subtree' ? `Include ${x} itself.` : kind === 'descendants' ? `Everything below ${x}.` : `Look one level ${kind === 'parent' || kind === 'siblings' ? 'up' : 'down'}.`],
+        hints: ['Recall the definitions of parent, child, sibling, ancestor, descendant and subtree.', { text: `Start from ${x}.`, hl: { nodes: [x] } }, kind === 'ancestors' ? `Walk upward from ${x} to the root.` : kind === 'subtree' ? `Include ${x} itself.` : kind === 'descendants' ? `Everything below ${x}.` : `Look one level ${kind === 'parent' || kind === 'siblings' ? 'up' : 'down'}.`],
       };
     },
   },
   {
     id: 'l13-measures',
-    lecture: 13,
     concept: 'l13.tree-measures',
     type: 'predict',
     title: 'Level, height and depth',
@@ -76,20 +74,20 @@ export const l13 = [
       if (kind === 'level') {
         ans = T.level(t, x);
         q = `What is the LEVEL of ${x}?`;
-        explain = `Level = number of edges from the root; the root is level 0 (Lec 13 p.3). ${x} is level ${ans}.`;
+        explain = `Level = number of edges from the root; the root is level 0. ${x} is level ${ans}.`;
       } else if (kind === 'height') {
         ans = T.height(t);
         q = 'What is the HEIGHT of the tree?';
-        explain = `Height = the maximum level (counted in edges): ${ans}. A single-node tree has height 0. Convention warning: some books count NODES instead, giving ${ans + 1}; and some define the empty tree’s height as −1.`;
+        explain = `Height = the maximum level (counted in edges): ${ans}. A single-node tree has height 0. Some references count NODES instead, which gives ${ans + 1}; the height of the empty tree is also defined differently (usually −1).`;
       } else if (kind === 'depth') {
-        ans = T.depthNotes(t, x);
-        q = `Using the notes’ definition (depth = number of NODES on the path from the root), what is the depth of ${x}?`;
-        explain = `The path from the root to ${x} has ${ans} node(s). Correction: most textbooks define depth = number of EDGES = level (${T.level(t, x)} here). The notes’ depth is always level + 1 — always check which convention a question uses.`;
+        ans = T.level(t, x);
+        q = `What is the DEPTH of ${x} (the number of edges on the path from the root)?`;
+        explain = `The path from the root to ${x} has ${ans} edge(s), so its depth is ${ans}: depth equals level, and the root has depth 0. Some references count NODES on the path instead, which gives ${ans + 1}; always check which convention a question uses.`;
       } else if (kind === 'atLevel') {
         const l = rng.int(0, T.height(t));
         ans = T.nodesAtLevel(t, l).length;
         q = `How many nodes are on level ${l}?`;
-        explain = `Level ${l} holds ${ans} node(s); at most 2^${l} = ${2 ** l} are possible (Lec 13 p.3 property ③).`;
+        explain = `Level ${l} holds ${ans} node(s); at most 2^${l} = ${2 ** l} are possible.`;
       } else {
         ans = T.leaves(t).length;
         q = 'How many LEAF nodes does the tree have?';
@@ -99,14 +97,13 @@ export const l13 = [
         prompt: q,
         visual: { type: 'tree', tree: t, mark: kind === 'level' || kind === 'depth' ? [x] : [], levels: kind !== 'level' && kind !== 'depth' },
         edge: T.size(t) === 1 || x === t.root,
-        ...numeric(ans, { explain, wrong: { [ans + 1]: { msg: 'Off by one — are you counting nodes instead of edges (or the other way round)?', tag: 'height-convention' }, [ans - 1]: { msg: 'Off by one — check the convention: levels and height count EDGES; the notes’ depth counts NODES.', tag: 'height-convention' } } }),
-        hints: ['Level and height count edges; the notes’ depth counts nodes.', { text: 'The root is level 0.', hl: { nodes: [t.root] } }, kind === 'height' ? 'Find the deepest node and count edges from the root.' : 'Count along the path from the root.'],
+        ...numeric(ans, { explain, wrong: { [ans + 1]: { msg: 'Off by one — are you counting nodes instead of edges (or the other way around)?', tag: 'height-convention' }, [ans - 1]: { msg: 'Off by one — check the convention: level, depth and height count EDGES, and the root is at level 0.', tag: 'height-convention' } } }),
+        hints: ['Level, depth and height count edges; the root has level 0 and depth 0.', { text: 'The root is level 0.', hl: { nodes: [t.root] } }, kind === 'height' ? 'Find the deepest node and count edges from the root.' : 'Count along the path from the root.'],
       };
     },
   },
   {
     id: 'l13-classify',
-    lecture: 13,
     concept: 'l13.tree-classify',
     type: 'classify',
     title: 'Classify the binary tree',
@@ -116,23 +113,22 @@ export const l13 = [
       const c = T.classify(t);
       const none = !c.strict && !c.perfect && !c.complete;
       const o = opts(rng, [
-        { text: 'Strictly binary (notes) — every internal node has exactly 2 children. Many books call this FULL or PROPER.', correct: c.strict, why: c.strict ? 'No node has exactly one child.' : 'Some node has exactly one child.', tag: 'full-vs-perfect' },
-        { text: '“Full” as defined in the notes — all leaves on the last level and every internal node has 2 children. Most books call this PERFECT.', correct: c.perfect, why: c.perfect ? `All leaves are on level ${T.height(t)}.` : 'Not every leaf is on the last level, or some node has one child.', tag: 'full-vs-perfect' },
-        { text: 'Complete — the nodes fill numbers 1..n of the level-order numbering (no gaps).', correct: c.complete, why: c.complete ? 'Every level is full except possibly the last, which is filled from the left.' : `There is a gap in the numbering (numbers used: ${Object.values(T.numbering(t)).sort((a, b) => a - b).join(', ')}).`, tag: 'complete' },
+        { text: 'Full (strictly binary): every node has 0 or 2 children.', correct: c.strict, why: c.strict ? 'No node has exactly one child.' : 'Some node has exactly one child.', tag: 'full-vs-perfect' },
+        { text: 'Perfect: every internal node has 2 children and all leaves are on the same level.', correct: c.perfect, why: c.perfect ? `All leaves are on level ${T.height(t)}.` : 'Not every leaf is on the same level, or some node has one child.', tag: 'full-vs-perfect' },
+        { text: 'Complete: every level is filled except possibly the last, which is filled from the left (the nodes occupy numbers 1..n of the level-order numbering, with no gaps).', correct: c.complete, why: c.complete ? 'Every level is full except possibly the last, which is filled from the left.' : `There is a gap in the numbering (numbers used: ${Object.values(T.numbering(t)).sort((a, b) => a - b).join(', ')}).`, tag: 'complete' },
         { text: 'None of these', correct: none, why: none ? 'It fails all three definitions.' : 'At least one definition holds.', tag: 'tree-shape' },
       ]);
       return {
         prompt: 'Select EVERY description that fits this tree.',
         visual: { type: 'tree', tree: t, numbering: true },
         edge: T.size(t) <= 2,
-        ...multi(o, { explain: 'Every perfect tree is also strictly binary and complete; a complete tree need not be strictly binary.' }),
+        ...multi(o, { explain: 'Every perfect tree is also full and complete; a complete tree need not be full.' }),
         hints: ['Check each definition separately.', { text: 'The small numbers show the level-order numbering (root 1, children 2k and 2k+1).' }, 'Look for a node with one child, and for gaps in the numbering.'],
       };
     },
   },
   {
     id: 'l13-array-index',
-    lecture: 13,
     concept: 'l13.tree-repr',
     type: 'convert',
     title: 'Array representation',
@@ -148,7 +144,7 @@ export const l13 = [
           prompt: `The tree is stored in an array using level-order positions, **${base}-based** (${f}). At which index is **${x}** stored? (Empty positions stay unused.)`,
           visual: { type: 'tree', tree: t, mark: [x], showArray: base },
           edge: x === t.root,
-          ...numeric(ans, { explain: `Root at index ${base}; each move down-left/down-right applies the formula. Lec 13 p.5 draws the 0-based layout (children of 0 at 1 and 2). In the LINKED representation the same node is reached by following left/right pointers instead — no index arithmetic, but extra memory for two pointers per node.`, wrong: { [base === 0 ? ans + 1 : ans - 1]: { msg: 'That would be the other (0-/1-based) convention.', tag: 'array-base' } } }),
+          ...numeric(ans, { explain: `Root at index ${base}; each move down-left/down-right applies the formula. In the 0-based layout the children of index 0 are at 1 and 2. In the LINKED representation the same node is reached by following left/right pointers instead — no index arithmetic, but extra memory for two pointers per node.`, wrong: { [base === 0 ? ans + 1 : ans - 1]: { msg: 'That would be the other (0-/1-based) convention.', tag: 'array-base' } } }),
           hints: ['Number the nodes level by level, left to right, counting empty spots under existing nodes.', { text: 'Follow the path from the root: left or right at each step.', hl: { nodes: T.pathFromRoot(t, x) } }, `Start at ${base} and apply the child formula along the path.`],
         };
       }
@@ -159,7 +155,7 @@ export const l13 = [
         return {
           prompt: `${base}-based array representation (${f}). At which index is the **${side} child** of the node at index ${i}?`,
           ...numeric(ans, { explain: `${side} child of i = ${base === 0 ? (side === 'left' ? '2i + 1' : '2i + 2') : side === 'left' ? '2i' : '2i + 1'} = ${ans}.`, wrong: { [base === 0 ? ans - 1 : ans + 1]: { msg: 'Check whether the array is 0-based or 1-based.', tag: 'array-base' } } }),
-          hints: ['Use the formula for this base.', { text: 'Lec 13 p.5: arrows from index 0 go to 1 and 2.' }, `Compute with i = ${i}.`],
+          hints: ['Use the formula for this base.', { text: base === 0 ? 'With 0-based indices, the children of index 0 are at 1 and 2.' : 'With 1-based indices, the children of index 1 are at 2 and 3.' }, `Compute with i = ${i}.`],
         };
       }
       const j = rng.int(base + 1, 14);
@@ -173,7 +169,6 @@ export const l13 = [
   },
   {
     id: 'l13-formulas',
-    lecture: 13,
     concept: 'l13.tree-measures',
     type: 'predict',
     title: 'Node-count formulas',
@@ -187,7 +182,7 @@ export const l13 = [
       if (kind === 'maxNodes') {
         ans = T.maxNodesOfHeight(h);
         q = `What is the MAXIMUM number of nodes in a binary tree of height ${h}?`;
-        explain = `Levels 0..${h} hold at most 1 + 2 + … + 2^${h} = 2^(${h}+1) − 1 = ${ans} nodes (Lec 13 p.3 ①).`;
+        explain = `Levels 0..${h} hold at most 1 + 2 + … + 2^${h} = 2^(${h}+1) − 1 = ${ans} nodes.`;
         if (h <= 3) visual = { type: 'tree', tree: T.randomTree(rng, ans, 'perfect'), levels: true };
       } else if (kind === 'maxLeaves') {
         ans = T.maxLeavesOfHeight(h);
@@ -197,17 +192,17 @@ export const l13 = [
       } else if (kind === 'atLevel') {
         ans = T.maxNodesAtLevel(h);
         q = `At most how many nodes can a binary tree have on level ${h}?`;
-        explain = `Each level can at most double: 2^${h} = ${ans} (Lec 13 p.3 ③).`;
+        explain = `Each level can at most double: 2^${h} = ${ans}.`;
       } else if (kind === 'nextLevel') {
         const m = rng.int(1, 9);
         ans = 2 * m;
         q = `A binary tree has ${m} node(s) on level ${h}. At most how many nodes can it have on level ${h + 1}?`;
-        explain = `Each of the ${m} nodes has at most 2 children: 2m = ${ans} (Lec 13 p.3 ②).`;
+        explain = `Each of the ${m} nodes has at most 2 children: 2m = ${ans}.`;
       } else if (kind === 'edges') {
         const n = rng.int(1, 30);
         ans = T.edgesOfTree(n);
         q = `A binary tree has ${n} node(s). How many edges does it have?`;
-        explain = `Every node except the root has exactly one incoming edge: n − 1 = ${ans}. Correction to Lec 13 p.3 ④: this holds for EVERY tree, not only full ones.`;
+        explain = `Every node except the root has exactly one incoming edge: n − 1 = ${ans}. This holds for EVERY tree, not only full or perfect ones.`;
         if (n <= 9) visual = { type: 'tree', tree: T.randomTree(rng, n, 'any') };
       } else {
         const n = rng.int(1, 40);
@@ -220,13 +215,12 @@ export const l13 = [
         visual,
         edge: h === 0,
         ...numeric(ans, { explain, wrong: { [ans * 2]: { msg: 'Check the exponent: level l has at most 2^l nodes.', tag: 'formula' }, [ans + 1]: { msg: 'Off by one — remember levels start at 0.', tag: 'height-convention' } } }),
-        hints: ['Level l can hold at most 2^l nodes.', { text: 'Picture the fullest possible tree.' }, 'Use the formulas on Lec 13 p.3.'],
+        hints: ['Level l can hold at most 2^l nodes.', { text: 'Picture the fullest possible tree.' }, 'Apply the node-count formulas: 2^l nodes on level l, 2^(h+1) − 1 nodes in total.'],
       };
     },
   },
   {
     id: 'l13-matrix',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Drawing → adjacency matrix',
@@ -263,7 +257,6 @@ export const l13 = [
   },
   {
     id: 'l13-adjlist',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Matrix → adjacency list',
@@ -273,7 +266,7 @@ export const l13 = [
       const { labels, m } = G.matrix(g);
       const list = G.adjList(g);
       return {
-        prompt: `Write the adjacency list for this **${directed ? 'directed' : 'undirected'}** graph's matrix. For each vertex type its neighbours separated by spaces (leave empty if none).`,
+        prompt: `Write the adjacency list for this **${directed ? 'directed' : 'undirected'}** graph's matrix. For each vertex, type its neighbors separated by spaces (leave the field empty if there are none).`,
         visual: { type: 'matrix', labels, m },
         edge: true,
         kind: 'adjlist',
@@ -285,7 +278,7 @@ export const l13 = [
             const want = list[v].map((x) => x.toUpperCase()).sort();
             return got.join() !== want.join();
           });
-          if (!bad.length) return { correct: true, message: `Each row of the matrix becomes one linked list (Lec 13 p.6, bottom). A list stores only the edges that exist. The ORDER inside a list does not change the graph, but it does change BFS/DFS results.` };
+          if (!bad.length) return { correct: true, message: `Each row of the matrix becomes one linked list. A list stores only the edges that exist. The ORDER inside a list does not change the graph, but it does change BFS/DFS results.` };
           return { correct: false, message: `Check ${bad.map((v) => `${v} (should be: ${list[v].join(' ') || 'none'})`).join('; ')}.`, tag: 'adjlist' };
         },
         solutionText: labels.map((v) => `${v}: ${list[v].join(' → ') || '(none)'}`).join('\n'),
@@ -295,7 +288,6 @@ export const l13 = [
   },
   {
     id: 'l13-draw',
-    lecture: 13,
     concept: 'l13.graph-repr',
     type: 'convert',
     title: 'Adjacency list → drawing',
@@ -330,7 +322,6 @@ export const l13 = [
   },
   {
     id: 'l13-build-tree',
-    lecture: 13,
     concept: 'l13.tree-repr',
     type: 'build',
     title: 'Build the tree from its array',

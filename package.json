@@ -2,7 +2,7 @@
   "name": "ds-study-lab",
   "productName": "DS Study Lab",
   "version": "1.0.0",
-  "description": "Interactive study app for data structures in C/C++ (Lectures 07–14): linked lists, stacks, queues, trees, graphs, traversals.",
+  "description": "Interactive learning application for data structures and algorithms in C++: memory and pointers, linked lists, stacks, queues, trees and graphs.",
   "author": "DS Study Lab",
   "license": "MIT",
   "homepage": "https://github.com/Azure-Vincent/Data-Structures-Study-Tool",
@@ -56,7 +56,7 @@
       ],
       "icon": "electron/icon.png",
       "category": "Education",
-      "synopsis": "Interactive data-structures study app (Lectures 07-14)",
+      "synopsis": "Interactive data structures and algorithms learning application",
       "maintainer": "DS Study Lab <https://github.com/Azure-Vincent/Data-Structures-Study-Tool>",
       "artifactName": "DS-Study-Lab-${version}-linux-${arch}.${ext}"
     },

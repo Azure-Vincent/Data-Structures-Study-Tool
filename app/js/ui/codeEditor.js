@@ -1,6 +1,6 @@
 // Small code editor: a transparent <textarea> over a syntax-highlighted <pre>,
 // with a line-number gutter, current-line / error-line marks and pseudocode
-// auto-indentation. The textarea stays the real input, so native undo/redo,
+// auto-indentation (4 spaces per block level). The textarea stays the real input, so native undo/redo,
 // selection, copy/paste and screen readers keep working.
 // The editor has no scrollbars: it grows with its text and wraps long lines (the
 // <pre> and the textarea wrap identically; each gutter row takes its line's height).
@@ -9,6 +9,7 @@ import { highlightLine, nextIndent, reindent } from '../lab/lang.js';
 
 const LINE_H = 21; // px — must match .code-editor line-height (a line that wraps is taller)
 const CLOSER = /^\s*(end\b|endif\b|endwhile\b|endfor\b|endfunction\b|else\b|elif\b|elseif\b|until\b)/i;
+const INDENT = '    '; // one block level: Tab, Shift+Tab and Enter all use 4 spaces
 
 const esc = (t) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
@@ -93,7 +94,7 @@ export function createCodeEditor(opts = {}) {
     const block = ta.value.slice(s, e);
     const out = block
       .split('\n')
-      .map((l) => (dir > 0 ? '  ' + l : l.replace(/^ {1,2}|^\t/, '')))
+      .map((l) => (dir > 0 ? INDENT + l : l.replace(/^ {1,4}|^\t/, '')))
       .join('\n');
     ta.setSelectionRange(s, e);
     insert(out);
@@ -119,7 +120,7 @@ export function createCodeEditor(opts = {}) {
       e.preventDefault();
       if (e.shiftKey) shiftLines(-1);
       else if (ta.value.slice(ta.selectionStart, ta.selectionEnd).includes('\n')) shiftLines(1);
-      else insert('  ');
+      else insert(INDENT);
       return;
     }
     if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {

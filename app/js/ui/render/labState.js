@@ -198,7 +198,7 @@ export function renderVariables(st, prev, { lines = true } = {}) {
         const v = fr.vars[name];
         const changed = prev && (!pfr || !(name in pfr.vars) || !same(pfr.vars[name], v));
         const kind = isRef(v) || v === null ? 'pointer' : isColl(v) ? 'collection' : isGraph(v) ? 'graph' : 'value';
-        return h('tr', { class: changed ? 'changed' : '' }, h('td', {}, name), h('td', {}, isRef(v) ? [h('span', { class: 'addr' }, `@${v.ref}`), h('span', { class: 'val' }, st.nodes[v.ref]?.freed ? '  → deleted node!' : `  → node with data ${dataText(st.nodes[v.ref]?.data)}`)] : v === null ? h('span', { class: 'addr' }, 'NULL') : fmt(st, v)), h('td', { class: 'small muted' }, kind));
+        return h('tr', { class: changed ? 'changed' : '' }, h('td', {}, name), h('td', {}, isRef(v) ? [h('span', { class: 'addr' }, `@${v.ref}`), h('span', { class: 'val' }, st.nodes[v.ref]?.freed ? '  → deleted node' : `  → node with data ${dataText(st.nodes[v.ref]?.data)}`)] : v === null ? h('span', { class: 'addr' }, 'NULL') : fmt(st, v)), h('td', { class: 'small muted' }, kind));
       });
     wrap.append(
       h('div', { class: 'lab-frame' + (isTop ? ' top' : '') }, h('div', { class: 'lab-frame-title' }, fr.fn === 'main' ? 'Global variables' : `${fr.fn}() — ${isTop ? 'running now' : 'waiting'}${fr.callLine && lines ? `, called on line ${fr.callLine}` : ''}`), rows.length ? h('table', { class: 'vars-table' }, rows) : h('p', { class: 'small muted', style: { margin: '4px 0' } }, 'No variables yet.')),

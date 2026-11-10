@@ -1,6 +1,6 @@
-// The "Build it in code" programs: every case runs in the Lab without errors,
+// The complete programs (C++, Python, pseudocode): every case runs in the Lab without errors,
 // the three languages carry the same labels, every executed pseudocode line can
-// be shown in C++ and Python, and the outputs match the lecture's answers.
+// be shown in C++ and Python, and the outputs match the worked examples.
 // (tests/langs/verify.mjs additionally compiles and runs the C++ and Python.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,7 +8,7 @@ import { IMPLEMENTATIONS, IMPL_BY_ID } from '../app/js/content/impl/index.js';
 import { compileExample, linesWithLabels, parseMarked, buildCall } from '../app/js/content/impl/format.js';
 import { runAll } from '../app/js/lab/run.js';
 import { STRUCTURES } from '../app/js/lab/structures.js';
-import { MISTAKE_LABELS } from '../app/js/content/concepts.js';
+import { MISTAKE_LABELS, MODULES, MODULE_BY_ID } from '../app/js/content/concepts.js';
 
 const LANGS = ['pseudo', 'cpp', 'py'];
 const labelSet = (prog) => new Set(prog.labels.flat().filter((l) => l !== 'setup'));
@@ -17,20 +17,20 @@ const run = (id, caseIndex = 0) => {
   return runAll(p.pseudo.text, p.setup, { limit: 20000 });
 };
 
-test('program ids are unique and every program names a Lab structure and a lecture', () => {
+test('program ids are unique and every program names a Lab structure and a learning module', () => {
   const ids = IMPLEMENTATIONS.map((x) => x.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const ex of IMPLEMENTATIONS) {
     assert.ok(STRUCTURES[ex.structure], `${ex.id}: unknown structure ${ex.structure}`);
-    assert.ok(ex.lecture >= 7 && ex.lecture <= 14, ex.id);
-    assert.ok(ex.title && ex.ref && ex.intro, ex.id);
+    assert.ok(MODULE_BY_ID[ex.module], ex.id);
+    assert.ok(ex.title && ex.intro, ex.id);
     assert.ok(Array.isArray(ex.cases) && ex.cases.length, ex.id);
     for (const lang of LANGS) assert.equal(typeof ex[lang], 'string', `${ex.id}: ${lang}`);
   }
 });
 
-test('every lecture 07–14 has at least one program', () => {
-  for (let l = 7; l <= 14; l++) assert.ok(IMPLEMENTATIONS.some((x) => x.lecture === l), `lecture ${l}`);
+test('every learning module has at least one program', () => {
+  for (const m of MODULES) assert.ok(IMPLEMENTATIONS.some((x) => x.module === m.id), m.id);
 });
 
 test('every case runs to the end in the Lab without errors', () => {
@@ -95,7 +95,7 @@ test('notes and fill-in blanks refer to existing labels; each blank is exactly o
   }
 });
 
-test('the programs reproduce the lecture answers', () => {
+test('the programs reproduce the worked examples', () => {
   const out = (id, ci) => run(id, ci).state.output.map(String).join(' ');
   assert.equal(out('tree-traversals', 0), 'A B D E C F G');
   assert.equal(out('tree-traversals', 1), 'D B E A F C G');

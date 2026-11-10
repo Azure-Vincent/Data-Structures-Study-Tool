@@ -344,7 +344,7 @@ export class Machine {
 
   *execForEach(s) {
     const c = yield* this.eval(s.coll);
-    if (!isColl(c)) this.err(`for each needs a list, queue, stack or set, but ${exprText(s.coll)} is ${this.f(c)}.`, s.coll, 'Loop over a linked list with while p != NULL do … p = p.next … end.');
+    if (!isColl(c)) this.err(`for each needs a list, queue, stack or set, but ${exprText(s.coll)} is ${this.f(c)}.`, s.coll, 'Loop over a linked list with while p != NULL do … p = p.next … end while.');
     const items = [...this.st.colls[c.coll].items];
     if (!items.length) yield this.ev('cond', s.line, `${exprText(s.coll)} is empty, so the loop body never runs.`);
     for (let k = 0; k < items.length; k++) {
@@ -399,7 +399,7 @@ export class Machine {
         return;
       }
       if (val !== null && !isRef(val)) {
-        this.err(`${exprText(t)} must point to a node or be NULL, but ${exprText(s.expr)} is ${this.f(val)}.`, s.expr, typeof val === 'number' || typeof val === 'string' ? `To store the value, use ${exprText(t.obj)}.data = ${exprText(s.expr)}. To link, assign a node: ${exprText(t)} = newnode.` : '', 'value-vs-address');
+        this.err(`${exprText(t)} must point to a node or be NULL, but ${exprText(s.expr)} is ${this.f(val)}.`, s.expr, typeof val === 'number' || typeof val === 'string' ? `To store the value, use ${exprText(t.obj)}.data = ${exprText(s.expr)}. To link, assign a node: ${exprText(t)} = new_node.` : '', 'value-vs-address');
       }
       if (isRef(val)) {
         const target = this.node(val.ref);
@@ -615,7 +615,7 @@ export class Machine {
     if (!user && !builtin) {
       if (own(this.top.vars, e.name) || own(this.globals.vars, e.name)) this.err(`${e.name} is a variable, not a function.`, e);
       const near = suggest(e.name, [...Object.keys(this.prog.funcs), ...Object.keys(BUILTINS)]);
-      this.err(`There is no function called ${e.name}.`, e, near ? `Did you mean ${near}?` : 'Define it with function name(params) … end, or see the syntax reference for built-in functions.');
+      this.err(`There is no function called ${e.name}.`, e, near ? `Did you mean ${near}?` : 'Define it with function name(params) … end function, or see the syntax reference for built-in functions.');
     }
     const args = [];
     for (const a of e.args) {
@@ -635,7 +635,7 @@ export class Machine {
 
   *callUser(fn, args, e) {
     if (args.length !== fn.params.length) this.err(`${fn.name} expects ${fn.params.length} argument${fn.params.length === 1 ? '' : 's'} (${fn.params.join(', ') || 'none'}) but got ${args.length}.`, e);
-    if (this.st.frames.length > this.maxDepth) this.err(`More than ${this.maxDepth} nested calls — the recursion never stops.`, e, 'A recursive function needs a base case that returns without calling itself, for example: if p == NULL then return … end.', 'infinite-loop');
+    if (this.st.frames.length > this.maxDepth) this.err(`More than ${this.maxDepth} nested calls — the recursion never stops.`, e, 'A recursive function needs a base case that returns without calling itself, for example: if p == NULL then … return … end if.', 'infinite-loop');
     const caller = this.top;
     const fr = { fn: fn.name, vars: {}, order: [], temps: [], callLine: e.line };
     fn.params.forEach((p, i) => {

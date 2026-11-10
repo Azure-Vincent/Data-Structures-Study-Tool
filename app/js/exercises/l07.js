@@ -1,19 +1,18 @@
-// Lecture 07 — Introduction: arrays vs linked lists, memory, pointers.
+// Memory and arrays: arrays versus linked lists, memory layout, pointers and allocation.
 import { opts, mcq, multi, numeric, reflect, sequenceText } from './kit.js';
 
 const SCENARIOS = [
   { s: 'You store 12 monthly temperatures and often read “the value for month k”.', a: 'array', why: 'The size is fixed and known, and an array reaches element k directly with one address calculation.' },
   { s: 'A music queue where songs are constantly inserted at the FRONT, and the number of songs is unknown when the program starts.', a: 'list', why: 'Inserting at the front of an array shifts every element; a linked list only changes two pointers, and it grows as needed.' },
-  { s: 'You keep reading exam score number k, for many different values of k, and the number of scores never changes.', a: 'array', why: 'Array element k sits at base + k·size, so it is reached directly; a linked list has to follow the links from start, one node at a time, to reach node k.' },
+  { s: 'You keep reading exam score number k, for many different values of k, and the number of scores never changes.', a: 'array', why: 'Array element k sits at base + k·size, so it is reached directly; a linked list has to follow the links from head, one node at a time, to reach node k.' },
   { s: 'An editor keeps an undo history that grows and shrinks unpredictably while the program runs.', a: 'list', why: 'Linked lists are dynamic: nodes are allocated when needed and freed when no longer needed.' },
   { s: 'A small embedded device stores exactly 1000 sensor readings (4-byte ints) and memory is very tight.', a: 'array', why: 'Each linked node also stores a pointer, so for small items a list can use roughly double the memory.' },
-  { s: 'While walking through a long collection you frequently remove the element you are standing on.', a: 'list', why: 'Removing from a linked list only relinks the neighbour; an array must shift all later elements left.' },
+  { s: 'While walking through a long collection you frequently remove the element you are standing on.', a: 'list', why: 'Removing from a linked list only relinks the neighbor; an array must shift all later elements left.' },
 ];
 
 export const l07 = [
   {
     id: 'l07-choose',
-    lecture: 7,
     concept: 'l07.tradeoffs',
     type: 'choose',
     title: 'Array or linked list?',
@@ -28,16 +27,15 @@ export const l07 = [
         ...mcq(o),
         reflection: reflect('In one or two sentences, name the operation that decided it and what the other structure would have to do instead.'),
         hints: [
-          'Ask: which operation happens most often — reading by position, or inserting/removing?',
-          { text: 'Lec 07 p.4 lists the six differences side by side.' },
-          'Arrays win at “read element k”; linked lists win at “insert/remove where I already am”.',
+          'Ask which operation happens most often: reading by position, or inserting and removing?',
+          { text: 'Compare the two on access by position, insertion and deletion, size changes and memory use.' },
+          'Arrays are faster at reading element k; linked lists are faster at inserting or removing at a position that has already been reached.',
         ],
       };
     },
   },
   {
     id: 'l07-address',
-    lecture: 7,
     concept: 'l07.memory-layout',
     type: 'predict',
     title: 'Contiguous memory: compute an address',
@@ -70,7 +68,6 @@ export const l07 = [
   },
   {
     id: 'l07-shifts',
-    lecture: 7,
     concept: 'l07.arrays-vs-lists',
     type: 'predict',
     title: 'Shift the elements of an array',
@@ -96,7 +93,7 @@ export const l07 = [
         visual: { type: 'array', n: MAX, filled: n, values: vals, highlight: kind === 'insert' ? Math.min(k, MAX - 1) : k },
         edge,
         ...sequenceText(after, {
-          explain: `${how} A linked list does the same job by changing two links instead of moving elements. Correction to Lec 07 p.2(c): deleting FROM an array is possible (shift + count); what a plain array cannot do is grow or shrink its allocated size.`,
+          explain: `${how} A linked list does the same job by changing two links instead of moving elements. Deleting from an array is therefore possible (shift, then decrease count); what a plain array cannot do is grow or shrink its allocated size.`,
           diagnose: (got) => {
             if (kind === 'insert' && got.length === n + 1 && got.slice(0, n).join(' ') === vals.join(' ')) return { msg: `${x} was added at the end — inserting at index ${k} means the later elements move right to make room there.`, tag: 'array-shift' };
             if (kind === 'insert' && got.length === n && got[k] === String(x)) return { msg: `Overwriting a[${k}] loses ${vals[k]}: the elements must shift right first.`, tag: 'array-shift' };
@@ -110,7 +107,6 @@ export const l07 = [
   },
   {
     id: 'l07-classify',
-    lecture: 7,
     concept: 'l07.linear-nonlinear',
     type: 'classify',
     title: 'Linear or non-linear?',
@@ -129,9 +125,9 @@ export const l07 = [
         ];
         const pick = rng.sample(items, 6);
         return {
-          prompt: 'Select every **primitive** data structure (Lec 07 p.1).',
+          prompt: 'Select every **primitive** data structure.',
           ...multi(opts(rng, pick.map((x) => ({ text: x.text, correct: x.p, why: x.p ? 'a single built-in value' : 'built from other values (non-primitive)', tag: 'taxonomy' })))),
-          hints: ['Primitive = a single value the language provides directly.', { text: 'Lec 07 p.1: the left branch of the chart.' }, 'Integers, floats, chars and pointers are primitive.'],
+          hints: ['Primitive = a single value the language provides directly.', { text: 'Non-primitive structures such as arrays, lists, files and trees are built by combining primitive values.' }, 'Integers, floats, chars and pointers are primitive.'],
         };
       }
       const all = [
@@ -148,13 +144,12 @@ export const l07 = [
         ...multi(opts(rng, all.map((x) => ({ text: x.text, correct: x.lin === want, why: x.lin ? 'elements form one sequence (each has at most one successor)' : 'elements form a hierarchy/network (a node can have several successors)', tag: 'taxonomy' }))), {
           explain: 'Note: “linear” is about the logical order, not memory. A linked list is linear even though its nodes are scattered (non-contiguous) in memory.',
         }),
-        hints: ['Linear: you can line all elements up so each has one next element.', { text: 'Lec 13 p.1 gives the definition.' }, 'Trees and graphs let one element lead to several others.'],
+        hints: ['Linear: you can line all elements up so each has one next element.', { text: 'In a linear structure every element except the last has exactly one successor.' }, 'Trees and graphs let one element lead to several others.'],
       };
     },
   },
   {
     id: 'l07-malloc',
-    lecture: 7,
     concept: 'l07.pointers-alloc',
     type: 'fill',
     title: 'Complete the malloc call',
@@ -177,13 +172,12 @@ export const l07 = [
           return { correct: false, message: `malloc needs the number of bytes for one ${t}: sizeof(${t}).`, tag: 'sizeof' };
         },
         solutionText: `${model}  →  ${v} = (${t} *) malloc(${n} * sizeof(${t}));  …  free(${v});`,
-        hints: ['malloc’s argument is a number of BYTES.', { text: 'Lec 07 p.2: ip = (int *) malloc(100 * sizeof(int)).' }, `Use the sizeof operator on ${t}.`],
+        hints: ['malloc’s argument is a number of BYTES.', { text: 'Example: ip = (int *) malloc(100 * sizeof(int)) reserves room for 100 ints.' }, `Use the sizeof operator on ${t}.`],
       };
     },
   },
   {
     id: 'l07-membug',
-    lecture: 7,
     concept: 'l07.pointers-alloc',
     type: 'bug',
     title: 'Spot the memory bug',
@@ -191,8 +185,8 @@ export const l07 = [
       const v = rng.pick(['p', 'q', 'ptr', 'cp']);
       const cases = [
         { code: [`${v} = (int *) malloc(sizeof(int));`, `*${v} = 5;`, `${v} = (int *) malloc(sizeof(int));`, `free(${v});`], a: 'leak', why: `The second malloc overwrote the only copy of the first block's address, so that block can never be freed.` },
-        { code: [`${v} = (int *) malloc(sizeof(int));`, `free(${v});`, `*${v} = 7;`], a: 'dangling', why: `After free(${v}), ${v} still holds the old address but the memory is no longer ours. Writing through it is undefined behaviour (dangling pointer). Set ${v} = NULL after freeing.` },
-        { code: [`${v} = (int *) malloc(sizeof(int));`, `free(${v});`, `free(${v});`], a: 'double', why: 'The same block is released twice — undefined behaviour that can corrupt the heap.' },
+        { code: [`${v} = (int *) malloc(sizeof(int));`, `free(${v});`, `*${v} = 7;`], a: 'dangling', why: `After free(${v}), ${v} still holds the old address but the memory is no longer ours. Writing through it is undefined behavior (dangling pointer). Set ${v} = NULL after freeing.` },
+        { code: [`${v} = (int *) malloc(sizeof(int));`, `free(${v});`, `free(${v});`], a: 'double', why: 'The same block is released twice — undefined behavior that can corrupt the heap.' },
         { code: [`${v} = (int *) malloc(sizeof(int));`, `*${v} = 3;`, `free(${v});`, `${v} = NULL;`], a: 'ok', why: 'Allocate, use, free once, then clear the pointer. Nothing is leaked and nothing dangles.' },
       ];
       const c = rng.pick(cases);
@@ -206,13 +200,12 @@ export const l07 = [
         prompt: 'What is wrong with this code?',
         visual: { type: 'code', lines: c.code },
         ...mcq(o),
-        hints: ['Track each block: who points to it, and has it been freed?', { text: 'free() is the opposite of malloc() (Lec 07 p.2).' }, 'Draw the pointer after every line.'],
+        hints: ['Track each block: who points to it, and has it been freed?', { text: 'free() releases a block that malloc() allocated; each block must be freed exactly once.' }, 'Draw the pointer after every line.'],
       };
     },
   },
   {
     id: 'l07-storage',
-    lecture: 7,
     concept: 'l07.memory-layout',
     type: 'choose',
     title: 'Where does the memory live?',
@@ -221,9 +214,9 @@ export const l07 = [
         { code: 'void f() {\n    int a[5];\n}', q: 'the array a', a: 'stack', why: 'A local array is an automatic variable: it lives in f’s stack frame and disappears when f returns.' },
         { code: 'void f() {\n    int *a = (int *) malloc(5 * sizeof(int));\n}', q: 'the 5 ints that a points to', a: 'heap', why: 'malloc always allocates on the heap. So an ARRAY can live on the heap too — “array” describes the layout (contiguous), not the storage location.' },
         { code: 'void f() {\n    int *a = (int *) malloc(5 * sizeof(int));\n}', q: 'the pointer variable a itself', a: 'stack', why: 'a is a local variable (stack); only the block it points to is on the heap.' },
-        { code: 'node *start = NULL;   /* global */\n...\nnewnode = getnode();', q: 'the node returned by getnode()', a: 'heap', why: 'getnode() calls malloc, so nodes are on the heap.' },
-        { code: 'node *start = NULL;   /* global, outside any function */', q: 'the pointer variable start', a: 'static', why: 'Global variables live in the static/global data area for the whole program, not on the stack or the heap.' },
-        { code: 'int a[5];   /* global */', q: 'the array a', a: 'static', why: 'A global array lives in the static area. So “array = stack” (Lec 07 p.4 ②) is a simplification: it is true only for local arrays.' },
+        { code: 'node *head = NULL;   /* global */\n...\nnew_node = create_node();', q: 'the node returned by create_node()', a: 'heap', why: 'create_node() calls malloc, so nodes are on the heap.' },
+        { code: 'node *head = NULL;   /* global, outside any function */', q: 'the pointer variable head', a: 'static', why: 'Global variables live in the static/global data area for the whole program, not on the stack or the heap.' },
+        { code: 'int a[5];   /* global */', q: 'the array a', a: 'static', why: 'A global array lives in the static area. The common claim that arrays live on the stack is a simplification: it holds only for local arrays.' },
       ];
       const c = rng.pick(cases);
       const o = opts(rng, [
@@ -234,8 +227,8 @@ export const l07 = [
       return {
         prompt: `Where is **${c.q}** stored?`,
         visual: { type: 'code', lines: c.code.split('\n') },
-        ...mcq(o, { explain: 'Correction to Lec 07 p.4 ②: the storage location depends on HOW memory is obtained (local variable, global, malloc), not on whether the structure is an array or a list.' }),
-        hints: ['Ask: is it a local variable, a global variable, or created by malloc/new?', { text: 'Lec 08 p.1 draws start on the stack and nodes on the heap.' }, 'malloc → heap; local → stack; global → static area.'],
+        ...mcq(o, { explain: 'The storage location depends on HOW the memory is obtained (local variable, global variable, malloc), not on whether the structure is an array or a list.' }),
+        hints: ['Ask: is it a local variable, a global variable, or created by malloc/new?', { text: 'In a typical linked list program, a local pointer such as head is on the stack while the nodes it reaches are on the heap.' }, 'malloc → heap; local → stack; global → static area.'],
       };
     },
   },

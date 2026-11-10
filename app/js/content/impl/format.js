@@ -1,11 +1,11 @@
-// The format of the "Build it in code" programs (content/impl/*.js).
+// The format of the implementation programs (content/impl/*.js).
 //
 // Every example is one program written three times — pseudocode, C++ and
 // Python — that does exactly the same thing. The pseudocode is what actually
 // runs (in the Pseudocode Lab interpreter); the C++ and Python lines are tied to
 // it by LABELS so the walkthrough can highlight the same statement in all three:
 //
-//   @a3|        start = newnode          ← this line carries label a3
+//   @a3|        start = new_node          ← this line carries label a3
 //   @a3,a4|     ...                      ← several labels
 //   @setup|     ...                      ← C++/Python only: builds the starting
 //                                          structure the Lab sets up before step 1

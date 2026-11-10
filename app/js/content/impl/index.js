@@ -1,4 +1,4 @@
-// Registry of the "Build it in code" programs (see ./format.js).
+// Registry of the implementation programs (see ./format.js).
 import { ARRAY_EXAMPLES } from './arrays.js';
 import { SLL_EXAMPLES } from './sll.js';
 import { DLL_EXAMPLES } from './dll.js';

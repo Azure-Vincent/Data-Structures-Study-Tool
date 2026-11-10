@@ -11,8 +11,8 @@ test('same input, stack vs queue removal order', () => {
   for (const k of ['aqueue', 'aqueue-circ', 'lqueue']) assert.deepEqual(SQ.runOps(k, ops).removed, [1, 2, 3, 4], k);
 });
 
-test('array stack: notes convention top = count; overflow and underflow', () => {
-  let s = SQ.arrayStack(3, 'notes');
+test('array stack: top = number of items; overflow and underflow', () => {
+  let s = SQ.arrayStack(3, 'count');
   assert.equal(s.top, 0);
   for (const x of [5, 6, 7]) s = SQ.astackPush(s, x).final;
   assert.equal(s.top, 3);
@@ -22,7 +22,7 @@ test('array stack: notes convention top = count; overflow and underflow', () => 
   const p = SQ.astackPop(s);
   assert.equal(p.result.value, 7);
   assert.equal(p.final.top, 2);
-  let e = SQ.arrayStack(3, 'notes');
+  let e = SQ.arrayStack(3, 'count');
   assert.equal(SQ.astackPop(e).result.event, 'underflow');
   let i = SQ.arrayStack(3, 'index');
   assert.equal(i.top, -1);
@@ -61,8 +61,8 @@ test('linked stack at the tail pops in O(n), at the head in O(1)', () => {
   assert.equal(head.counters.moves || 0, 0);
 });
 
-test('lecture traversal tree A..G', () => {
-  const t = T.LECTURE_TREE();
+test('traversals of the example tree A..G', () => {
+  const t = T.EXAMPLE_TREE();
   assert.deepEqual(T.preorder(t), ['A', 'B', 'D', 'E', 'C', 'F', 'G']);
   assert.deepEqual(T.inorder(t), ['D', 'B', 'E', 'A', 'F', 'C', 'G']);
   assert.deepEqual(T.postorder(t), ['D', 'E', 'B', 'F', 'G', 'C', 'A']);
@@ -79,10 +79,11 @@ test('lecture traversal tree A..G', () => {
 });
 
 test('tree measures, classification and array representation', () => {
-  const t = T.LECTURE_TREE();
+  const t = T.EXAMPLE_TREE();
   assert.equal(T.height(t), 2);
   assert.equal(T.level(t, 'D'), 2);
-  assert.equal(T.depthNotes(t, 'D'), 3);
+  assert.equal(T.level(t, 'D'), 2, 'depth = level = edges from the root');
+  assert.equal(T.depthInNodes(t, 'D'), 3);
   assert.deepEqual(T.classify(t), { strict: true, perfect: true, complete: true });
   assert.deepEqual(T.toArray(t, 0), ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
   assert.equal(T.arrayIndexOf(t, 'E', 0), 4);
@@ -111,8 +112,8 @@ test('random trees respect requested shapes', () => {
   }
 });
 
-test('lecture 14 graph: DFS and BFS match the notes with alphabetical order', () => {
-  const g = G.lec14Graph();
+test('example graph: DFS and BFS match the worked examples with alphabetical order', () => {
+  const g = G.exampleGraph();
   assert.equal(G.dfsOrder(g, 'a').join(''), 'abcgdefih');
   assert.equal(G.bfsOrder(g, 'a').join(''), 'abefcdgih');
   assert.equal(G.traceDFS(g, 'a').result.join(''), 'abcgdefih');
@@ -123,7 +124,7 @@ test('lecture 14 graph: DFS and BFS match the notes with alphabetical order', ()
 });
 
 test('graph representations, self-loops, disconnected traversal', () => {
-  const g = G.lec13SelfLoop();
+  const g = G.selfLoopGraph();
   const m = G.matrix(g).m;
   assert.deepEqual(m, [[1, 1, 1], [0, 0, 1], [0, 1, 0]]);
   assert.deepEqual(G.adjList(g), { 1: ['1', '2', '3'], 2: ['3'], 3: ['2'] });
@@ -132,9 +133,9 @@ test('graph representations, self-loops, disconnected traversal', () => {
   assert.deepEqual(G.bfsOrder(d, 'A'), ['A', 'B', 'C']);
   assert.deepEqual(G.fullTraversal(d, 'bfs').components, [['A', 'B', 'C'], ['D', 'E']]);
   assert.deepEqual(G.traceDFS(d, 'A', { all: true }).result, ['A', 'B', 'C', 'D', 'E']);
-  assert.equal(G.degree(g, '1'), 4); // directed: out 3 (incl. loop) + in 1 (loop)
+  assert.equal(G.degree(g, '1'), 4); // directed: out 3 (including the loop) + in 1 (the loop)
   // matrix ↔ list round trip
-  const w = G.lec13Weighted();
+  const w = G.weightedGraph();
   const mm = G.matrix(w);
   assert.equal(mm.m[0][0], 0);
   assert.equal(mm.m[0][3], Infinity);
@@ -142,8 +143,8 @@ test('graph representations, self-loops, disconnected traversal', () => {
   assert.equal(back.edges.length, w.edges.length);
 });
 
-test('BFS minimises edges, not weight', () => {
-  const w = G.lec13Weighted();
+test('BFS minimizes edges, not weight', () => {
+  const w = G.weightedGraph();
   const { parent } = G.bfsTree(w, 'A');
   const p = G.pathTo(parent, 'D');
   assert.deepEqual(p, ['A', 'B', 'D']);

@@ -1,4 +1,4 @@
-// Lecture 14 — Traversals: preorder/inorder/postorder, DFS, BFS.
+// Traversals: preorder/inorder/postorder, DFS, BFS.
 import { opts, mcq, numeric, sequenceClick, sequenceText, nodePick } from './kit.js';
 import * as T from '../core/tree.js';
 import * as G from '../core/graph.js';
@@ -7,23 +7,22 @@ const ORDER_NAME = { preorder: 'Preorder (Root, Left, Right)', inorder: 'Inorder
 
 function travGraph(rng, { allowDisc = false } = {}) {
   const pick = rng.int(0, 9);
-  if (pick === 0) return { g: G.lec14Graph(), lecture: true };
-  if (pick === 1) return { g: G.lec13Directed(), lecture: true };
+  if (pick === 0) return { g: G.exampleGraph(), example: true };
+  if (pick === 1) return { g: G.directedGraph(), example: true };
   const directed = rng.bool(0.35);
   const g = G.randomGraph(rng, { n: rng.int(5, 7), directed, density: 0.45, selfLoop: rng.bool(0.3), isolated: allowDisc && rng.bool(0.4) });
-  return { g, lecture: false };
+  return { g, example: false };
 }
 
 export const l14 = [
   {
     id: 'l14-tree-order',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'traverse',
     title: 'Click the tree traversal',
     generate(rng, { guidance = 'less', params = {} } = {}) {
       const order = params.order || rng.pick(['preorder', 'inorder', 'postorder']);
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(params.small ? 1 : 3, 9), rng.pick(['any', 'any', 'complete', 'skewed']));
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(params.small ? 1 : 3, 9), rng.pick(['any', 'any', 'complete', 'skewed']));
       const ans = T.ORDER_FNS[order](t);
       const others = ['preorder', 'inorder', 'postorder'].filter((o) => o !== order);
       return {
@@ -48,13 +47,12 @@ export const l14 = [
   },
   {
     id: 'l14-entered-output',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'predict',
     title: 'Entered vs output',
     generate(rng, { params = {} } = {}) {
       const order = params.order || rng.pick(['preorder', 'inorder', 'postorder']);
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(4, 9), 'any');
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(4, 9), 'any');
       const tr = T.traceTraversal(t, order);
       const outs = tr.steps.filter((s) => s.kind === 'output');
       const st = rng.pick(outs);
@@ -75,12 +73,11 @@ export const l14 = [
   },
   {
     id: 'l14-bfs-click',
-    lecture: 14,
     concept: 'l14.bfs',
     type: 'traverse',
     title: 'Click the BFS order',
     generate(rng, { guidance = 'less', params = {} } = {}) {
-      const { g } = params.lecture ? { g: G.lec14Graph() } : travGraph(rng);
+      const { g } = params.example ? { g: G.exampleGraph() } : travGraph(rng);
       const s = params.start || rng.pick(G.sortedVertices(g).filter((v) => G.neighbors(g, v).length));
       const tr = G.traceBFS(g, s);
       const ans = tr.result;
@@ -89,7 +86,7 @@ export const l14 = [
         return { label: 'Queue (front → rear)', items: st ? st.state.frontier : [] };
       };
       return {
-        prompt: `Run **BFS from ${s}**. Neighbour order: **ascending (alphabetical/numeric)**. Click vertices in the order they are OUTPUT (dequeued). ${g.directed ? 'Edges are directed: follow arrows only.' : ''}${ans.length < g.vertices.length ? '' : ''}`,
+        prompt: `Run **BFS from ${s}**. Neighbor order: **ascending (alphabetical/numeric)**. Click vertices in the order they are OUTPUT (dequeued). ${g.directed ? 'Edges are directed: follow arrows only.' : ''}${ans.length < g.vertices.length ? '' : ''}`,
         visual: { type: 'graph', graph: g, clickable: true, mark: [s] },
         edge: ans.length < g.vertices.length || g.edges.some((e) => e.u === e.v),
         ...sequenceClick(ans, {
@@ -97,23 +94,22 @@ export const l14 = [
           frontierAt: guidance !== 'none' ? queueAfter : null,
           diagnose: (got, i) => {
             const dfs = G.dfsOrder(g, s);
-            if (got.length > i && got.slice(0, i + 1).every((x, k) => x === dfs[k])) return { msg: 'That is the DFS order — BFS finishes ALL neighbours of a vertex before going deeper.', tag: 'bfs-dfs-confusion' };
+            if (got.length > i && got.slice(0, i + 1).every((x, k) => x === dfs[k])) return { msg: 'That is the DFS order — BFS finishes ALL neighbors of a vertex before going deeper.', tag: 'bfs-dfs-confusion' };
             return null;
           },
         }),
-        hints: ['BFS uses a QUEUE: the earliest discovered vertex is processed next.', { text: `Start: queue = [${s}].`, hl: { nodes: [s] } }, `After ${s}, its neighbours in ascending order: ${G.neighbors(g, s).join(', ')}.`],
+        hints: ['BFS uses a QUEUE: the earliest discovered vertex is processed next.', { text: `Start: queue = [${s}].`, hl: { nodes: [s] } }, `After ${s}, its neighbors in ascending order: ${G.neighbors(g, s).join(', ')}.`],
         solutionTrace: { struct: 'graph', op: 'bfs', graph: g, start: s },
       };
     },
   },
   {
     id: 'l14-dfs-click',
-    lecture: 14,
     concept: 'l14.dfs',
     type: 'traverse',
     title: 'Click the DFS order',
     generate(rng, { guidance = 'less', params = {} } = {}) {
-      const { g } = params.lecture ? { g: G.lec14Graph() } : travGraph(rng);
+      const { g } = params.example ? { g: G.exampleGraph() } : travGraph(rng);
       const s = params.start || rng.pick(G.sortedVertices(g).filter((v) => G.neighbors(g, v).length));
       const tr = G.traceDFS(g, s);
       const ans = tr.result;
@@ -122,26 +118,25 @@ export const l14 = [
         return { label: 'Stack (bottom → top)', items: st ? st.state.frontier : [] };
       };
       return {
-        prompt: `Run **recursive DFS from ${s}**. Neighbour order: **ascending**. Click vertices in the order they are first visited (output).`,
+        prompt: `Run **recursive DFS from ${s}**. Neighbor order: **ascending**. Click vertices in the order they are first visited (output).`,
         visual: { type: 'graph', graph: g, clickable: true, mark: [s] },
         edge: ans.length < g.vertices.length || g.edges.some((e) => e.u === e.v),
         ...sequenceClick(ans, {
-          explain: `DFS output: ${ans.join(' ')}. When a vertex has no undiscovered neighbour left, DFS backtracks (pops) to the previous vertex and continues with ITS next neighbour.`,
+          explain: `DFS output: ${ans.join(' ')}. When a vertex has no undiscovered neighbor left, DFS backtracks (pops) to the previous vertex and continues with ITS next neighbor.`,
           frontierAt: guidance !== 'none' ? stackAfter : null,
           diagnose: (got, i) => {
             const bfs = G.bfsOrder(g, s);
-            if (got.length > i && got.slice(0, i + 1).every((x, k) => x === bfs[k])) return { msg: 'That is the BFS order — DFS goes as DEEP as possible before trying the next neighbour.', tag: 'bfs-dfs-confusion' };
+            if (got.length > i && got.slice(0, i + 1).every((x, k) => x === bfs[k])) return { msg: 'That is the BFS order — DFS goes as DEEP as possible before trying the next neighbor.', tag: 'bfs-dfs-confusion' };
             return null;
           },
         }),
-        hints: ['DFS = go deeper immediately; backtrack when stuck.', { text: `Start at ${s}; its first neighbour is ${G.neighbors(g, s)[0]}.`, hl: { nodes: [s] } }, 'Keep the current path as a stack; the top is where you are.'],
+        hints: ['DFS = go deeper immediately; backtrack when stuck.', { text: `Start at ${s}; its first neighbor is ${G.neighbors(g, s)[0]}.`, hl: { nodes: [s] } }, 'Keep the current path as a stack; the top is where you are.'],
         solutionTrace: { struct: 'graph', op: 'dfs', graph: g, start: s },
       };
     },
   },
   {
     id: 'l14-frontier',
-    lecture: 14,
     concept: 'l14.bfs',
     conceptBy: (p) => (p.kind === 'dfs' ? 'l14.dfs' : 'l14.bfs'),
     type: 'predict',
@@ -158,7 +153,7 @@ export const l14 = [
       else st = tr.steps.find((x) => x.state.output.length === k);
       const items = st.state.frontier;
       return {
-        prompt: `${kind === 'bfs' ? `BFS from ${s}` : `Recursive DFS from ${s}`} (ascending neighbour order). ${kind === 'bfs' ? `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} dequeued vertex has had ALL its neighbours examined, what is in the queue (front → rear)?` : `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} vertex is visited, what is on the stack of active calls (bottom → top)?`} Type “empty” if nothing.`,
+        prompt: `${kind === 'bfs' ? `BFS from ${s}` : `Recursive DFS from ${s}`} (ascending neighbor order). ${kind === 'bfs' ? `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} dequeued vertex has had ALL its neighbors examined, what is in the queue (front → rear)?` : `Right after the ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} vertex is visited, what is on the stack of active calls (bottom → top)?`} Type “empty” if nothing.`,
         visual: { type: 'graph', graph: g, mark: [s] },
         edge: items.length === 0,
         ...sequenceText(items, { explain: `Output so far: ${st.state.output.join(' ')}. Discovered: ${st.state.discovered.join(' ')}. Processed: ${st.state.processed.join(' ') || 'none'}.` }),
@@ -170,7 +165,6 @@ export const l14 = [
   },
   {
     id: 'l14-components',
-    lecture: 14,
     concept: 'l14.components',
     type: 'predict',
     title: 'One component or the whole graph?',
@@ -207,7 +201,7 @@ export const l14 = [
       }
       const full = G.fullTraversal(g, 'bfs');
       return {
-        prompt: 'Traverse the WHOLE graph with BFS: loop over vertices in ascending order and start a new BFS from each one not yet discovered (neighbours ascending). Type the full output order.',
+        prompt: 'Traverse the WHOLE graph with BFS: loop over vertices in ascending order and start a new BFS from each one not yet discovered (neighbors ascending). Type the full output order.',
         visual: { type: 'graph', graph: g },
         edge: true,
         ...sequenceText(full.order, { explain: `Components: ${full.components.map((c) => '{' + c.join(', ') + '}').join(' ')}. There were ${full.components.length} separate BFS calls — one per connected component (an isolated vertex is a component by itself).` }),
@@ -218,7 +212,6 @@ export const l14 = [
   },
   {
     id: 'l14-bfs-weight',
-    lecture: 14,
     concept: 'l14.bfs',
     type: 'choose',
     title: 'BFS paths on a weighted graph',
@@ -229,7 +222,7 @@ export const l14 = [
       let bp;
       let best;
       if (rng.bool(0.35)) {
-        g = G.lec13Weighted();
+        g = G.weightedGraph();
         s = 'A';
         t = rng.pick(['D', 'E', 'G']);
       } else {
@@ -242,33 +235,32 @@ export const l14 = [
       const bw = G.pathWeight(g, bp);
       const lighter = best.dist < bw;
       const o = opts(rng, [
-        { text: `BFS finds ${bp.join('–')} (${bp.length - 1} edges, total weight ${bw}); ${lighter ? `but ${best.path.join('–')} weighs only ${best.dist}` : 'and no lighter path exists here'}`, correct: true, why: 'BFS minimises the number of EDGES, ignoring weights.' },
+        { text: `BFS finds ${bp.join('–')} (${bp.length - 1} edges, total weight ${bw}); ${lighter ? `but ${best.path.join('–')} weighs only ${best.dist}` : 'and no lighter path exists here'}`, correct: true, why: 'BFS minimizes the number of EDGES, ignoring weights.' },
         { text: `BFS always finds the path of minimum total weight, so ${bp.join('–')} is the lightest`, correct: false, why: lighter ? `Counter-example right here: ${best.path.join('–')} weighs ${best.dist} < ${bw}.` : 'It happens to be lightest here, but BFS ignores weights in general.', tag: 'bfs-weight' },
         { text: `BFS finds ${best.path.join('–')} because it follows the smallest weights first`, correct: !lighter && best.path.join() === bp.join() ? false : false, why: 'BFS does not look at weights at all — it expands level by level (number of edges).', tag: 'bfs-weight' },
       ]);
       return {
-        prompt: `Weighted, undirected graph. Run BFS from **${s}** (ascending neighbour order) and follow BFS parents to reach **${t}**. Which statement is true?`,
+        prompt: `Weighted, undirected graph. Run BFS from **${s}** (ascending neighbor order) and follow BFS parents to reach **${t}**. Which statement is true?`,
         visual: { type: 'graph', graph: g, mark: [s, t] },
         edge: !lighter,
-        ...mcq(o, { explain: 'For minimum total weight use Dijkstra’s algorithm (supplementary — not in Lec 14).' }),
+        ...mcq(o, { explain: 'For minimum total weight, use Dijkstra’s algorithm (an extension topic).' }),
         hints: ['BFS discovers vertices in rings: 1 edge away, 2 edges away, …', { text: 'Ignore the numbers on the edges while running BFS.' }, 'Compare the BFS path’s total weight with other paths.'],
       };
     },
   },
   {
     id: 'l14-inorder-stack',
-    lecture: 14,
     concept: 'l14.tree-traversal',
     type: 'predict',
     title: 'Inorder with an explicit stack',
     generate(rng, { params = {} } = {}) {
-      const t = params.lectureTree ? T.LECTURE_TREE() : T.randomTree(rng, rng.int(3, 8), 'any');
+      const t = params.exampleTree ? T.EXAMPLE_TREE() : T.randomTree(rng, rng.int(3, 8), 'any');
       const tr = T.traceInorderStack(t);
       const pops = tr.steps.map((s, i) => [s, i]).filter(([s]) => s.kind === 'pop');
       const k = rng.int(1, pops.length);
       const before = tr.steps[pops[k - 1][1] - 1].state.stack;
       return {
-        prompt: `Iterative inorder (Lec 14 p.1 stack pictures): push nodes while going left, pop & output, then go right. What does the stack contain (bottom → top) right BEFORE pop number ${k}?`,
+        prompt: `Iterative inorder with an explicit stack: push nodes while going left, pop and output, then go right. What does the stack contain (bottom → top) right BEFORE pop number ${k}?`,
         visual: { type: 'tree', tree: t },
         edge: k === 1,
         ...sequenceText(before, { explain: `Pop ${k} outputs ${pops[k - 1][0].hl.node}. Inorder: ${T.inorder(t).join(' ')}. The stack holds the ancestors still waiting for their left subtree to finish.` }),

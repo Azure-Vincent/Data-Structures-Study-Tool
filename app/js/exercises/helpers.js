@@ -1,4 +1,4 @@
-// Shared generators used by several lecture templates.
+// Shared generators used by several exercise templates.
 import { buildList, createWorld, addVar, walk, forwardField, clone } from '../core/pointerWorld.js';
 
 /** Random list values (distinct). */
@@ -6,8 +6,8 @@ export function values(rng, n, lo = 1, hi = 99) {
   return rng.distinct(n, lo, hi);
 }
 
-/** Build a list whose addresses are either lecture-style (100, 200, ...) or scattered. */
-export function randList(rng, kind, vals, { vars = ['start'], scatter = null, globals } = {}) {
+/** Build a list whose addresses are either evenly spaced (100, 200, ...) or scattered. */
+export function randList(rng, kind, vals, { vars = ['head'], scatter = null, globals } = {}) {
   const useScatter = scatter ?? rng.bool(0.5);
   const opts = { vars, globals: globals || [vars[0]] };
   if (useScatter) {
@@ -25,11 +25,11 @@ export function withVars(w, names) {
   return c;
 }
 
-export function addrs(w, head = 'start') {
+export function addrs(w, head = 'head') {
   return walk(w, w.vars[head], forwardField(w.kind)).addrs;
 }
 
-export function vals(w, head = 'start') {
+export function vals(w, head = 'head') {
   return walk(w, w.vars[head], forwardField(w.kind)).values;
 }
 
@@ -41,7 +41,7 @@ export function arrow(kind) {
   return kind === 'dll' ? '⇄' : '→';
 }
 
-export function emptyWorld(kind, vars = ['start']) {
+export function emptyWorld(kind, vars = ['head']) {
   const w = createWorld(kind, vars);
   w.globals = [vars[0]];
   return w;
@@ -54,10 +54,10 @@ export function guide(level, full, less = '') {
   return '';
 }
 
-import { getnode as _getnode } from '../core/pointerWorld.js';
+import { create_node as _getnode } from '../core/pointerWorld.js';
 
 /** Build a rewire spec from a world and a core operation (op returns a trace). */
-export function rewireSpec(world, op, { vars = ['start', 'temp', 'prev', 'newnode'], head = 'start', lastVar = null, locals, newValue = null } = {}) {
+export function rewireSpec(world, op, { vars = ['head', 'temp', 'prev', 'new_node'], head = 'head', lastVar = null, locals, newValue = null } = {}) {
   const goal = op(world).final;
   goal.globals = world.globals || [head];
   const w = withVars(world, vars);
@@ -65,8 +65,8 @@ export function rewireSpec(world, op, { vars = ['start', 'temp', 'prev', 'newnod
   return { world: w, goal, opts: { head, lastVar, locals: locals || vars.filter((v) => !(world.globals || [head]).includes(v)) }, newValue, vars };
 }
 
-/** A copy of `world` with a freshly getnode()'d newnode (same address malloc would give). */
-export function withNewnode(world, value, name = 'newnode') {
+/** A copy of `world` with a freshly create_node()'d new_node (same address malloc would give). */
+export function withNewnode(world, value, name = 'new_node') {
   const w = clone(world);
   const a = _getnode(w, value);
   addVar(w, name, a);

@@ -1,8 +1,8 @@
 // Helpers shared by the traced linked-list algorithms.
 import { malloc, addVar, dropVar, fieldsOf, free, sweepFreed, fmtPtr } from './pointerWorld.js';
 
-/** getnode(): malloc, then data, then every link = NULL. detail=false → one step. */
-export function getnodeSteps(t, line, value, { detail = true, varName = 'newnode' } = {}) {
+/** create_node(): malloc, then data, then every link = NULL. detail=false → one step. */
+export function getnodeSteps(t, line, value, { detail = true, varName = 'new_node' } = {}) {
   const w = t.state;
   const a = malloc(w);
   addVar(w, varName, a);
@@ -18,8 +18,8 @@ export function getnodeSteps(t, line, value, { detail = true, varName = 'newnode
     t.count('linkWrites');
   }
   const fl = fieldsOf(w.kind).map((f) => `${varName}->${f}`).join(' and ');
-  if (detail) t.step(line, 'link', `${fl} = NULL. The new node is initialised but not connected to the list yet.`, { links: fieldsOf(w.kind).map((f) => ({ from: a, field: f })) });
-  else t.step(line, 'alloc', `getnode(): malloc a block at ${a}, store data ${value}, set ${fl} = NULL. ${varName} = ${a}.`, { nodes: [a], vars: [varName], anim: 'alloc' });
+  if (detail) t.step(line, 'link', `${fl} = NULL. The new node is initialized but not connected to the list yet.`, { links: fieldsOf(w.kind).map((f) => ({ from: a, field: f })) });
+  else t.step(line, 'alloc', `create_node(): malloc a block at ${a}, store data ${value}, set ${fl} = NULL. ${varName} = ${a}.`, { nodes: [a], vars: [varName], anim: 'alloc' });
   return a;
 }
 
@@ -43,7 +43,7 @@ export function freeStep(t, line, varName, explain) {
   const a = w.vars[varName];
   free(w, a);
   t.count('frees');
-  t.step(line, 'free', explain || `free(${varName}) releases the block at ${a}. ${varName} still holds ${a}, but that memory no longer belongs to us (dangling if used).`, { nodes: [a], vars: [varName], anim: 'free' });
+  t.step(line, 'free', explain || `free(${varName}) releases the block at ${a}. ${varName} still holds ${a}, but that memory no longer belongs to the program (dangling if used).`, { nodes: [a], vars: [varName], anim: 'free' });
 }
 
 export function cond(t, line, value, explain, hl = {}) {

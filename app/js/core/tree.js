@@ -1,4 +1,5 @@
-// Binary trees (Lectures 13 and 14). Node ids are their labels (unique).
+// Binary trees: structure, measures, shapes, array representation and traversals.
+// Node ids are their labels (unique).
 import { Tracer, keyCodes } from './trace.js';
 
 export function emptyTree() {
@@ -30,7 +31,7 @@ export function fromSpec(spec, root) {
   return t;
 }
 
-export const LECTURE_TREE = () => fromSpec({ A: ['B', 'C'], B: ['D', 'E'], C: ['F', 'G'] }, 'A');
+export const EXAMPLE_TREE = () => fromSpec({ A: ['B', 'C'], B: ['D', 'E'], C: ['F', 'G'] }, 'A');
 
 export function clone(t) {
   return JSON.parse(JSON.stringify(t));
@@ -114,13 +115,13 @@ export function pathFromRoot(t, id) {
   return [...ancestors(t, id).reverse(), id];
 }
 
-/** Level = number of EDGES from the root (root = level 0), as in the notes. */
+/** Level = number of EDGES from the root (root = level 0). The depth of a node is the same number. */
 export function level(t, id) {
   return ancestors(t, id).length;
 }
 
-/** The notes' depth = number of NODES on the root→node path = level + 1. */
-export function depthNotes(t, id) {
+/** The alternative convention that counts NODES on the root→node path: level + 1 (root = 1). */
+export function depthInNodes(t, id) {
   return level(t, id) + 1;
 }
 
@@ -141,13 +142,13 @@ export function nodesAtLevel(t, l) {
   return ids(t).filter((x) => level(t, x) === l);
 }
 
-/** Notes' "strictly binary": every non-leaf has exactly 2 children. (Many books: "full" or "proper".) */
+/** Full (also called strictly binary or proper): every node has 0 or 2 children. */
 export function isStrict(t) {
   if (!t.root) return true;
   return ids(t).every((x) => children(t, x).length !== 1);
 }
 
-/** Notes' "full binary tree of height h": all leaves on level h, internal nodes have 2 children. (Many books: "perfect".) */
+/** Perfect: every internal node has 2 children and all leaves are on the same level (the last one, h). */
 export function isPerfect(t) {
   if (!t.root) return true;
   const h = height(t);
@@ -169,7 +170,8 @@ export function numbering(t) {
   return num;
 }
 
-/** Complete: the n nodes occupy exactly numbers 1..n of the numbering scheme (Lec 13 p.4). */
+/** Complete: the n nodes occupy exactly numbers 1..n of the level-order numbering
+ *  (every level filled except possibly the last, which is filled from the left). */
 export function isComplete(t) {
   const num = numbering(t);
   const ks = Object.values(num);
@@ -181,7 +183,7 @@ export function classify(t) {
   return { strict: isStrict(t), perfect: isPerfect(t), complete: isComplete(t) };
 }
 
-/** Array representation. base 0: children of i at 2i+1, 2i+2 (Lec 13 p.5 picture). base 1: 2i, 2i+1. */
+/** Array representation. base 0: children of i at 2i+1, 2i+2. base 1: 2i, 2i+1. */
 export function toArray(t, base = 0) {
   const num = numbering(t);
   const max = Math.max(0, ...Object.values(num));
@@ -212,7 +214,7 @@ export function arrayIndexOf(t, id, base = 0) {
   return numbering(t)[id] - (base === 0 ? 1 : 0);
 }
 
-// ---------------------------------------------------------------- formulas (Lec 13 p.3)
+// ---------------------------------------------------------------- node-count formulas
 export const maxNodesOfHeight = (h) => 2 ** (h + 1) - 1;
 export const maxLeavesOfHeight = (h) => 2 ** h;
 export const maxNodesAtLevel = (l) => 2 ** l;
@@ -256,12 +258,11 @@ export function levelorder(t) {
 export const ORDER_FNS = { preorder, inorder, postorder, levelorder };
 
 export const TRAV_CODE = {
-  preorder: { title: 'preorder(node)  (Root, Left, Right)', ref: 'Lec 14 p.1', lines: ['void preorder(node *root) {', '    if (root == NULL) return;', '    visit(root);            // output FIRST', '    preorder(root->left);', '    preorder(root->right);', '}'] },
-  inorder: { title: 'inorder(node)  (Left, Root, Right)', ref: 'Lec 14 p.1', lines: ['void inorder(node *root) {', '    if (root == NULL) return;', '    inorder(root->left);', '    visit(root);            // output BETWEEN the subtrees', '    inorder(root->right);', '}'] },
-  postorder: { title: 'postorder(node)  (Left, Right, Root)', ref: 'Lec 14 p.2', lines: ['void postorder(node *root) {', '    if (root == NULL) return;', '    postorder(root->left);', '    postorder(root->right);', '    visit(root);            // output LAST', '}'] },
+  preorder: { title: 'preorder(node)  (Root, Left, Right)', lines: ['void preorder(node *root) {', '    if (root == NULL) return;', '    visit(root);            // output FIRST', '    preorder(root->left);', '    preorder(root->right);', '}'] },
+  inorder: { title: 'inorder(node)  (Left, Root, Right)', lines: ['void inorder(node *root) {', '    if (root == NULL) return;', '    inorder(root->left);', '    visit(root);            // output BETWEEN the subtrees', '    inorder(root->right);', '}'] },
+  postorder: { title: 'postorder(node)  (Left, Right, Root)', lines: ['void postorder(node *root) {', '    if (root == NULL) return;', '    postorder(root->left);', '    postorder(root->right);', '    visit(root);            // output LAST', '}'] },
   inorderStack: {
     title: 'inorder with an explicit stack',
-    ref: 'Lec 14 p.1 (stack pictures)',
     lines: ['cur = root;', 'while (cur != NULL || !isEmpty(S)) {', '    while (cur != NULL) {     // go as far left as possible', '        push(S, cur);', '        cur = cur->left;', '    }', '    cur = pop(S);', '    visit(cur);', '    cur = cur->right;', '}'],
   },
 };
@@ -313,7 +314,7 @@ export function traceTraversal(tree, order) {
   return t.finish(`${order}: ${s.output.join(' ')}`, s.output);
 }
 
-/** Inorder using an explicit stack, as in the stack pictures of Lec 14 p.1. */
+/** Inorder using an explicit stack in place of the recursion's call stack. */
 export function traceInorderStack(tree) {
   const st = { type: 'tree', tree: clone(tree), stack: [], output: [], current: tree.root, cur: tree.root };
   const t = new Tracer(st, TRAV_CODE.inorderStack);

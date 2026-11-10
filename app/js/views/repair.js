@@ -7,10 +7,10 @@ export function repairView(ctx, which) {
   const { store } = ctx;
   let id = REPAIRS.find((r) => r.id === which) ? which : REPAIRS[0].id;
   const root = h('div');
-  const list = h('div', { class: 'seg', role: 'toolbar', 'aria-label': 'Repair scenarios' });
+  const list = h('div', { class: 'seg', role: 'toolbar', 'aria-label': 'Debugging scenarios' });
   const host = h('div', { style: { marginTop: '12px' } });
   root.append(
-    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Repair mode'), h('div', { class: 'subtitle' }, 'Observe a broken structure, find the first bad action, undo, fix.'))),
+    h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Algorithm Debugging'), h('div', { class: 'subtitle' }, 'Each scenario shows a data structure damaged by an incorrect sequence of operations. Identify the first incorrect operation, undo it and apply the correct one.'))),
     list,
     host,
   );
@@ -19,7 +19,7 @@ export function repairView(ctx, which) {
     const ex = makeRepair(id, seed);
     clear(host).append(
       renderExercise(ex, {
-        onResult: (r) => store.recordAttempt({ templateId: ex.templateId, seed, concept: ex.concept, type: 'bug', lecture: ex.lecture, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: 'less', tag: r.tag, message: r.message }),
+        onResult: (r) => store.recordAttempt({ templateId: ex.templateId, seed, concept: ex.concept, type: 'bug', module: ex.module, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: 'less', tag: r.tag, message: r.message }),
         onSimilar: () => load(),
         onNext: () => {
           const i = REPAIRS.findIndex((r) => r.id === id);

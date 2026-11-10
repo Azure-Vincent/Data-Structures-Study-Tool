@@ -1,4 +1,4 @@
-// "Build it in code": singly linked lists (Lectures 08 and 09).
+// implementation: singly linked lists.
 // Format: see ./format.js. Each program exists in pseudocode (runs in the Lab),
 // C++ and Python; labels tie equivalent statements together.
 
@@ -13,24 +13,24 @@ struct Node {
     Node* next;            // nullptr = there is no next node
 };
 
-Node* start = nullptr;     // address of the first node (nullptr = empty list)`;
+Node* head = nullptr;     // address of the first node (nullptr = empty list)`;
 
 export const SLL_CPP_SETUP = `// Setup (not part of the lesson's operation): builds the starting list shown in the diagram.
 @setup|void build(initializer_list<int> values) {
 @setup|    Node* last = nullptr;
 @setup|    for (int v : values) {
 @setup|        Node* n = new Node{v, nullptr};
-@setup|        if (last == nullptr) start = n; else last->next = n;
+@setup|        if (last == nullptr) head = n; else last->next = n;
 @setup|        last = n;
 @setup|    }
 @setup|}
 
 // Clean-up: C++ never frees memory by itself, so give every node back at the end.
 @setup|void destroyList() {
-@setup|    while (start != nullptr) {
-@setup|        Node* rest = start->next;
-@setup|        delete start;
-@setup|        start = rest;
+@setup|    while (head != nullptr) {
+@setup|        Node* rest = head->next;
+@setup|        delete head;
+@setup|        head = rest;
 @setup|    }
 @setup|}`;
 
@@ -39,16 +39,16 @@ export const SLL_PY_HEAD = `class Node:
         self.data = data     # the value
         self.next = None     # reference to the next node (None = there is no next node)
 
-start = None                 # the first node (None = empty list)`;
+head = None                 # the first node (None = empty list)`;
 
 export const SLL_PY_SETUP = `# Setup (not part of the lesson's operation): builds the starting list shown in the diagram.
 @setup|def build(values):
-@setup|    global start
+@setup|    global head
 @setup|    last = None
 @setup|    for v in values:
 @setup|        n = Node(v)
 @setup|        if last is None:
-@setup|            start = n
+@setup|            head = n
 @setup|        else:
 @setup|            last.next = n
 @setup|        last = n`;
@@ -58,28 +58,28 @@ const PSEUDO_HEAD = `# Nodes have two fields: data and next (next = NULL means "
 
 export const DISPLAY = {
   pseudo: `@fd|function display()
-@d1|    temp = start
+@d1|    temp = head
 @d2|    while temp != NULL do
 @d3|        print temp.data
 @d4|        temp = temp.next
     end while
 @fd_end|end function`,
   cpp: `@fd|void display() {
-@d1|    Node* temp = start;
+@d1|    Node* temp = head;
 @d2|    while (temp != nullptr) {
 @d3|        cout << temp->data << "\\n";
 @d4|        temp = temp->next;
     }
 @fd_end|}`,
   py: `@fd,fd_end|def display():
-@d1|    temp = start
+@d1|    temp = head
 @d2|    while temp is not None:
 @d3|        print(temp.data)
 @d4|        temp = temp.next`,
 };
 
 const COUNT = {
-  pseudo: `@fc|function countnode(p)
+  pseudo: `@fc|function count_nodes(p)
 @c1|    n = 0
 @c2|    while p != NULL do
 @c3|        n = n + 1
@@ -87,7 +87,7 @@ const COUNT = {
     end while
 @c5|    return n
 end function`,
-  cpp: `@fc|int countnode(Node* p) {
+  cpp: `@fc|int count_nodes(Node* p) {
 @c1|    int n = 0;
 @c2|    while (p != nullptr) {
 @c3|        n = n + 1;
@@ -95,7 +95,7 @@ end function`,
     }
 @c5|    return n;
 }`,
-  py: `@fc|def countnode(p):
+  py: `@fc|def count_nodes(p):
 @c1|    n = 0
 @c2|    while p is not None:
 @c3|        n = n + 1
@@ -104,7 +104,7 @@ end function`,
 };
 
 const DISPLAY_NOTES = {
-  d1: 'The walking pointer **temp** starts at the first node. temp is a copy of the address in start, so moving temp never changes the list.',
+  d1: 'The walking pointer **temp** starts at the first node. temp is a copy of the address in head, so moving temp never changes the list.',
   d2: 'Keep going while temp still points at a node. In C++ the end of the list is `nullptr`, in Python `None`, in the pseudocode `NULL`.',
   d3: 'Print the value stored in the node temp points at: `temp->data` (C++ follows the pointer with `->`), `temp.data` (Python and the pseudocode use `.`).',
   d4: '**Traversal**: temp moves to the next node. Only the variable changes — no node and no link is modified.',
@@ -114,30 +114,29 @@ const DISPLAY_NOTES = {
 export const SLL_EXAMPLES = [
   {
     id: 'sll-create',
-    lecture: 8,
+    module: 'sll',
     structure: 'sll',
     title: 'Create a singly linked list from scratch',
-    ref: 'Lec 08 p.1–3',
-    intro: 'The node type, `getnode()` and an `append()` that builds the list in input order, exactly like `creatlist()` in the notes (p.3): every new node is linked after the current last node. `display()` then walks the list once.',
+    intro: 'The node type, `create_node()`, and an `append()` that builds the list in input order, as `create_list()` does: every new node is linked after the current last node. `display()` then traverses the list once.',
     params: { a: 10, b: 20, c: 30 },
     cases: [{ label: 'Build 10 → 20 → 30', setup: { values: [] } }],
     pseudo: `${PSEUDO_HEAD}
 
-@fg|function getnode(value)
-@g1|    newnode = new Node(value)    # data = value, next = NULL
-@g2|    return newnode
+@fg|function create_node(value)
+@g1|    new_node = new Node(value)    # data = value, next = NULL
+@g2|    return new_node
 end function
 
 @fa|function append(value)
-@a1|    newnode = getnode(value)
-@a2|    if start == NULL then
-@a3|        start = newnode          # the very first node
+@a1|    new_node = create_node(value)
+@a2|    if head == NULL then
+@a3|        head = new_node          # the very first node
     else
-@a4|        temp = start
+@a4|        temp = head
 @a5|        while temp.next != NULL do
 @a6|            temp = temp.next     # walk to the LAST node
         end while
-@a7|        temp.next = newnode      # link the new node after it
+@a7|        temp.next = new_node      # link the new node after it
     end if
 @fa_end|end function
 
@@ -149,20 +148,20 @@ ${DISPLAY.pseudo}
 @m4|display()`,
     cpp: `${SLL_CPP_HEAD}
 
-@fg|Node* getnode(int value) {
-@g1|    Node* newnode = new Node{value, nullptr};   // on the heap: data = value, next = nullptr
-@g2|    return newnode;
+@fg|Node* create_node(int value) {
+@g1|    Node* new_node = new Node{value, nullptr};   // on the heap: data = value, next = nullptr
+@g2|    return new_node;
 }
 
 @fa|void append(int value) {
-@a1|    Node* newnode = getnode(value);
-@a2|    if (start == nullptr)
-@a3|        start = newnode;             // the very first node
+@a1|    Node* new_node = create_node(value);
+@a2|    if (head == nullptr)
+@a3|        head = new_node;             // the very first node
     else {
-@a4|        Node* temp = start;
+@a4|        Node* temp = head;
 @a5|        while (temp->next != nullptr)
 @a6|            temp = temp->next;       // walk to the LAST node
-@a7|        temp->next = newnode;        // link the new node after it
+@a7|        temp->next = new_node;        // link the new node after it
     }
 @fa_end|}
 
@@ -179,20 +178,20 @@ int main() {
 }`,
     py: `${SLL_PY_HEAD}
 
-@fg|def getnode(value):
-@g1|    newnode = Node(value)        # a new object: data = value, next = None
-@g2|    return newnode
+@fg|def create_node(value):
+@g1|    new_node = Node(value)        # a new object: data = value, next = None
+@g2|    return new_node
 
 @fa,fa_end|def append(value):
-    global start                 # append may change the global variable start
-@a1|    newnode = getnode(value)
-@a2|    if start is None:
-@a3|        start = newnode          # the very first node
+    global head                 # append may change the global variable head
+@a1|    new_node = create_node(value)
+@a2|    if head is None:
+@a3|        head = new_node          # the very first node
     else:
-@a4|        temp = start
+@a4|        temp = head
 @a5|        while temp.next is not None:
 @a6|            temp = temp.next     # walk to the LAST node
-@a7|        temp.next = newnode      # link the new node after it
+@a7|        temp.next = new_node      # link the new node after it
 
 ${DISPLAY.py}
 
@@ -201,11 +200,11 @@ ${DISPLAY.py}
 @m3|append({{c}})
 @m4|display()`,
     notes: {
-      fg: '`getnode()` packages the two jobs of creating a node: reserve memory for it and initialise its fields (Lec 08 p.2).',
+      fg: '`create_node()` combines the two steps of creating a node: allocating memory for it and initializing its fields.',
       g1: '**Allocation.** C++ `new Node{...}` reserves a node on the heap and returns its ADDRESS; Python `Node(value)` creates an object and returns a REFERENCE to it; the pseudocode `new Node(value)` does the same in the Lab, which numbers nodes @100, @200, … A new, unlinked box appears in the diagram.',
-      g2: 'getnode hands the address (C++) / reference (Python) back to its caller. The local variable newnode disappears, but the node itself stays alive: it lives on the heap, not in the function.',
-      a2: 'Empty list? `start == nullptr` / `start is None` / `start == NULL`.',
-      a3: 'The first node: start now holds its address. In Python, `global start` is what makes this assignment change the program-wide start instead of creating a local variable.',
+      g2: 'create_node hands the address (C++) / reference (Python) back to its caller. The local variable new_node disappears, but the node itself stays alive: it lives on the heap, not in the function.',
+      a2: 'Empty list? `head == nullptr` / `head is None` / `head == NULL`.',
+      a3: 'The first node: head now holds its address. In Python, `global head` is what makes this assignment change the program-wide head instead of creating a local variable.',
       a4: 'temp starts at the first node…',
       a5: '…and stops ON the last node: the loop runs while temp has a next node.',
       a6: 'temp moves one node forward. Only temp changes.',
@@ -216,11 +215,10 @@ ${DISPLAY.py}
   },
   {
     id: 'sll-insert-beg',
-    lecture: 8,
+    module: 'sll',
     structure: 'sll',
     title: 'Insert at the beginning',
-    ref: 'Lec 08 p.4',
-    intro: 'Two link changes, in this order: (1) the new node points to the old first node, (2) start points to the new node. Swapping them would make start point at the new node while the rest of the list is no longer referenced by anything.',
+    intro: 'Two link changes, in this order: (1) the new node points to the old first node, (2) head points to the new node. Swapping them would make head point at the new node while the rest of the list is no longer referenced by anything.',
     params: { x: 5 },
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -228,22 +226,22 @@ ${DISPLAY.py}
     ],
     pseudo: `${PSEUDO_HEAD}
 
-@fi|function insert_at_beg(value)
-@i1|    newnode = new Node(value)
-@i2|    newnode.next = start         # (1) new node -> old first node (NULL if the list was empty)
-@i3|    start = newnode              # (2) start -> new node
+@fi|function insert_at_beginning(value)
+@i1|    new_node = new Node(value)
+@i2|    new_node.next = head         # (1) new node -> old first node (NULL if the list was empty)
+@i3|    head = new_node              # (2) head -> new node
 @fi_end|end function
 
 ${DISPLAY.pseudo}
 
-@m1|insert_at_beg({{x}})
+@m1|insert_at_beginning({{x}})
 @m2|display()`,
     cpp: `${SLL_CPP_HEAD}
 
-@fi|void insert_at_beg(int value) {
-@i1|    Node* newnode = new Node{value, nullptr};
-@i2|    newnode->next = start;       // (1) new node -> old first node (nullptr if the list was empty)
-@i3|    start = newnode;             // (2) start -> new node
+@fi|void insert_at_beginning(int value) {
+@i1|    Node* new_node = new Node{value, nullptr};
+@i2|    new_node->next = head;       // (1) new node -> old first node (nullptr if the list was empty)
+@i3|    head = new_node;             // (2) head -> new node
 @fi_end|}
 
 ${DISPLAY.cpp}
@@ -252,29 +250,29 @@ ${SLL_CPP_SETUP}
 
 int main() {
 @setup|    {{build}}
-@m1|    insert_at_beg({{x}});
+@m1|    insert_at_beginning({{x}});
 @m2|    display();
 @setup|    destroyList();
 }`,
     py: `${SLL_PY_HEAD}
 
-@fi,fi_end|def insert_at_beg(value):
-    global start
-@i1|    newnode = Node(value)
-@i2|    newnode.next = start         # (1) new node -> old first node (None if the list was empty)
-@i3|    start = newnode              # (2) start -> new node
+@fi,fi_end|def insert_at_beginning(value):
+    global head
+@i1|    new_node = Node(value)
+@i2|    new_node.next = head         # (1) new node -> old first node (None if the list was empty)
+@i3|    head = new_node              # (2) head -> new node
 
 ${DISPLAY.py}
 
 ${SLL_PY_SETUP}
 
 @setup|{{build}}
-@m1|insert_at_beg({{x}})
+@m1|insert_at_beginning({{x}})
 @m2|display()`,
     notes: {
-      i1: 'A new node with next = NULL / nullptr / None. Nothing points to it yet except newnode.',
-      i2: '**Link change (1).** The new node’s next takes the address that is in start — the old first node. On an empty list start is NULL, so next stays NULL: the same two lines handle the empty list, which is why the notes’ separate empty-list case is not needed.',
-      i3: '**Link change (2).** start now holds the new node’s address. The order matters: doing (2) first would overwrite the only reference to the old first node.',
+      i1: 'A new node with next = NULL / nullptr / None. Nothing points to it yet except new_node.',
+      i2: '**Link change (1).** The new node’s next takes the address that is in head — the old first node. On an empty list head is NULL, so next stays NULL: the same two lines handle the empty list, so a separate empty-list case is not needed.',
+      i3: '**Link change (2).** head now holds the new node’s address. The order matters: doing (2) first would overwrite the only reference to the old first node.',
       ...DISPLAY_NOTES,
     },
     blanks: [
@@ -282,27 +280,26 @@ ${SLL_PY_SETUP}
         label: 'i2',
         why: 'The new node must first take over the reference to the rest of the list.',
         wrong: [
-          { cpp: 'start->next = newnode;', py: 'start.next = newnode', pseudo: 'start.next = newnode', why: 'That links the new node AFTER the first node and fails on an empty list (start is NULL).', tag: 'pointer-walk' },
-          { cpp: 'newnode = start;', py: 'newnode = start', pseudo: 'newnode = start', why: 'That makes newnode point at the old first node and loses the new node.', tag: 'value-vs-address' },
-          { cpp: 'newnode->next = nullptr;', py: 'newnode.next = None', pseudo: 'newnode.next = NULL', why: 'next is already NULL; after the next line the old list would be unreachable.', tag: 'lost-access' },
+          { cpp: 'head->next = new_node;', py: 'head.next = new_node', pseudo: 'head.next = new_node', why: 'That links the new node AFTER the first node and fails on an empty list (head is NULL).', tag: 'pointer-walk' },
+          { cpp: 'new_node = head;', py: 'new_node = head', pseudo: 'new_node = head', why: 'That makes new_node point at the old first node and loses the new node.', tag: 'value-vs-address' },
+          { cpp: 'new_node->next = nullptr;', py: 'new_node.next = None', pseudo: 'new_node.next = NULL', why: 'next is already NULL; after the next line the old list would be unreachable.', tag: 'lost-access' },
         ],
       },
       {
         label: 'i3',
-        why: 'start must end up on the new first node.',
+        why: 'head must end up on the new first node.',
         wrong: [
-          { cpp: 'start->next = newnode;', py: 'start.next = newnode', pseudo: 'start.next = newnode', why: 'With newnode.next = start already done, this makes a cycle between the first two nodes.', tag: 'pointer-walk' },
-          { cpp: 'newnode = start;', py: 'newnode = start', pseudo: 'newnode = start', why: 'start never moves, so the new node is not in the list.', tag: 'wrong-result' },
+          { cpp: 'head->next = new_node;', py: 'head.next = new_node', pseudo: 'head.next = new_node', why: 'With new_node.next = head already done, this makes a cycle between the first two nodes.', tag: 'pointer-walk' },
+          { cpp: 'new_node = head;', py: 'new_node = head', pseudo: 'new_node = head', why: 'head never moves, so the new node is not in the list.', tag: 'wrong-result' },
         ],
       },
     ],
   },
   {
     id: 'sll-insert-end',
-    lecture: 8,
+    module: 'sll',
     structure: 'sll',
     title: 'Insert at the end',
-    ref: 'Lec 08 p.5',
     intro: 'Walk temp to the LAST node (the one whose next is NULL) and link the new node after it. An empty list has no last node, so it is a separate case.',
     params: { x: 40 },
     cases: [
@@ -312,15 +309,15 @@ ${SLL_PY_SETUP}
     pseudo: `${PSEUDO_HEAD}
 
 @fi|function insert_at_end(value)
-@i1|    newnode = new Node(value)
-@i2|    if start == NULL then
-@i3|        start = newnode
+@i1|    new_node = new Node(value)
+@i2|    if head == NULL then
+@i3|        head = new_node
     else
-@i4|        temp = start
+@i4|        temp = head
 @i5|        while temp.next != NULL do
 @i6|            temp = temp.next
         end while
-@i7|        temp.next = newnode
+@i7|        temp.next = new_node
     end if
 @fi_end|end function
 
@@ -331,14 +328,14 @@ ${DISPLAY.pseudo}
     cpp: `${SLL_CPP_HEAD}
 
 @fi|void insert_at_end(int value) {
-@i1|    Node* newnode = new Node{value, nullptr};
-@i2|    if (start == nullptr)
-@i3|        start = newnode;
+@i1|    Node* new_node = new Node{value, nullptr};
+@i2|    if (head == nullptr)
+@i3|        head = new_node;
     else {
-@i4|        Node* temp = start;
+@i4|        Node* temp = head;
 @i5|        while (temp->next != nullptr)
 @i6|            temp = temp->next;
-@i7|        temp->next = newnode;
+@i7|        temp->next = new_node;
     }
 @fi_end|}
 
@@ -355,15 +352,15 @@ int main() {
     py: `${SLL_PY_HEAD}
 
 @fi,fi_end|def insert_at_end(value):
-    global start
-@i1|    newnode = Node(value)
-@i2|    if start is None:
-@i3|        start = newnode
+    global head
+@i1|    new_node = Node(value)
+@i2|    if head is None:
+@i3|        head = new_node
     else:
-@i4|        temp = start
+@i4|        temp = head
 @i5|        while temp.next is not None:
 @i6|            temp = temp.next
-@i7|        temp.next = newnode
+@i7|        temp.next = new_node
 
 ${DISPLAY.py}
 
@@ -394,19 +391,18 @@ ${SLL_PY_SETUP}
         label: 'i7',
         why: 'The last node gets the new node’s address.',
         wrong: [
-          { cpp: 'temp = newnode;', py: 'temp = newnode', pseudo: 'temp = newnode', why: 'That only moves the local variable temp; no link changes.', tag: 'value-vs-address' },
-          { cpp: 'newnode->next = temp;', py: 'newnode.next = temp', pseudo: 'newnode.next = temp', why: 'That points the new node backwards and leaves it outside the list.', tag: 'pointer-walk' },
+          { cpp: 'temp = new_node;', py: 'temp = new_node', pseudo: 'temp = new_node', why: 'That only moves the local variable temp; no link changes.', tag: 'value-vs-address' },
+          { cpp: 'new_node->next = temp;', py: 'new_node.next = temp', pseudo: 'new_node.next = temp', why: 'That points the new node backwards and leaves it outside the list.', tag: 'pointer-walk' },
         ],
       },
     ],
   },
   {
     id: 'sll-insert-pos',
-    lecture: 8,
+    module: 'sll',
     structure: 'sll',
     title: 'Insert at a middle position',
-    ref: 'Lec 08 p.6–7',
-    intro: '`insert_at_mid(value, pos)` with the two corrections to the notes: the position is checked BEFORE a node is allocated (no leak on a bad position), and pos = nodectr is accepted (the new node goes just before the last node). prev follows one node behind temp; the new node goes between them.',
+    intro: '`insert_at_position(value, pos)` with two safeguards: the position is checked BEFORE a node is allocated (no leak on an invalid position), and pos = node_count is accepted (the new node goes just before the last node). prev follows one node behind temp; the new node goes between them.',
     params: { x: 15 },
     cases: [
       { label: 'pos = 2', setup: { values: [10, 20, 30] }, params: { pos: 2 } },
@@ -418,18 +414,18 @@ ${SLL_PY_SETUP}
 
 ${COUNT.pseudo}
 
-@fi|function insert_at_mid(value, pos)
-@i1|    nodectr = countnode(start)
-@i2|    if pos > 1 and pos <= nodectr then   # corrected: the notes use pos < nodectr
-@i3|        newnode = new Node(value)        # corrected: allocate only after checking
-@i4|        temp = start; prev = start; ctr = 1
-@i5|        while ctr < pos do
+@fi|function insert_at_position(value, pos)
+@i1|    node_count = count_nodes(head)
+@i2|    if pos > 1 and pos <= node_count then   # middle positions: 2 .. node_count
+@i3|        new_node = new Node(value)        # allocate only after the check
+@i4|        temp = head; prev = head; i = 1
+@i5|        while i < pos do
 @i6|            prev = temp
 @i7|            temp = temp.next
-@i8|            ctr = ctr + 1
+@i8|            i = i + 1
         end while
-@i9|        prev.next = newnode              # (1) the node before -> new node
-@i10|        newnode.next = temp              # (2) new node -> the node that was at pos
+@i9|        prev.next = new_node              # (1) the node before -> new node
+@i10|        new_node.next = temp              # (2) new node -> the node that was at pos
     else
 @i11|        print "position", pos, "is not a middle position"
     end if
@@ -437,24 +433,24 @@ ${COUNT.pseudo}
 
 ${DISPLAY.pseudo}
 
-@m1|insert_at_mid({{x}}, {{pos}})
+@m1|insert_at_position({{x}}, {{pos}})
 @m2|display()`,
     cpp: `${SLL_CPP_HEAD}
 
 ${COUNT.cpp}
 
-@fi|void insert_at_mid(int value, int pos) {
-@i1|    int nodectr = countnode(start);
-@i2|    if (pos > 1 && pos <= nodectr) {    // corrected: the notes use pos < nodectr
-@i3|        Node* newnode = new Node{value, nullptr};   // corrected: allocate only after checking
-@i4|        Node *temp = start, *prev = start;  int ctr = 1;
-@i5|        while (ctr < pos) {
+@fi|void insert_at_position(int value, int pos) {
+@i1|    int node_count = count_nodes(head);
+@i2|    if (pos > 1 && pos <= node_count) {    // middle positions: 2 .. node_count
+@i3|        Node* new_node = new Node{value, nullptr};   // allocate only after the check
+@i4|        Node *temp = head, *prev = head;  int i = 1;
+@i5|        while (i < pos) {
 @i6|            prev = temp;
 @i7|            temp = temp->next;
-@i8|            ctr = ctr + 1;
+@i8|            i = i + 1;
         }
-@i9|        prev->next = newnode;           // (1) the node before -> new node
-@i10|        newnode->next = temp;           // (2) new node -> the node that was at pos
+@i9|        prev->next = new_node;           // (1) the node before -> new node
+@i10|        new_node->next = temp;           // (2) new node -> the node that was at pos
     } else
 @i11|        cout << "position " << pos << " is not a middle position\\n";
 @fi_end|}
@@ -465,7 +461,7 @@ ${SLL_CPP_SETUP}
 
 int main() {
 @setup|    {{build}}
-@m1|    insert_at_mid({{x}}, {{pos}});
+@m1|    insert_at_position({{x}}, {{pos}});
 @m2|    display();
 @setup|    destroyList();
 }`,
@@ -473,17 +469,17 @@ int main() {
 
 ${COUNT.py}
 
-@fi,fi_end|def insert_at_mid(value, pos):
-@i1|    nodectr = countnode(start)
-@i2|    if pos > 1 and pos <= nodectr:      # corrected: the notes use pos < nodectr
-@i3|        newnode = Node(value)           # corrected: allocate only after checking
-@i4|        temp = prev = start; ctr = 1
-@i5|        while ctr < pos:
+@fi,fi_end|def insert_at_position(value, pos):
+@i1|    node_count = count_nodes(head)
+@i2|    if pos > 1 and pos <= node_count:      # middle positions: 2 .. node_count
+@i3|        new_node = Node(value)           # allocate only after the check
+@i4|        temp = prev = head; i = 1
+@i5|        while i < pos:
 @i6|            prev = temp
 @i7|            temp = temp.next
-@i8|            ctr = ctr + 1
-@i9|        prev.next = newnode             # (1) the node before -> new node
-@i10|        newnode.next = temp             # (2) new node -> the node that was at pos
+@i8|            i = i + 1
+@i9|        prev.next = new_node             # (1) the node before -> new node
+@i10|        new_node.next = temp             # (2) new node -> the node that was at pos
     else:
 @i11|        print("position", pos, "is not a middle position")
 
@@ -492,14 +488,14 @@ ${DISPLAY.py}
 ${SLL_PY_SETUP}
 
 @setup|{{build}}
-@m1|insert_at_mid({{x}}, {{pos}})
+@m1|insert_at_position({{x}}, {{pos}})
 @m2|display()`,
     notes: {
-      fc: '`countnode(p)` walks a COPY of the pointer it is given (parameters are copies in C++, Python and the pseudocode), so counting never moves start.',
-      i1: 'How many nodes are there? The valid middle positions are 2 … nodectr.',
-      i2: '**Validate first.** Position 1 is “insert at the beginning” and nodectr + 1 is “insert at the end” — they have their own functions. Correction: the notes test `pos < nodectr`, which wrongly rejects inserting just before the last node.',
-      i3: 'Only now is the node created. The notes call getnode() before the check, so an invalid position would leak a node that is never linked or freed.',
-      i4: 'Both walking pointers start at the first node; ctr counts the position temp is on.',
+      fc: '`count_nodes(p)` walks a COPY of the pointer it is given (parameters are copies in C++, Python and the pseudocode), so counting never moves head.',
+      i1: 'How many nodes are there? The valid middle positions are 2 … node_count.',
+      i2: '**Validate first.** Position 1 is “insert at the beginning” and node_count + 1 is “insert at the end”; both have their own functions. The upper bound is `pos <= node_count`: testing `pos < node_count` would wrongly reject inserting just before the last node.',
+      i3: 'Only now is the node created. Calling create_node() before the check would leak a node on an invalid position: it would never be linked or freed.',
+      i4: 'Both traversal pointers start at the first node; i counts the position temp is on.',
       i5: 'Walk until temp is ON position pos.',
       i6: 'prev catches up to temp…',
       i7: '…and temp moves one node ahead, so prev is always one node behind.',
@@ -512,29 +508,28 @@ ${SLL_PY_SETUP}
     blanks: [
       {
         label: 'i2',
-        why: 'Middle positions are 2 … nodectr (pos = nodectr puts the new node just before the last one).',
+        why: 'Middle positions are 2 … node_count (pos = node_count puts the new node just before the last one).',
         wrong: [
-          { cpp: 'if (pos > 1 && pos < nodectr) {', py: 'if pos > 1 and pos < nodectr:', pseudo: 'if pos > 1 and pos < nodectr then', why: 'That is the notes’ test: it wrongly rejects inserting just before the last node (pos = nodectr).', tag: 'position-range' },
-          { cpp: 'if (pos >= 1 && pos <= nodectr) {', py: 'if pos >= 1 and pos <= nodectr:', pseudo: 'if pos >= 1 and pos <= nodectr then', why: 'pos = 1 has no node before it: prev would stay on the first node and the new node would land at position 2.', tag: 'position-range' },
+          { cpp: 'if (pos > 1 && pos < node_count) {', py: 'if pos > 1 and pos < node_count:', pseudo: 'if pos > 1 and pos < node_count then', why: 'This test wrongly rejects inserting just before the last node (pos = node_count).', tag: 'position-range' },
+          { cpp: 'if (pos >= 1 && pos <= node_count) {', py: 'if pos >= 1 and pos <= node_count:', pseudo: 'if pos >= 1 and pos <= node_count then', why: 'pos = 1 has no node before it: prev would stay on the first node and the new node would land at position 2.', tag: 'position-range' },
         ],
       },
       {
         label: 'i10',
         why: 'The new node continues with the node that was at pos, which temp still holds.',
         wrong: [
-          { cpp: 'newnode->next = prev->next;', py: 'newnode.next = prev.next', pseudo: 'newnode.next = prev.next', why: 'prev.next was just changed to newnode, so this makes the new node point to itself.', tag: 'pointer-walk' },
-          { cpp: 'temp->next = newnode;', py: 'temp.next = newnode', pseudo: 'temp.next = newnode', why: 'That links the new node in a second place and cuts off everything after temp.', tag: 'lost-access' },
+          { cpp: 'new_node->next = prev->next;', py: 'new_node.next = prev.next', pseudo: 'new_node.next = prev.next', why: 'prev.next was just changed to new_node, so this makes the new node point to itself.', tag: 'pointer-walk' },
+          { cpp: 'temp->next = new_node;', py: 'temp.next = new_node', pseudo: 'temp.next = new_node', why: 'That links the new node in a second place and cuts off everything after temp.', tag: 'lost-access' },
         ],
       },
     ],
   },
   {
     id: 'sll-delete-beg',
-    lecture: 9,
+    module: 'sll',
     structure: 'sll',
     title: 'Delete at the beginning',
-    ref: 'Lec 09 p.1',
-    intro: 'Save → relink → free: keep the first node in temp, move start to the second node, then give the old first node back.',
+    intro: 'Save → relink → free: keep the first node in temp, move head to the second node, then free the old first node.',
     params: {},
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -543,29 +538,29 @@ ${SLL_PY_SETUP}
     ],
     pseudo: `${PSEUDO_HEAD}
 
-@fx|function delete_at_beg()
-@x1|    if start == NULL then
+@fx|function delete_at_beginning()
+@x1|    if head == NULL then
 @x2|        print "No nodes exist"
 @x3|        return
     end if
-@x4|    temp = start                 # save the node to remove
-@x5|    start = temp.next            # relink: start skips it
+@x4|    temp = head                 # save the node to remove
+@x5|    head = temp.next            # relink: head skips it
 @x6|    delete temp                  # free it last
 @fx_end|end function
 
 ${DISPLAY.pseudo}
 
-@m1|delete_at_beg()
+@m1|delete_at_beginning()
 @m2|display()`,
     cpp: `${SLL_CPP_HEAD}
 
-@fx|void delete_at_beg() {
-@x1|    if (start == nullptr) {
+@fx|void delete_at_beginning() {
+@x1|    if (head == nullptr) {
 @x2|        cout << "No nodes exist\\n";
 @x3|        return;
     }
-@x4|    Node* temp = start;          // save the node to remove
-@x5|    start = temp->next;          // relink: start skips it
+@x4|    Node* temp = head;          // save the node to remove
+@x5|    head = temp->next;          // relink: head skips it
 @x6|    delete temp;                 // free it last
 @fx_end|}
 
@@ -575,19 +570,19 @@ ${SLL_CPP_SETUP}
 
 int main() {
 @setup|    {{build}}
-@m1|    delete_at_beg();
+@m1|    delete_at_beginning();
 @m2|    display();
 @setup|    destroyList();
 }`,
     py: `${SLL_PY_HEAD}
 
-@fx,fx_end|def delete_at_beg():
-    global start
-@x1|    if start is None:
+@fx,fx_end|def delete_at_beginning():
+    global head
+@x1|    if head is None:
 @x2|        print("No nodes exist")
 @x3|        return
-@x4|    temp = start                 # save the node to remove
-@x5|    start = temp.next            # relink: start skips it
+@x4|    temp = head                 # save the node to remove
+@x5|    head = temp.next            # relink: head skips it
 @x6|    del temp                     # last reference gone: Python frees the node
 
 ${DISPLAY.py}
@@ -595,33 +590,32 @@ ${DISPLAY.py}
 ${SLL_PY_SETUP}
 
 @setup|{{build}}
-@m1|delete_at_beg()
+@m1|delete_at_beginning()
 @m2|display()`,
     notes: {
       x1: 'Underflow check: an empty list has nothing to delete.',
-      x4: '**Save.** temp keeps the address of the node we are removing — we will need it to free the node.',
-      x5: '**Relink.** start moves to the second node (or NULL if the list had one node). The old first node is now outside the list but temp still points at it.',
-      x6: '**Free.** C++ `delete` gives the node’s memory back. Python has no delete for objects: once no variable refers to the node it is reclaimed automatically (`del temp` just removes that last reference). In the Lab the node is marked freed.',
+      x4: '**Save.** temp keeps the address of the node being removed; that address is needed to free the node.',
+      x5: '**Relink.** head moves to the second node (or NULL if the list had one node). The old first node is now outside the list but temp still points at it.',
+      x6: '**Free.** C++ `delete` returns the node’s memory to the heap. Python has no delete for objects: once no variable refers to the node it is reclaimed automatically (`del temp` just removes that last reference). In the Lab the node is marked freed.',
       ...DISPLAY_NOTES,
     },
     blanks: [
       {
         label: 'x5',
-        why: 'start must move to the second node before the first one is freed.',
+        why: 'head must move to the second node before the first one is freed.',
         wrong: [
-          { cpp: 'start = nullptr;', py: 'start = None', pseudo: 'start = NULL', why: 'That throws away the whole list, not just the first node.', tag: 'lost-access' },
-          { cpp: 'temp = temp->next;', py: 'temp = temp.next', pseudo: 'temp = temp.next', why: 'That moves temp; start still points at the node that is about to be freed (a dangling pointer).', tag: 'dangling' },
+          { cpp: 'head = nullptr;', py: 'head = None', pseudo: 'head = NULL', why: 'That discards the whole list, not just the first node.', tag: 'lost-access' },
+          { cpp: 'temp = temp->next;', py: 'temp = temp.next', pseudo: 'temp = temp.next', why: 'That moves temp; head still points at the node that is about to be freed (a dangling pointer).', tag: 'dangling' },
         ],
       },
     ],
   },
   {
     id: 'sll-delete-end',
-    lecture: 9,
+    module: 'sll',
     structure: 'sll',
-    title: 'Delete at the end (with the one-node correction)',
-    ref: 'Lec 09 p.2',
-    intro: 'prev trails temp so that when temp reaches the last node, prev is on the node that becomes the new last node. The correction to the notes: with only one node there is no node before it, so start itself must become NULL.',
+    title: 'Delete at the end (including the one-node case)',
+    intro: 'prev trails temp so that when temp reaches the last node, prev is on the node that becomes the new last node. A one-node list needs its own case: there is no node before the only node, so head itself must become NULL.',
     params: {},
     cases: [
       { label: 'Three nodes', setup: { values: [10, 20, 30] } },
@@ -630,18 +624,18 @@ ${SLL_PY_SETUP}
     ],
     pseudo: `${PSEUDO_HEAD}
 
-@fx|function delete_at_last()
-@x1|    if start == NULL then
+@fx|function delete_at_end()
+@x1|    if head == NULL then
 @x2|        print "Empty list"
 @x3|        return
     end if
-@x4|    temp = start; prev = start
+@x4|    temp = head; prev = head
 @x5|    while temp.next != NULL do
 @x6|        prev = temp
 @x7|        temp = temp.next
     end while
-@x8|    if temp == start then        # correction: the only node
-@x9|        start = NULL
+@x8|    if temp == head then        # one-node list: temp is the only node
+@x9|        head = NULL
     else
 @x10|        prev.next = NULL         # prev becomes the last node
     end if
@@ -650,22 +644,22 @@ ${SLL_PY_SETUP}
 
 ${DISPLAY.pseudo}
 
-@m1|delete_at_last()
+@m1|delete_at_end()
 @m2|display()`,
     cpp: `${SLL_CPP_HEAD}
 
-@fx|void delete_at_last() {
-@x1|    if (start == nullptr) {
+@fx|void delete_at_end() {
+@x1|    if (head == nullptr) {
 @x2|        cout << "Empty list\\n";
 @x3|        return;
     }
-@x4|    Node *temp = start, *prev = start;
+@x4|    Node *temp = head, *prev = head;
 @x5|    while (temp->next != nullptr) {
 @x6|        prev = temp;
 @x7|        temp = temp->next;
     }
-@x8|    if (temp == start)           // correction: the only node
-@x9|        start = nullptr;
+@x8|    if (temp == head)           // one-node list: temp is the only node
+@x9|        head = nullptr;
     else
 @x10|        prev->next = nullptr;    // prev becomes the last node
 @x11|    delete temp;
@@ -677,23 +671,23 @@ ${SLL_CPP_SETUP}
 
 int main() {
 @setup|    {{build}}
-@m1|    delete_at_last();
+@m1|    delete_at_end();
 @m2|    display();
 @setup|    destroyList();
 }`,
     py: `${SLL_PY_HEAD}
 
-@fx,fx_end|def delete_at_last():
-    global start
-@x1|    if start is None:
+@fx,fx_end|def delete_at_end():
+    global head
+@x1|    if head is None:
 @x2|        print("Empty list")
 @x3|        return
-@x4|    temp = prev = start
+@x4|    temp = prev = head
 @x5|    while temp.next is not None:
 @x6|        prev = temp
 @x7|        temp = temp.next
-@x8|    if temp is start:            # correction: the only node
-@x9|        start = None
+@x8|    if temp is head:            # one-node list: temp is the only node
+@x9|        head = None
     else:
 @x10|        prev.next = None         # prev becomes the last node
 @x11|    del temp
@@ -703,15 +697,15 @@ ${DISPLAY.py}
 ${SLL_PY_SETUP}
 
 @setup|{{build}}
-@m1|delete_at_last()
+@m1|delete_at_end()
 @m2|display()`,
     notes: {
       x4: 'Two walking pointers on the first node.',
       x5: 'Stop when temp is ON the last node.',
       x6: 'prev catches up…',
       x7: '…temp moves ahead: prev stays one node behind.',
-      x8: '**Edge case.** If temp is still start, the list has only one node and there is no node before it. Comparing pointers compares ADDRESSES (C++ `==`, Python `is`): is it the same node?',
-      x9: 'The list becomes empty. The notes omit this: they set prev->next = NULL (which changes the node being deleted) and free it, leaving start holding a freed address — a dangling pointer.',
+      x8: '**Edge case.** If temp is still head, the list has only one node and there is no node before it. Comparing pointers compares ADDRESSES (C++ `==`, Python `is`): is it the same node?',
+      x9: 'The list becomes empty. An incorrect version that omits this case sets prev->next = NULL (which changes the node being deleted) and frees the node, leaving head holding a freed address: a dangling pointer.',
       x10: '**Link change.** The node before the last one becomes the new last node.',
       x11: 'Free the old last node. In Python, the last reference disappears and the object is reclaimed automatically.',
       ...DISPLAY_NOTES,
@@ -719,21 +713,20 @@ ${SLL_PY_SETUP}
     blanks: [
       {
         label: 'x9',
-        why: 'With one node there is no previous node: start itself must become empty.',
+        why: 'With one node there is no previous node: head itself must become empty.',
         wrong: [
-          { cpp: 'prev->next = nullptr;', py: 'prev.next = None', pseudo: 'prev.next = NULL', why: 'prev IS the node being deleted here; start would be left pointing at freed memory.', tag: 'dangling' },
-          { cpp: 'start = start->next->next;', py: 'start = start.next.next', pseudo: 'start = start.next.next', why: 'start.next is NULL on a one-node list, so this follows NULL.', tag: 'null-deref' },
+          { cpp: 'prev->next = nullptr;', py: 'prev.next = None', pseudo: 'prev.next = NULL', why: 'prev IS the node being deleted here; head would be left pointing at freed memory.', tag: 'dangling' },
+          { cpp: 'head = head->next->next;', py: 'head = head.next.next', pseudo: 'head = head.next.next', why: 'head.next is NULL on a one-node list, so this follows NULL.', tag: 'null-deref' },
         ],
       },
     ],
   },
   {
     id: 'sll-delete-pos',
-    lecture: 9,
+    module: 'sll',
     structure: 'sll',
     title: 'Delete at a middle position',
-    ref: 'Lec 09 p.3–4',
-    intro: 'Only positions 2 … nodectr − 1 are middle positions for deletion (the first and last nodes have their own functions). Relink around the node, then free it.',
+    intro: 'Only positions 2 … node_count − 1 are middle positions for deletion (the first and last nodes have their own functions). Relink around the node, then free it.',
     params: {},
     cases: [
       { label: 'pos = 2', setup: { values: [10, 20, 30, 40] }, params: { pos: 2 } },
@@ -744,14 +737,14 @@ ${SLL_PY_SETUP}
 
 ${COUNT.pseudo}
 
-@fx|function delete_at_mid(pos)
-@x1|    nodectr = countnode(start)
-@x2|    if pos > 1 and pos < nodectr then
-@x3|        temp = start; prev = start; ctr = 1
-@x4|        while ctr < pos do
+@fx|function delete_at_position(pos)
+@x1|    node_count = count_nodes(head)
+@x2|    if pos > 1 and pos < node_count then
+@x3|        temp = head; prev = head; i = 1
+@x4|        while i < pos do
 @x5|            prev = temp
 @x6|            temp = temp.next
-@x7|            ctr = ctr + 1
+@x7|            i = i + 1
         end while
 @x8|        prev.next = temp.next    # bypass the node
 @x9|        delete temp              # then free it
@@ -762,20 +755,20 @@ ${COUNT.pseudo}
 
 ${DISPLAY.pseudo}
 
-@m1|delete_at_mid({{pos}})
+@m1|delete_at_position({{pos}})
 @m2|display()`,
     cpp: `${SLL_CPP_HEAD}
 
 ${COUNT.cpp}
 
-@fx|void delete_at_mid(int pos) {
-@x1|    int nodectr = countnode(start);
-@x2|    if (pos > 1 && pos < nodectr) {
-@x3|        Node *temp = start, *prev = start;  int ctr = 1;
-@x4|        while (ctr < pos) {
+@fx|void delete_at_position(int pos) {
+@x1|    int node_count = count_nodes(head);
+@x2|    if (pos > 1 && pos < node_count) {
+@x3|        Node *temp = head, *prev = head;  int i = 1;
+@x4|        while (i < pos) {
 @x5|            prev = temp;
 @x6|            temp = temp->next;
-@x7|            ctr = ctr + 1;
+@x7|            i = i + 1;
         }
 @x8|        prev->next = temp->next;     // bypass the node
 @x9|        delete temp;                 // then free it
@@ -789,7 +782,7 @@ ${SLL_CPP_SETUP}
 
 int main() {
 @setup|    {{build}}
-@m1|    delete_at_mid({{pos}});
+@m1|    delete_at_position({{pos}});
 @m2|    display();
 @setup|    destroyList();
 }`,
@@ -797,14 +790,14 @@ int main() {
 
 ${COUNT.py}
 
-@fx,fx_end|def delete_at_mid(pos):
-@x1|    nodectr = countnode(start)
-@x2|    if pos > 1 and pos < nodectr:
-@x3|        temp = prev = start; ctr = 1
-@x4|        while ctr < pos:
+@fx,fx_end|def delete_at_position(pos):
+@x1|    node_count = count_nodes(head)
+@x2|    if pos > 1 and pos < node_count:
+@x3|        temp = prev = head; i = 1
+@x4|        while i < pos:
 @x5|            prev = temp
 @x6|            temp = temp.next
-@x7|            ctr = ctr + 1
+@x7|            i = i + 1
 @x8|        prev.next = temp.next        # bypass the node
 @x9|        del temp                     # then let it go
     else:
@@ -815,14 +808,14 @@ ${DISPLAY.py}
 ${SLL_PY_SETUP}
 
 @setup|{{build}}
-@m1|delete_at_mid({{pos}})
+@m1|delete_at_position({{pos}})
 @m2|display()`,
     notes: {
-      x2: 'Middle positions for deletion are 2 … nodectr − 1.',
+      x2: 'Middle positions for deletion are 2 … node_count − 1.',
       x3: 'Walk with prev one node behind temp, as for insertion.',
       x8: '**Link change.** The node before temp now points to the node after temp: the list skips temp. temp still points at the removed node, so it can be freed.',
       x9: '**Free after relinking.** Freeing first would make `temp->next` a read from freed memory (see “Freeing too early”).',
-      x10: 'Positions 1 and nodectr belong to delete_at_beg / delete_at_last.',
+      x10: 'Positions 1 and node_count belong to delete_at_beginning / delete_at_end.',
       ...DISPLAY_NOTES,
     },
     blanks: [

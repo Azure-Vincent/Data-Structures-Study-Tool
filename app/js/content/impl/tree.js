@@ -1,8 +1,9 @@
-// "Build it in code": binary trees (Lectures 13 and 14). See ./format.js.
-// Node values are the letters of the lecture tree: C++ char, Python str,
+// implementation: binary trees (linked and array representations,
+// traversals). See ./format.js.
+// Node values are the letters of the example tree: C++ char, Python str,
 // pseudocode text ("A").
 
-const LECTURE_VALUES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const EXAMPLE_VALUES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 // ---------------------------------------------------------------- shared parts
 const TREE_CPP_HEAD = `#include <iostream>
@@ -69,47 +70,46 @@ const PSEUDO_HEAD = `# Nodes have three fields: data, left and right (NULL = no 
 export const TREE_EXAMPLES = [
   {
     id: 'tree-create',
-    lecture: 13,
+    module: 'tree',
     structure: 'tree',
     title: 'Create a binary tree from scratch',
-    ref: 'Lec 13 p.2, p.5',
-    intro: 'A binary tree node is a list node with TWO links: left and right. `getnode()` creates an unlinked node; the tree is built by storing each new node’s address in a child field of its parent. The result is the lecture tree A (B (D, E), C (F, G)).',
+    intro: 'A binary tree node is a list node with TWO links: left and right. `create_node()` creates an unlinked node; the tree is built by storing each new node’s address in a child field of its parent. The result is the example tree A (B (D, E), C (F, G)).',
     params: {},
-    cases: [{ label: 'Build the lecture tree', setup: { values: [] } }],
+    cases: [{ label: 'Build the example tree', setup: { values: [] } }],
     pseudo: `# Nodes have three fields: data, left and right (NULL = no child).
 
-@fg|function getnode(value)
-@g1|    newnode = new Node(value)    # data = value, left = right = NULL
-@g2|    return newnode
+@fg|function create_node(value)
+@g1|    new_node = new Node(value)    # data = value, left = right = NULL
+@g2|    return new_node
 end function
 
-@m1|root = getnode("A")
-@m2|root.left = getnode("B")
-@m3|root.right = getnode("C")
-@m4|root.left.left = getnode("D")
-@m5|root.left.right = getnode("E")
-@m6|root.right.left = getnode("F")
-@m7|root.right.right = getnode("G")
+@m1|root = create_node("A")
+@m2|root.left = create_node("B")
+@m3|root.right = create_node("C")
+@m4|root.left.left = create_node("D")
+@m5|root.left.right = create_node("E")
+@m6|root.right.left = create_node("F")
+@m7|root.right.right = create_node("G")
 @m8|print root.data                                  # level 0
 @m9|print root.left.data, root.right.data            # level 1
 @m10|print root.left.left.data, root.left.right.data, root.right.left.data, root.right.right.data`,
     cpp: `${TREE_CPP_HEAD}
 
-@fg|Node* getnode(char value) {
-@g1|    Node* newnode = new Node{value, nullptr, nullptr};   // on the heap: no children yet
-@g2|    return newnode;
+@fg|Node* create_node(char value) {
+@g1|    Node* new_node = new Node{value, nullptr, nullptr};   // on the heap: no children yet
+@g2|    return new_node;
 }
 
 ${TREE_CPP_DESTROY}
 
 int main() {
-@m1|    root = getnode('A');
-@m2|    root->left = getnode('B');
-@m3|    root->right = getnode('C');
-@m4|    root->left->left = getnode('D');
-@m5|    root->left->right = getnode('E');
-@m6|    root->right->left = getnode('F');
-@m7|    root->right->right = getnode('G');
+@m1|    root = create_node('A');
+@m2|    root->left = create_node('B');
+@m3|    root->right = create_node('C');
+@m4|    root->left->left = create_node('D');
+@m5|    root->left->right = create_node('E');
+@m6|    root->right->left = create_node('F');
+@m7|    root->right->right = create_node('G');
 @m8|    cout << root->data << "\\n";                                   // level 0
 @m9|    cout << root->left->data << " " << root->right->data << "\\n";  // level 1
 @m10|    cout << root->left->left->data << " " << root->left->right->data << " "
@@ -118,47 +118,46 @@ int main() {
 }`,
     py: `${TREE_PY_HEAD}
 
-@fg|def getnode(value):
-@g1|    newnode = Node(value)        # a new object: no children yet
-@g2|    return newnode
+@fg|def create_node(value):
+@g1|    new_node = Node(value)        # a new object: no children yet
+@g2|    return new_node
 
-@m1|root = getnode('A')
-@m2|root.left = getnode('B')
-@m3|root.right = getnode('C')
-@m4|root.left.left = getnode('D')
-@m5|root.left.right = getnode('E')
-@m6|root.right.left = getnode('F')
-@m7|root.right.right = getnode('G')
+@m1|root = create_node('A')
+@m2|root.left = create_node('B')
+@m3|root.right = create_node('C')
+@m4|root.left.left = create_node('D')
+@m5|root.left.right = create_node('E')
+@m6|root.right.left = create_node('F')
+@m7|root.right.right = create_node('G')
 @m8|print(root.data)                                 # level 0
 @m9|print(root.left.data, root.right.data)           # level 1
 @m10|print(root.left.left.data, root.left.right.data, root.right.left.data, root.right.right.data)`,
     notes: {
-      g1: '**Allocation.** A node with no children: left = right = NULL / nullptr / None. A node with no children is a **leaf** (Lec 13 p.2).',
+      g1: '**Allocation.** A node with no children: left = right = NULL / nullptr / None. A node with no children is a **leaf**.',
       g2: 'The caller receives the node’s address (C++) / a reference to it (Python).',
       m1: 'The first node is the **root**: the only node without a parent. root holds its address.',
       m2: '**Link change.** The root’s left field now holds B’s address: B is the root’s left child and A is B’s parent.',
       m3: 'C becomes the right child: A now has two children, which are **siblings**.',
       m4: '`root.left.left` follows two links: from A to B, then sets B’s left field. In C++ every `->` follows one pointer.',
       m7: 'Seven nodes, six links: every node except the root has exactly one incoming link, so a tree with n nodes has n − 1 edges.',
-      m8: 'Reading values back by following links, level by level. (Lec 14 shows the systematic ways to visit every node: traversals.)',
+      m8: 'Reading values back by following links, level by level. Traversals (preorder, inorder, postorder) visit every node systematically.',
     },
     blanks: [
       {
         label: 'm2',
         why: 'The new node’s address must be stored in a child field of its parent.',
         wrong: [
-          { cpp: 'root = getnode(\'B\');', py: "root = getnode('B')", pseudo: 'root = getnode("B")', why: 'That replaces the root — A is no longer reachable.', tag: 'lost-access' },
-          { cpp: 'getnode(\'B\');', py: "getnode('B')", pseudo: 'getnode("B")', why: 'The node is created but nothing refers to it: it is not in the tree (and in C++ it leaks).', tag: 'memory-bug' },
+          { cpp: 'root = create_node(\'B\');', py: "root = create_node('B')", pseudo: 'root = create_node("B")', why: 'That replaces the root — A is no longer reachable.', tag: 'lost-access' },
+          { cpp: 'create_node(\'B\');', py: "create_node('B')", pseudo: 'create_node("B")', why: 'The node is created but nothing refers to it: it is not in the tree (and in C++ it leaks).', tag: 'memory-bug' },
         ],
       },
     ],
   },
   {
     id: 'tree-array',
-    lecture: 13,
+    module: 'tree',
     structure: 'arrays',
     title: 'A binary tree stored in an array',
-    ref: 'Lec 13 p.5',
     intro: 'The nodes are stored level by level. With positions numbered from 0, the children of position i are at 2i + 1 and 2i + 2, and its parent is at (i − 1) / 2 rounded down. Here B has no left child, so position 3 holds the marker "-" — an unused slot.',
     params: { i: 1 },
     cases: [
@@ -264,7 +263,7 @@ int main() {
 @m1|show({{i}})`,
     notes: {
       s2: 'One slot per position of a complete tree with 3 levels: 1 + 2 + 4 = 7 slots.',
-      s3: 'Position 0 is the root. (Some books number from 1: then the children are 2i and 2i + 1 and the parent is i / 2. Lec 13 p.5 shows both.)',
+      s3: 'Position 0 is the root. (Some texts number positions from 1: then the children are 2i and 2i + 1 and the parent is i / 2.)',
       s6: '**Gap.** B has no left child, but its slot still exists: an incomplete tree wastes array slots. No pointers are stored — the positions alone define the links.',
       q2: 'Edge case: the root (position 0) has no parent.',
       q4: 'Parent of i: (i − 1) / 2 rounded DOWN. C++ int division and the pseudocode `div` round down for non-negative numbers; in Python use `//` — `/` would give a fraction.',
@@ -292,16 +291,15 @@ int main() {
   },
   {
     id: 'tree-traversals',
-    lecture: 14,
+    module: 'tree',
     structure: 'tree',
     title: 'Preorder, inorder and postorder (recursive)',
-    ref: 'Lec 14 p.1–2',
     intro: 'Each traversal is a function that calls itself for the left and the right subtree. The three differ ONLY in where the print is: before both calls (preorder), between them (inorder) or after both (postorder). A call with NULL returns immediately — the base case that stops the recursion.',
     params: { call: 'preorder' },
     cases: [
-      { label: 'Preorder', setup: { values: LECTURE_VALUES }, params: { call: 'preorder' } },
-      { label: 'Inorder', setup: { values: LECTURE_VALUES }, params: { call: 'inorder' } },
-      { label: 'Postorder', setup: { values: LECTURE_VALUES }, params: { call: 'postorder' } },
+      { label: 'Preorder', setup: { values: EXAMPLE_VALUES }, params: { call: 'preorder' } },
+      { label: 'Inorder', setup: { values: EXAMPLE_VALUES }, params: { call: 'inorder' } },
+      { label: 'Postorder', setup: { values: EXAMPLE_VALUES }, params: { call: 'postorder' } },
       { label: 'Empty tree', setup: { values: [] }, params: { call: 'preorder' } },
     ],
     pseudo: `${PSEUDO_HEAD}
@@ -431,18 +429,17 @@ ${TREE_PY_SETUP}
   },
   {
     id: 'tree-inorder-stack',
-    lecture: 14,
+    module: 'tree',
     structure: 'tree',
     title: 'Inorder with an explicit stack (no recursion)',
-    ref: 'Lec 14 p.1 (stack pictures)',
-    intro: 'The stack pictures in the notes show what the recursion keeps track of. Here that stack is an ARRAY of node addresses with a `top` count, exactly like the array stack of Lec 12: go left as far as possible pushing every node, pop one, print it, then continue with its right subtree.',
+    intro: 'An explicit stack can replace the recursion: it holds exactly the nodes whose calls would still be waiting on the call stack. Here that stack is an ARRAY of node addresses with a `top` count, exactly like an array stack: go left as far as possible pushing every node, pop one, print it, then continue with its right subtree.',
     params: {},
     cases: [
-      { label: 'Lecture tree', setup: { values: LECTURE_VALUES } },
+      { label: 'Example tree', setup: { values: EXAMPLE_VALUES } },
       { label: 'Empty tree', setup: { values: [] } },
     ],
     pseudo: `${PSEUDO_HEAD}
-# S is a stack of nodes (an array with a count top, as in Lec 12).
+# S is a stack of nodes: an array with a count top (top = number of items).
 @s1|S = new Array(10)
 @s2|top = 0
 
@@ -464,7 +461,7 @@ ${TREE_PY_SETUP}
 @m1|inorder_stack()`,
     cpp: `${TREE_CPP_HEAD}
 
-// S is a stack of node addresses (an array with a count top, as in Lec 12).
+// S is a stack of node addresses: an array with a count top (top = number of items).
 @s1|Node* S[10];
 @s2|int top = 0;
 
@@ -494,7 +491,7 @@ int main() {
 }`,
     py: `${TREE_PY_HEAD}
 
-# S is a stack of nodes (a fixed list of slots with a count top, as in Lec 12).
+# S is a stack of nodes: a fixed list of slots with a count top (top = number of items).
 @s1|S = [None] * 10
 @s2|top = 0
 
@@ -520,7 +517,7 @@ ${TREE_PY_SETUP}
       i2: 'Continue while there is still a subtree to explore (cur) or a node waiting on the stack. Edge case: an empty tree fails both tests at once — nothing is printed.',
       i4: '**Push.** The node is remembered: it will be printed after its whole left subtree.',
       i6: 'Move to the left child. When it is NULL, the leftmost node of this subtree is on top of the stack.',
-      i7: '**Pop.** top moves down first (top counts the items), then the node is read — the same order as pop() in Lec 12.',
+      i7: '**Pop.** top moves down first (top counts the items), then the node is read — the same order as pop() on an array stack.',
       i9: 'Visit: the left subtree of this node is finished.',
       i10: 'Continue with the right subtree (NULL for a leaf: then the next pop happens).',
     },

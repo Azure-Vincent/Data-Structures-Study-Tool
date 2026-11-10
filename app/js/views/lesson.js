@@ -1,6 +1,7 @@
-import { h, clear, md, refPill, stickyWhenFits } from '../ui/dom.js';
-import { LESSON_BY_LECTURE } from '../content/lessons.js';
-import { LECTURES } from '../content/concepts.js';
+import { h, clear, md, stickyWhenFits } from '../ui/dom.js';
+import { LESSONS, LESSON_BY_ID } from '../content/lessons.js';
+import { MODULES, MODULE_BY_ID } from '../content/concepts.js';
+import { TEMPLATE_BY_ID } from '../exercises/registry.js';
 import { renderVisual } from '../ui/render/visual.js';
 import { createWorkspace } from '../ui/workspace.js';
 import { buildTrace } from '../sim/specs.js';
@@ -13,21 +14,69 @@ import { langCode } from '../ui/langs.js';
 import { createWalkthrough } from '../ui/walkthrough.js';
 import { IMPL_BY_ID } from '../content/impl/index.js';
 
-const NOTE_TAGS = { correction: 'Correction / clarification', terms: 'Terminology', supplementary: 'Supplementary', prereq: 'Before you start', pitfalls: 'Common mistakes & edge cases' };
+export const NOTE_TAGS = { technical: 'Technical Note', terms: 'Terminology', extension: 'Extension', prereq: 'Prerequisite', pitfalls: 'Common Errors and Edge Cases' };
 const isWriting = (s) => s.type === 'exercise' && /-write-code$/.test(s.templateId);
-const typeName = (s) => (isWriting(s) ? 'Write it yourself' : TYPE_NAMES[s.type] || s.type);
-const TYPE_NAMES = { read: 'Read', note: 'Note', code: 'Code', sim: 'Worked example', codesim: 'Run the code', walk: 'Build it in code', exercise: 'Your turn', lab: 'Write it yourself', demo: 'Interactive', pseudo: 'Write pseudocode' };
 
-export function lessonView(ctx, n, at) {
+// Every section is labeled with the kind of work it asks for.
+const SECTION_NAMES = {
+  read: 'Conceptual Foundations',
+  code: 'C++ Implementation',
+  walk: 'C++ Implementation',
+  sim: 'Algorithm Execution',
+  codesim: 'Algorithm Tracing',
+  pseudo: 'Pseudocode Construction',
+};
+const EXERCISE_NAMES = {
+  predict: 'Algorithm Tracing',
+  traverse: 'Algorithm Tracing',
+  rewire: 'Algorithm Execution',
+  order: 'Pseudocode Construction',
+  fill: 'Pseudocode Construction',
+  lab: 'Pseudocode Construction',
+  bug: 'Error Identification and Debugging',
+  convert: 'Data Structure Representation',
+  build: 'Data Structure Representation',
+  choose: 'Application and Problem Solving',
+  classify: 'Conceptual Foundations',
+};
+const MEMORY_CONCEPTS = ['l07.memory-layout', 'l07.pointers-alloc'];
+export function sectionName(s) {
+  if (s.type === 'note') return NOTE_TAGS[s.variant] || 'Technical Note';
+  if (s.type === 'demo') return s.kind === 'formulas' ? 'Conceptual Foundations' : 'Data Structure Representation';
+  if (s.type === 'exercise') {
+    const t = TEMPLATE_BY_ID[s.templateId];
+    if (/-predict-output$/.test(s.templateId)) return 'Pseudocode Interpretation';
+    if (t && MEMORY_CONCEPTS.includes(t.concept)) return 'Memory Visualization';
+    return (t && EXERCISE_NAMES[t.type]) || 'Practice Exercise';
+  }
+  return SECTION_NAMES[s.type] || 'Conceptual Foundations';
+}
+
+/** Open a module by its old lesson link (#/lesson/<number>/<step>): the step keeps its section. */
+export function moduleLinkForOldLesson(n, i) {
+  const old = { 7: 'l07', 8: 'l08', 9: 'l09', 10: 'l10', 11: 'l11', 12: 'l12', 13: 'l13', 14: 'l14' }[n];
+  return import('../progress/migrate.js').then(({ V2_LESSON_KEYS, LESSON_MODULE, KEY_RENAMES }) => {
+    const oldKey = old && V2_LESSON_KEYS[old] ? V2_LESSON_KEYS[old][i || 0] : null;
+    const key = KEY_RENAMES[oldKey] || oldKey;
+    for (const l of LESSONS) {
+      const k = l.sections.findIndex((x) => x.key === key);
+      if (k >= 0) return `#/module/${l.id}/${k}`;
+    }
+    return `#/module/${LESSON_MODULE[n] || 'memory'}`;
+  });
+}
+
+export function lessonView(ctx, id, at) {
   const { store } = ctx;
-  const lesson = LESSON_BY_LECTURE[n];
-  const L = LECTURES.find((x) => x.n === n);
-  if (!lesson) return h('p', {}, 'No such lecture.');
+  const lesson = LESSON_BY_ID[id];
+  if (!lesson) return h('p', {}, 'This module does not exist. ', h('a', { href: '#/modules' }, 'See all learning modules'));
+  const M = MODULE_BY_ID[lesson.id];
+  const next = MODULES.find((x) => x.n === M.n + 1);
   const rec = store.lesson(lesson.id);
   const keys = lesson.sections.map((s) => s.key);
   let idx = at != null && !Number.isNaN(at) ? Math.max(0, Math.min(at, lesson.sections.length - 1)) : Math.max(0, keys.indexOf(rec.at));
   const root = h('div');
-  const outline = h('ol', { class: 'history', 'aria-label': 'Lesson outline' });
+  const outline = h('ol', { class: 'history', 'aria-label': 'Module outline' });
   const progBar = h('span');
   const progTxt = h('span');
   const body = h('div', { style: { minWidth: 0 } });
@@ -38,12 +87,12 @@ export function lessonView(ctx, n, at) {
   // and the lesson takes the freed width. The choice is remembered; without one
   // it starts open on wide windows and closed on narrow ones.
   const saved = store.data.settings.lessonOutline;
-  const summary = h('summary', {}, h('span', { class: 'outline-label' }, `Lesson outline · ${lesson.sections.length} steps`));
+  const summary = h('summary', {}, h('span', { class: 'outline-label' }, `Module outline · ${lesson.sections.length} steps`));
   const outlineBox = h('details', { class: 'panel outline', open: saved ? saved === 'open' : window.innerWidth >= 1240 }, summary, outline);
   const grid = h('div', { class: 'lesson-grid' }, outlineBox, body);
   const syncOutline = () => {
     grid.classList.toggle('outline-collapsed', !outlineBox.open);
-    summary.title = outlineBox.open ? 'Hide the lesson outline' : 'Show the lesson outline';
+    summary.title = outlineBox.open ? 'Hide the module outline' : 'Show the module outline';
   };
   outlineBox.addEventListener('toggle', () => {
     syncOutline();
@@ -51,7 +100,7 @@ export function lessonView(ctx, n, at) {
   });
   syncOutline();
   root.append(
-    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Lecture ${String(n).padStart(2, '0')}`), h('h1', {}, lesson.title), h('div', { class: 'subtitle' }, `Source: ${L.file} (${L.pages} pages)`)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, 'Practise this lecture'))),
+    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, `Learning Module ${M.n} of ${MODULES.length}`), h('h1', {}, lesson.title), h('div', { class: 'subtitle' }, M.summary)), h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => ctx.go(`#/practice/new/module/${lesson.id}`) }, 'Practice this module'))),
     h('div', { class: 'lesson-progress' }, h('div', { class: 'bar' }, progBar), progTxt),
     grid,
   );
@@ -74,24 +123,25 @@ export function lessonView(ctx, n, at) {
     const nDone = store.lessonDoneCount(lesson.id, keys);
     const pct = Math.round((nDone / lesson.sections.length) * 100);
     progBar.style.width = pct + '%';
-    progTxt.textContent = `${nDone} of ${lesson.sections.length} steps done`;
+    progTxt.textContent = `${nDone} of ${lesson.sections.length} steps completed`;
     clear(outline).append(
-      lesson.sections.map((s, i) =>
+      lesson.sections.map((s, i) => [
+        s.part ? h('li', { class: 'part-head', role: 'presentation' }, s.part) : null,
         h(
           'li',
           { class: [i === idx ? 'cur' : '', r.done.includes(s.key) ? 'done' : ''], onclick: () => go(i), 'aria-current': i === idx ? 'step' : null },
           h('span', { class: 'step-dot', 'aria-hidden': 'true' }, r.done.includes(s.key) ? '✓' : String(i + 1)),
-          h('span', { class: 'k' }, typeName(s)),
+          h('span', { class: 'k' }, sectionName(s)),
           h('span', {}, s.title),
           h('span', { class: 'sr-only' }, r.done.includes(s.key) ? '(done)' : ''),
         ),
-      ),
+      ]),
     );
   }
 
   function go(i) {
     idx = i;
-    history.replaceState(null, '', `#/lesson/${n}/${i}`);
+    history.replaceState(null, '', `#/module/${lesson.id}/${i}`);
     draw();
     body.querySelector('h2')?.focus();
   }
@@ -103,7 +153,7 @@ export function lessonView(ctx, n, at) {
     const s = lesson.sections[idx];
     const card = h('section', { class: 'section-card' });
     card.append(
-      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `Step ${idx + 1} of ${lesson.sections.length}`), h('span', { class: 'pill type' }, typeName(s)), refPill(s.ref), s.variant === 'supplementary' ? h('span', { class: 'pill supp' }, 'Supplementary') : null, h('h2', { tabindex: '-1' }, s.title)),
+      h('div', { class: 'section-head' }, h('span', { class: 'step' }, `Step ${idx + 1} of ${lesson.sections.length}`), h('span', { class: 'pill type' }, sectionName(s)), s.extension && s.type !== 'note' ? h('span', { class: 'pill supp' }, 'Extension') : null, h('h2', { tabindex: '-1' }, s.title)),
     );
     const nav = h(
       'div',
@@ -111,7 +161,7 @@ export function lessonView(ctx, n, at) {
       h('button', { class: 'btn', disabled: idx === 0, onclick: () => go(idx - 1) }, '← Previous'),
       h('span', { class: 'spacer' }),
     );
-    const nextBtn = h('button', { class: 'btn primary', onclick: () => { done(idx); if (idx < lesson.sections.length - 1) go(idx + 1); else finish(); } }, idx < lesson.sections.length - 1 ? 'Continue →' : 'Finish lesson');
+    const nextBtn = h('button', { class: 'btn primary', onclick: () => { done(idx); if (idx < lesson.sections.length - 1) go(idx + 1); else finish(); } }, idx < lesson.sections.length - 1 ? 'Continue →' : 'Finish module');
     switch (s.type) {
       case 'read':
         card.append(md(s.body));
@@ -162,7 +212,7 @@ export function lessonView(ctx, n, at) {
         const pick = (k) => {
           tabs.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-selected', j === k ? 'true' : 'false'));
           const v = s.variants[k];
-          const ws = createWorkspace(buildTrace({ struct: 'code', lines: v.lines, langs: v.langs, setup: v.setup, newValue: v.newValue, title: `${v.label} version`, ref: s.ref }), { settings: store.data.settings });
+          const ws = createWorkspace(buildTrace({ struct: 'code', lines: v.lines, langs: v.langs, setup: v.setup, newValue: v.newValue, title: `${v.label} version` }), { settings: store.data.settings });
           cleanupWs.push(() => ws.destroy());
           clear(host).append(ws.el);
         };
@@ -178,18 +228,18 @@ export function lessonView(ctx, n, at) {
           clear(host).append(
             renderExercise(ex, {
               onResult: (r) => {
-                store.recordAttempt({ templateId: ex.templateId, seed, concept: ex.concept, type: ex.type, lecture: ex.lecture, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: s.guidance, tag: r.tag, message: r.message });
+                store.recordAttempt({ templateId: ex.templateId, seed, concept: ex.concept, type: ex.type, module: ex.module, correct: r.correct, hints: r.hints, revealed: r.revealed, guidance: s.guidance, tag: r.tag, message: r.message });
                 if (ex.kind === 'lab' && r.correct && !r.revealed) store.markLabSolved(ex.labId);
                 done(idx);
               },
               onOpenLab: (id, code) => openExerciseInLab(id, code),
               onSimilar: () => make(randomSeed()),
               onNext: () => (idx < lesson.sections.length - 1 ? go(idx + 1) : finish()),
-              nextLabel: 'Continue the lesson',
+              nextLabel: 'Continue the module',
             }),
           );
         };
-        make(n * 1000 + idx * 17 + (store.lesson(lesson.id).done.includes(keys[idx]) ? randomSeed() : 0));
+        make(M.n * 1000 + idx * 17 + (store.lesson(lesson.id).done.includes(keys[idx]) ? randomSeed() : 0));
         // a "write it yourself" task has one fixed goal, so there is no other variation to offer
         card.append(host, isWriting(s) ? null : h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn small ghost', onclick: () => make(randomSeed()) }, 'New variation')));
         break;
@@ -253,13 +303,57 @@ export function lessonView(ctx, n, at) {
         'section',
         { class: 'section-card finish-card' },
         h('div', { class: 'badge', 'aria-hidden': 'true' }, '✓'),
-        h('h2', {}, `Lecture ${String(n).padStart(2, '0')} lesson complete`),
-        h('p', { class: 'prose' }, 'These topics will now come back in mixed practice, with fresh values and less guidance. Mastery needs several independent correct answers across different exercise types.'),
-        h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => ctx.go(`#/practice/new/lecture/${n}`) }, `Practise Lecture ${String(n).padStart(2, '0')}`), n < 14 ? h('button', { class: 'btn', onclick: () => ctx.go(`#/lesson/${n + 1}/0`) }, `Next: Lecture ${String(n + 1).padStart(2, '0')}`) : null, h('button', { class: 'btn ghost', onclick: () => go(0) }, 'Restart this lesson')),
+        h('h2', {}, `Module complete: ${lesson.title}`),
+        h('p', { class: 'prose' }, 'The concepts of this module now appear in Practice Exercises with new values and less guidance. A concept is mastered after several independent correct answers across different exercise types. The Knowledge Assessment for this module tests it without hints.'),
+        h(
+          'div',
+          { class: 'row' },
+          h('button', { class: 'btn primary', onclick: () => ctx.go(`#/practice/new/module/${lesson.id}`) }, 'Practice this module'),
+          h('button', { class: 'btn', onclick: () => ctx.go(`#/assessment/start/${lesson.id}`) }, 'Take the module assessment'),
+          next ? h('button', { class: 'btn', onclick: () => ctx.go(`#/module/${next.id}/0`) }, `Next module: ${next.title}`) : null,
+          h('button', { class: 'btn ghost', onclick: () => go(0) }, 'Restart this module'),
+        ),
       ),
     );
   }
 
   draw();
   return root;
+}
+
+// ---------------------------------------------------------------- the Learning Modules page
+export function modulesView(ctx) {
+  const { store } = ctx;
+  return h(
+    'div',
+    { class: 'modules' },
+    h('div', { class: 'page-head' }, h('div', {}, h('div', { class: 'eyebrow' }, 'Curriculum'), h('h1', {}, 'Learning Modules'), h('div', { class: 'subtitle' }, 'Seven modules, each combining explanations, visualizations, step-by-step algorithm execution, pseudocode, C++ implementation and exercises. The modules build on each other and are intended to be studied in order.'))),
+    h(
+      'ol',
+      { class: 'module-list' },
+      LESSONS.map((lesson) => {
+        const M = MODULE_BY_ID[lesson.id];
+        const keys = lesson.sections.map((s) => s.key);
+        const rec = store.data.lessons[lesson.id];
+        const nDone = store.lessonDoneCount(lesson.id, keys);
+        const pct = Math.round((nDone / keys.length) * 100);
+        const parts = lesson.sections.filter((s) => s.part).map((s) => s.part);
+        return h(
+          'li',
+          { class: ['panel module-item', rec && rec.completed ? 'done' : nDone ? 'started' : ''] },
+          h('div', { class: 'module-num', 'aria-hidden': 'true' }, String(M.n)),
+          h(
+            'div',
+            { class: 'module-body' },
+            h('h2', {}, h('a', { href: `#/module/${lesson.id}` }, `Module ${M.n}: ${M.title}`)),
+            h('p', {}, M.summary),
+            parts.length ? h('p', { class: 'small muted' }, `Parts: ${parts.join(' · ')}`) : null,
+            h('div', { class: 'meta small' }, h('span', {}, `${keys.length} steps`), h('span', {}, rec && rec.completed ? 'Completed' : nDone ? `${nDone} of ${keys.length} steps completed (${pct}%)` : 'Not started')),
+            h('div', { class: 'bar', role: 'img', 'aria-label': `module ${pct}% complete` }, h('span', { style: { width: `${pct}%` } })),
+          ),
+          h('div', { class: 'module-actions' }, h('button', { class: `btn ${nDone && !(rec && rec.completed) ? 'primary' : ''}`, onclick: () => ctx.go(`#/module/${lesson.id}`) }, rec && rec.completed ? 'Review module' : nDone ? 'Continue' : 'Begin module')),
+        );
+      }),
+    ),
+  );
 }

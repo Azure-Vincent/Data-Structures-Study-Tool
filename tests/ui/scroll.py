@@ -23,7 +23,7 @@ def check(name, ok, detail=''):
 
 
 # lesson steps are addressed by their stable key (positions change when lessons grow)
-LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/lesson/' + l.lecture + '/' + i; } return null; })"
+LESSON_AT = "k => import('./js/content/lessons.js').then(m => { for (const l of m.LESSONS) { const i = l.sections.findIndex(s => s.key === k); if (i >= 0) return '#/module/' + l.id + '/' + i; } return null; })"
 def lesson_route(pg, key):
     if not pg.url.startswith('http'):
         pg.goto(BASE); pg.wait_for_timeout(200)
@@ -74,7 +74,7 @@ with sync_playwright() as p:
         errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
 
-        # 1. "Predict the intermediate states" (Lecture 8): Step, answering every prediction
+        # 1. "Predict the intermediate states" (Singly Linked Lists): Step, answering every prediction
         y0 = prepare(pg, lesson_route(pg, 's:predict-the-intermediate-states-insert-15-at-pos'))
         ws = pg.locator('.ws-wrap')
         title = pg.get_by_text('Predict the intermediate states').count()

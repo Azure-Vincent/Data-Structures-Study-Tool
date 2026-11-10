@@ -1,18 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LESSONS } from '../app/js/content/lessons.js';
-import { LECTURES, CONCEPT_BY_ID } from '../app/js/content/concepts.js';
+import { MODULES, CONCEPT_BY_ID } from '../app/js/content/concepts.js';
 import { buildTrace } from '../app/js/sim/specs.js';
 import { generateExercise, TEMPLATE_BY_ID } from '../app/js/exercises/registry.js';
 import { makeQuestion, wantsPrediction } from '../app/js/sim/predict.js';
 import { modelResponse } from './_model.js';
 
-test('one lesson per lecture, every section cites a page or is supplementary', () => {
-  assert.deepEqual(LESSONS.map((l) => l.lecture), LECTURES.map((l) => l.n));
+test('seven learning modules in order, with their exact names; every section has a unique key', () => {
+  assert.deepEqual(LESSONS.map((l) => l.id), MODULES.map((m) => m.id));
+  assert.deepEqual(LESSONS.map((l) => l.title), [
+    'Memory Management and Pointer Fundamentals',
+    'Singly Linked Lists',
+    'Doubly Linked Lists',
+    'Stack Data Structures',
+    'Queue Data Structures',
+    'Tree Data Structures',
+    'Graph Data Structures',
+  ]);
+  const keys = LESSONS.flatMap((l) => l.sections.map((s) => s.key));
+  assert.equal(new Set(keys).size, keys.length);
   for (const l of LESSONS) for (const s of l.sections) {
-    if (['read', 'note', 'code', 'sim', 'demo'].includes(s.type)) assert.ok(s.ref, `${l.id} "${s.title}" has no ref`);
+    assert.ok(s.key && s.title, `${l.id}: section without key or title`);
+    assert.equal(s.ref, undefined, `${l.id} "${s.title}" still carries a page reference`);
     for (const c of s.concepts || []) assert.ok(CONCEPT_BY_ID[c], `unknown concept ${c}`);
   }
+  // every concept belongs to exactly one module, and every module has concepts
+  for (const m of MODULES) assert.ok(Object.values(CONCEPT_BY_ID).some((c) => c.module === m.id), m.id);
 });
 
 test('every lesson simulation builds a trace; predictions are answerable', () => {
@@ -52,7 +66,7 @@ test('required examples use the specified data', () => {
   const del = generateExercise('l09-rewire-delete', 5, { params: { kind: 'mid', values: [10, 15, 20, 30], deleteValue: 20 } });
   assert.match(del.prompt, /Delete \*\*20\*\*/);
   assert.match(del.prompt, /10 → 15 → 30/);
-  const pre = generateExercise('l14-tree-order', 1, { params: { order: 'preorder', lectureTree: true } });
+  const pre = generateExercise('l14-tree-order', 1, { params: { order: 'preorder', exampleTree: true } });
   assert.deepEqual(pre.answer, ['A', 'B', 'D', 'E', 'C', 'F', 'G']);
 });
 
@@ -71,27 +85,32 @@ test('code sections: the pseudocode is valid Pseudocode Lab syntax, and complete
   }
 });
 
-test('every "Build it in code" program is taught in a lesson, and every walkthrough names a program', async () => {
+test('every complete program is taught in its module, and every walkthrough names a program', async () => {
   const { IMPLEMENTATIONS, IMPL_BY_ID } = await import('../app/js/content/impl/index.js');
   const used = new Set();
   for (const l of LESSONS) for (const s of l.sections) {
     if (s.type !== 'walk') continue;
     assert.ok(IMPL_BY_ID[s.impl], `${l.id} "${s.title}": unknown program ${s.impl}`);
-    assert.equal(IMPL_BY_ID[s.impl].lecture, l.lecture, `${s.impl} belongs to lecture ${IMPL_BY_ID[s.impl].lecture}`);
+    assert.equal(IMPL_BY_ID[s.impl].module, l.id, `${s.impl} belongs to module ${IMPL_BY_ID[s.impl].module}`);
     used.add(s.impl);
   }
   for (const ex of IMPLEMENTATIONS) assert.ok(used.has(ex.id), `program ${ex.id} is not in any lesson`);
 });
 
-test('every lesson ends its new material with the predict → complete → write progression', () => {
+test('every module ends its new material with the predict → complete → write progression, on its own programs', () => {
   for (const l of LESSONS) {
-    const ids = l.sections.filter((s) => s.type === 'exercise').map((s) => s.templateId);
-    const pad = String(l.lecture).padStart(2, '0');
-    assert.ok(ids.includes(`l${pad}-predict-output`), `${l.id}: predict`);
-    assert.ok(ids.includes(`l${pad}-complete-code`), `${l.id}: complete`);
-    assert.ok(ids.includes(`l${pad}-write-code`), `${l.id}: write`);
-    const at = (t) => l.sections.findIndex((s) => s.templateId === t);
-    assert.ok(at(`l${pad}-predict-output`) < at(`l${pad}-complete-code`) && at(`l${pad}-complete-code`) < at(`l${pad}-write-code`), `${l.id}: order`);
+    const at = (re) => l.sections.findIndex((s) => s.type === 'exercise' && re.test(s.templateId));
+    const [p, c, w] = [at(/-predict-output$/), at(/-complete-code$/), at(/-write-code$/)];
+    assert.ok(p >= 0 && c >= 0 && w >= 0, `${l.id}: predict ${p}, complete ${c}, write ${w}`);
+    assert.ok(p < c && c < w, `${l.id}: order`);
+    // the predict / complete exercises of a module only use that module's programs
+    for (const s of l.sections) {
+      if (s.type !== 'exercise' || !/-(predict-output|complete-code|write-code)$/.test(s.templateId)) continue;
+      for (const seed of [1, 2, 3, 4, 5]) {
+        const ex = generateExercise(s.templateId, seed, { guidance: s.guidance, params: s.params || {} });
+        assert.equal(CONCEPT_BY_ID[ex.concept].module, l.id, `${l.id} "${s.title}" (seed ${seed}) practices ${ex.concept}`);
+      }
+    }
   }
 });
 

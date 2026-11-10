@@ -20,13 +20,13 @@ export function renderArrayStack(st, opts = {}) {
     g.append(s('text', { class: 'i', x: x0 + cw + 8, y: y + 21 }, String(i)));
     svg.append(g);
   }
-  // top arrow: notes convention points at the next free slot, index convention at the top item
+  // top arrow: count convention ('count') points at the next free slot, index convention at the top item
   const ti = st.top;
   const ty = H - 30 - (ti + 1) * ch + ch / 2;
   const clampY = Math.max(14, Math.min(H - 14, ty));
   svg.append(s('path', { class: 'idx-arrow', d: `M30,${clampY} L${x0 - 6},${clampY}`, 'marker-end': 'none' }));
   svg.append(s('text', { class: 'idx-label', x: 6, y: clampY - 6 }, `top = ${ti}`));
-  svg.append(s('text', { class: 'svg-label', x: x0, y: H - 8 }, st.conv === 'notes' ? 'top = next free slot (notes)' : 'top = index of top item'));
+  svg.append(s('text', { class: 'svg-label', x: x0, y: H - 8 }, st.conv === 'count' ? 'top = item count (next free slot)' : 'top = index of top item'));
   if (ti >= st.MAX) svg.append(s('text', { class: 'svg-label', x: 6, y: 12 }, '(full)'));
   return svg;
 }
@@ -35,9 +35,9 @@ export function renderArrayQueue(q, opts = {}) {
   const hl = opts.hl || {};
   const cells = new Set(hl.cells || []);
   const cw = 58;
-  const x0 = 30;
-  const W = x0 * 2 + q.MAX * cw + 30;
-  const svg = s('svg', { viewBox: `0 0 ${W} 150`, width: W, height: 150, role: 'img', 'aria-label': `Array queue, MAX ${q.MAX}, F ${q.F}, R ${q.R}` });
+  const x0 = 60;
+  const W = Math.max(380, x0 + q.MAX * cw + 90);
+  const svg = s('svg', { viewBox: `0 0 ${W} 150`, width: W, height: 150, role: 'img', 'aria-label': `Array queue, MAX ${q.MAX}, front ${q.F}, rear ${q.R}` });
   for (let i = 0; i < q.MAX; i++) {
     const x = x0 + i * cw;
     const g = s('g', { class: ['cell', q.live[i] ? 'live' : q.arr[i] != null ? 'stale' : '', cells.has(i) ? 'hl' : ''].join(' ') });
@@ -46,15 +46,17 @@ export function renderArrayQueue(q, opts = {}) {
     g.append(s('text', { class: 'i', x: x + cw / 2, y: 30, 'text-anchor': 'middle' }, String(i)));
     svg.append(g);
   }
+  // front's label sits to the LEFT of its arrow and rear's to the RIGHT of its own,
+  // so neither label crosses the other arrow when front and rear share a slot.
   const arrow = (idx, label, row) => {
     const x = x0 + Math.min(idx, q.MAX) * cw + 12 + (row ? 14 : 0);
     svg.append(s('path', { class: 'idx-arrow', d: `M${x},${118 + row * 14} L${x},86` }));
-    svg.append(s('text', { class: 'idx-label', x: x - 4, y: 132 + row * 14 }, `${label}=${idx}`));
+    svg.append(s('text', { class: 'idx-label', x: row ? x - 4 : x + 4, y: 132 + row * 14, 'text-anchor': row ? 'start' : 'end' }, `${label}=${idx}`));
   };
-  arrow(q.F, 'F', 0);
-  arrow(q.R, 'R', 1);
+  arrow(q.F, 'front', 0);
+  arrow(q.R, 'rear', 1);
   if (q.mode === 'circular') svg.append(s('text', { class: 'svg-label', x: x0, y: 14 }, `circular, count = ${q.count}`));
-  else svg.append(s('text', { class: 'svg-label', x: x0, y: 14 }, `linear (notes): empty when F == R, full when R == ${q.MAX}`));
+  else svg.append(s('text', { class: 'svg-label', x: x0, y: 14 }, `linear: empty when front == rear, full when rear == ${q.MAX}`));
   return svg;
 }
 

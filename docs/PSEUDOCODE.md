@@ -1,8 +1,33 @@
-# Pseudocode Lab — language and feedback reference
+# Pseudocode reference: conventions, language and feedback
 
-The Pseudocode Lab (sidebar → **Tools → Pseudocode Lab**, route `#/lab`) runs pseudocode you write on a
-simulated heap and shows every step: the current line, the structure diagram, all variables and the
-call stack, collections, output and the full execution history.
+**Pseudocode Development** (the Pseudocode Lab; sidebar → **Pseudocode Development**, route `#/lab`)
+runs pseudocode on a simulated heap and shows every step: the current line, the structure diagram,
+all variables and the call stack, collections, output and the full execution history. The same
+language is used for every pseudocode example in the learning modules, so every example can be run.
+
+## Conventions
+
+All pseudocode in the application follows these conventions, chosen so that every line translates
+directly into C++:
+
+- **Assignment and comparison are distinct.** `=` assigns; `==` compares; `!=` means “not equal”.
+  An `=` inside a condition is a syntax error.
+- **NULL.** `NULL` is the value of a pointer that refers to no node (`nil` is accepted as a synonym,
+  but `NULL` is used throughout). It corresponds to `nullptr` in C++ and `None` in Python. An empty
+  list is `head == NULL`; a new node has every link set to `NULL`.
+- **Pointer assignment and traversal.** `p.next = q` changes a link (a pointer assignment);
+  `p = p.next` moves the pointer variable `p` and changes no node. `p.next` is written `p->next`
+  (dereferencing) in C++.
+- **Explicit block ends.** Every block is closed with the matching keyword: `if … then … end if`,
+  `while … do … end while`, `for … do … end for`, `function name(parameters) … end function`.
+  A loop that tests its condition after the body is written `do … while condition`.
+- **Indentation.** Each nested block is indented by four spaces (**Tidy indentation** applies this).
+- **Functions.** A function declares its parameters in parentheses and returns a value with
+  `return`. Parameters are passed by value; a function that changes the caller's pointer returns
+  the new value (`head = insert_at_beginning(head, 5)`).
+- **Identifiers.** Names are descriptive and the same in pseudocode, C++ and Python: `head`,
+  `temp`, `prev`, `new_node`, `node_count`, `top`, `front`, `rear`, `root`; functions such as
+  `create_node`, `count_nodes`, `insert_at_beginning`, `insert_at_position`, `delete_at_end`.
 
 The program is parsed by a real parser (`app/js/lab/lang.js`) and executed by a small interpreter
 (`app/js/lab/machine.js`). Nothing you type is ever evaluated as JavaScript. Every run stops after
@@ -13,9 +38,9 @@ an instruction limit, so an endless loop cannot freeze the app.
 ## 1. Program shape
 
 - One statement per line. A `;` can also separate statements.
-- Blocks open with `then` / `do` at the **end** of a line and close with `end` on its own line.
-  `end if`, `end while`, `end for`, `end function`, `endif`, `endwhile` … are accepted too, and
-  are checked against the block they close.
+- Blocks open with `then` / `do` at the **end** of a line and close with `end if`, `end while`,
+  `end for` or `end function` on its own line; the word after `end` is checked against the block it
+  closes. A bare `end`, `endif`, `endwhile` … are also accepted.
 - Comments start with `#` or `//`.
 - Keywords are not case-sensitive (`IF`, `While`, `NULL`, `null`, `nil`); variable names are.
 - Indentation is for people, not for the parser. **Tidy indentation** re-indents by block structure.
@@ -42,14 +67,14 @@ an instruction limit, so an endless loop cannot freeze the app.
 | `p = new Node(15)` | **Node creation** — a node with data 15 and every link `NULL`, at the next free simulated address. |
 | `delete p` / `free(p)` | **Deletion** — the node is freed. Every pointer still holding its address is now dangling. |
 | `print a, b` | Appends one line of output. `print(a, b)` also works. |
-| `if c then … else if c2 then … else … end` | `elif` / `elseif` also work. `then` is required. |
-| `while c do … end` | Loop while `c` is true. `do` is required. |
-| `for i = 1 to n do … end` | Inclusive count; `step k` changes the step (it may be negative). |
-| `for each x in coll do … end` | Loop over an array, queue, stack or set (a copy of its items when the loop starts). |
-| `repeat … until c` | Body first; stops when `c` is true. |
+| `if c then … else if c2 then … else … end if` | `elif` / `elseif` also work. `then` is required. |
+| `while c do … end while` | Loop while `c` is true. `do` is required. |
+| `for i = 1 to n do … end for` | Inclusive count; `step k` changes the step (it may be negative). |
+| `for each x in coll do … end for` | Loop over an array, queue, stack or set (a copy of its items when the loop starts). |
+| `repeat … until c` | Body first; stops when `c` is true. Accepted, but the modules use `do … while`. |
 | `do … while c` | Body first; repeats while `c` is true (C's `do { } while`). The closing `while c` has **no** `do`. |
-| `break`, `continue` | Leave the loop / start its next round. |
-| `function f(a, b) … end` | Define a function (top level only). `return expr` or plain `return`. |
+| `break`, `continue` | Leave the loop / start its next iteration. |
+| `function f(a, b) … end function` | Define a function (top level only). `return expr` or plain `return`. |
 | `f(x)` | Call a function on its own line. |
 
 Conditions use `== != < <= > >=`, `and`, `or`, `not` (also `&&`, `||`, `!`). `and` and `or` stop
@@ -59,7 +84,7 @@ are false and any node is true. Comparisons can't be chained (`a < b < c`).
 ### Comparing pointers
 
 `p == q` asks *is it the same node?* — it compares addresses, never data. Comparing a node with a
-value (`p == 10`) is reported as an error, because that confusion is one of the commonest bugs;
+value (`p == 10`) is reported as an error, because that confusion is one of the most common errors;
 write `p.data == 10`.
 
 ## 4. Nodes and structures
@@ -68,9 +93,9 @@ Each structure fixes the fields its nodes have and the variables that hold it:
 
 | Structure | Node fields | Pointer variables |
 |---|---|---|
-| Singly linked list | `data`, `next` | `start` |
-| Doubly linked list | `data`, `left`, `right` (`prev` = left, `next` = right) | `start` |
-| Circular linked list | `data`, `next` (last node → start) | `start` |
+| Singly linked list | `data`, `next` | `head` |
+| Doubly linked list | `data`, `prev`, `next` (`left` and `right` are accepted as other names) | `head` |
+| Circular linked list | `data`, `next` (last node → head) | `head` |
 | Stack (linked) | `data`, `next` (first node is the top) | `top` |
 | Queue (linked) | `data`, `next` | `front`, `rear` |
 | Binary tree | `data`, `left`, `right` | `root` |
@@ -93,10 +118,10 @@ different from a pointer change.
 
 - Parameters are **copies** (like C). Changing a parameter inside a function does not change the
   caller's variable. To change the caller's pointer, return the new value:
-  `start = insertFront(start, 5)`.
+  `head = insertFront(head, 5)`.
 - Inside a function, reading a name looks at the function's own variables first, then the global
   (top-level) ones. Assigning to a name that already exists globally updates the global (like a
-  C global such as `start`). Any other assignment creates a local variable.
+  C global such as `head`). Any other assignment creates a local variable.
 - Recursion is allowed up to 100 nested calls.
 - Your own function may use the name of a built-in helper (for example your own `push(value)` for
   an array stack); inside the program your function is the one that runs.
@@ -111,7 +136,7 @@ different from a pointer change.
 | `add(set, x)`, `contains(c, x)`, `remove(set, x)` | Set (contains also works on any collection) | |
 | `append(a, x)`, `a[i]`, `a[i] = x` | Array (0-based) | |
 | `isEmpty(c)`, `size(c)` (`length(c)`) | any collection | |
-| `neighbors(G, v)` | Graph | the neighbours of `v` in ascending order (as an array) |
+| `neighbors(G, v)` | Graph | the neighbors of `v` in ascending order (as an array) |
 | `vertices(G)`, `degree(G, v)`, `hasEdge(G, u, v)` | Graph | |
 | `abs(x)`, `min(a, b)`, `max(a, b)` | numbers | |
 
@@ -124,11 +149,11 @@ Problems are shown in three categories:
 
 | Category | Stops the run? | Examples |
 |---|---|---|
-| **Syntax error** | can't start | missing `then`/`do`/`end`, `=` used in a condition, braces, a type like `int x`, `x++`, an unclosed string, a stray `end` |
+| **Syntax error** | cannot start | missing `then`/`do`/`end`, `=` used in a condition, braces, a type like `int x`, `x++`, an unclosed string, a stray `end` |
 | **Runtime error** | yes, on that line | following `NULL` (`cur.next` when `cur` is NULL); using a deleted node; using a variable before assigning it (with a "did you mean" suggestion); deleting a node twice; storing a number in a link; comparing a node with a value; arithmetic on pointers; an unknown field (e.g. `prev` in a singly linked list); underflow of a built-in queue/stack; an endless loop hitting the instruction limit; runaway recursion |
 | **Logic warning** | no | a node becomes **unreachable** (named, with exactly which reference changed); at the end: an unintended cycle, a broken link into deleted memory, a broken back link in a doubly linked list, a circle that is not closed, `rear` not on the last node, a structure pointer left dangling, leaked nodes |
 
-Temporary states are allowed. A new node held only by `newnode`, or a node held only by `temp`
+Temporary states are allowed. A new node held only by `new_node`, or a node held only by `temp`
 while you rewire, is not a problem. Deleting a node that is still linked, or creating a
 temporary cycle, produces only a **note**. It becomes a warning if it is still there when the
 program ends. Only a node that nothing can reach any more is flagged right away: it can never be
@@ -138,7 +163,7 @@ Every problem links to the step where it happened. You can **Go to this step**, 
 step** (step back to just before it), or open **Show before / after** to see the two diagrams side
 by side. Editing the code resets the run, so the picture always matches the code.
 
-### Guided exercises vs free experiments
+### Guided exercises and free mode
 
 - **Guided exercises** state a goal and are checked against several test cases, including empty
   and single-node structures. Each test starts from a fresh copy of its structure. The check
@@ -146,10 +171,9 @@ by side. Editing the code resets the run, so the picture always matches the code
   deleted — and adds any structural problems. Three progressive hints come before the reference
   solution can be revealed, and revealing it means the attempt doesn't count as independent.
   Results are saved to your progress like other exercises (type "Pseudocode Lab").
-- In **free experiment** mode you choose or build the starting structure (values, a level-order
-  tree with `-` for gaps, or one of the lecture graphs). The lab still reports errors and
-  structural problems. Without a goal it can't know whether the result is the one you meant, and
-  it says so.
+- In **free mode** you choose or build the starting structure (values, a level-order tree with
+  `-` for gaps, or one of the example graphs). Errors and structural problems are still reported.
+  Without a goal, whether the result is the intended one cannot be determined, and the page says so.
 
 Code drafts are saved automatically per exercise and per free-mode structure.
 
@@ -160,7 +184,7 @@ Code drafts are saved automatically per exercise and per free-mode structure.
 
 - **Stop** ends the program for good. **Pause** can be resumed.
 - Keyboard, outside the editor: `→` step, `←` back, `Space` run/pause, `Home` reset.
-- In the editor: `Tab` / `Shift+Tab` indent, `Enter` auto-indents (a line starting with `end` or
+- In the editor: `Tab` / `Shift+Tab` indent by four spaces, `Enter` auto-indents (a line starting with `end` or
   `else` snaps to the right level), `Ctrl+Enter` runs, and `Esc` then `Tab` moves focus out of the
   editor.
 

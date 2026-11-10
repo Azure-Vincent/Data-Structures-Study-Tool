@@ -1,28 +1,30 @@
-// Stacks and queues (Lecture 12): array and linked implementations.
+// Stacks and queues: array and linked implementations.
 import { Tracer, keyCodes } from './trace.js';
 import { createWorld, addVar, fmtPtr, walk } from './pointerWorld.js';
 import { getnodeSteps, setVar, setLink, freeStep, cond, endScope, d } from './listCommon.js';
 
 // ---------------------------------------------------------------- array stack
-// conv 'notes': top = number of items = index of the next FREE slot (top = 0 when empty).
-// conv 'index': top = index of the TOP item (top = -1 when empty). Standard textbook style.
-export function arrayStack(MAX = 6, conv = 'notes') {
-  return { type: 'astack', MAX, conv, arr: Array(MAX).fill(null), live: Array(MAX).fill(false), top: conv === 'notes' ? 0 : -1 };
+// Two standard conventions for top (the conv values are internal ids):
+//   conv 'count' (count convention): top counts the stored items, so it is also the
+//                index of the next FREE slot (top = 0 when empty).
+//   conv 'index' (index convention): top is the index of the TOP item (top = -1 when empty).
+export function arrayStack(MAX = 6, conv = 'count') {
+  return { type: 'astack', MAX, conv, arr: Array(MAX).fill(null), live: Array(MAX).fill(false), top: conv === 'count' ? 0 : -1 };
 }
 export function stackSize(s) {
-  return s.conv === 'notes' ? s.top : s.top + 1;
+  return s.conv === 'count' ? s.top : s.top + 1;
 }
 
 export const ASTACK_CODE = {
-  notes: {
-    push: { title: 'push(x)  — array, notes convention', ref: 'Lec 12 p.3', lines: ['if (top == MAX) {', '    printf("stack overflow"); return;', '}', 'stack[top] = data;', '++top;              // top = top + 1'] },
-    pop: { title: 'pop()  — array, notes convention', ref: 'Lec 12 p.3', lines: ['if (top == 0) {', '    printf("stack underflow"); return;', '}', 'x = stack[--top];   // decrement FIRST, then read'] },
-    peek: { title: 'peek()  — array, notes convention', ref: 'Supplementary', lines: ['if (top == 0) { printf("empty"); return; }', 'return stack[top - 1];'] },
+  count: {
+    push: { title: 'push(x)  — array, top = number of items', lines: ['if (top == MAX) {', '    printf("stack overflow"); return;', '}', 'stack[top] = data;', '++top;              // top = top + 1'] },
+    pop: { title: 'pop()  — array, top = number of items', lines: ['if (top == 0) {', '    printf("stack underflow"); return;', '}', 'x = stack[--top];   // decrement FIRST, then read'] },
+    peek: { title: 'peek()  — array, top = number of items', extension: true, lines: ['if (top == 0) { printf("empty"); return; }', 'return stack[top - 1];'] },
   },
   index: {
-    push: { title: 'push(x)  — array, top = index of top item', ref: 'Supplementary (common textbook convention)', lines: ['if (top == MAX - 1) {', '    printf("stack overflow"); return;', '}', 'top = top + 1;', 'stack[top] = data;'] },
-    pop: { title: 'pop()  — array, top = index of top item', ref: 'Supplementary', lines: ['if (top == -1) {', '    printf("stack underflow"); return;', '}', 'x = stack[top--];   // read, THEN decrement'] },
-    peek: { title: 'peek()  — array, top = index of top item', ref: 'Supplementary', lines: ['if (top == -1) { printf("empty"); return; }', 'return stack[top];'] },
+    push: { title: 'push(x)  — array, top = index of top item', lines: ['if (top == MAX - 1) {', '    printf("stack overflow"); return;', '}', 'top = top + 1;', 'stack[top] = data;'] },
+    pop: { title: 'pop()  — array, top = index of top item', extension: true, lines: ['if (top == -1) {', '    printf("stack underflow"); return;', '}', 'x = stack[top--];   // read, THEN decrement'] },
+    peek: { title: 'peek()  — array, top = index of top item', extension: true, lines: ['if (top == -1) { printf("empty"); return; }', 'return stack[top];'] },
   },
 };
 keyCodes(ASTACK_CODE, 'sq.astack');
@@ -32,17 +34,17 @@ export function astackPush(s, x) {
   const code = ASTACK_CODE[s.conv].push;
   const t = new Tracer(s, code);
   const st = t.state;
-  const full = st.conv === 'notes' ? st.top === st.MAX : st.top === st.MAX - 1;
-  if (cond(t, 0, full, st.conv === 'notes' ? `top == MAX? ${st.top} == ${st.MAX}` : `top == MAX-1? ${st.top} == ${st.MAX - 1}`)) {
+  const full = st.conv === 'count' ? st.top === st.MAX : st.top === st.MAX - 1;
+  if (cond(t, 0, full, st.conv === 'count' ? `top == MAX? ${st.top} == ${st.MAX}` : `top == MAX-1? ${st.top} == ${st.MAX - 1}`)) {
     t.output.push('stack overflow');
     t.fail(1, `Overflow: all ${st.MAX} slots are used, ${x} cannot be pushed.`);
     return t.finish('push rejected (overflow).', { ok: false, event: 'overflow' });
   }
-  if (st.conv === 'notes') {
+  if (st.conv === 'count') {
     st.arr[st.top] = x;
     st.live[st.top] = true;
     t.count('arrayWrites');
-    t.step(3, 'write', `stack[${st.top}] = ${x}. In the notes' convention top is the index of the next free slot.`, { cells: [st.top] });
+    t.step(3, 'write', `stack[${st.top}] = ${x}. In the count convention top is the index of the next free slot.`, { cells: [st.top] });
     st.top++;
     t.step(4, 'var', `++top → ${st.top}. top now equals the number of items (${st.top}).`, { top: true });
   } else {
@@ -60,14 +62,14 @@ export function astackPop(s) {
   const code = ASTACK_CODE[s.conv].pop;
   const t = new Tracer(s, code);
   const st = t.state;
-  const empty = st.conv === 'notes' ? st.top === 0 : st.top === -1;
-  if (cond(t, 0, empty, st.conv === 'notes' ? `top == 0? (${st.top})` : `top == -1? (${st.top})`)) {
+  const empty = st.conv === 'count' ? st.top === 0 : st.top === -1;
+  if (cond(t, 0, empty, st.conv === 'count' ? `top == 0? (${st.top})` : `top == -1? (${st.top})`)) {
     t.output.push('stack underflow');
     t.fail(1, 'Underflow: the stack is empty, nothing to pop.');
     return t.finish('pop rejected (underflow).', { ok: false, event: 'underflow' });
   }
   let x;
-  if (st.conv === 'notes') {
+  if (st.conv === 'count') {
     st.top--;
     x = st.arr[st.top];
     st.live[st.top] = false;
@@ -93,28 +95,30 @@ export function astackPeek(s) {
     t.fail(0, 'Peek on an empty stack: nothing to return.');
     return t.finish('', { ok: false, event: 'underflow' });
   }
-  const i = st.conv === 'notes' ? st.top - 1 : st.top;
+  const i = st.conv === 'count' ? st.top - 1 : st.top;
   t.output.push(st.arr[i]);
   t.step(1, 'read', `return stack[${i}] = ${st.arr[i]}. peek does not change top.`, { cells: [i] });
   return t.finish(`Top item is ${st.arr[i]}.`, { ok: true, value: st.arr[i] });
 }
 
 // ---------------------------------------------------------------- array queue
-// 'linear' = the notes: F = index of the front item, R = index of the next free slot.
-// Empty when F == R. "Full" when R == MAX — even if items were dequeued (wasted slots).
-// 'circular' = supplementary fix: indices wrap with % MAX and a count tracks size.
+// 'linear': front = index of the front item, rear = index of the next free slot.
+// Empty when front == rear. "Full" when rear == MAX, even if items were dequeued (wasted slots).
+// 'circular' (extension): indices wrap around with % MAX and a count tracks the size.
+// The state keeps the short property names F (front) and R (rear); everything shown
+// to the learner (code, explanations, diagrams) uses front and rear.
 export function arrayQueue(MAX = 5, mode = 'linear') {
   return { type: 'aqueue', MAX, mode, arr: Array(MAX).fill(null), live: Array(MAX).fill(false), F: 0, R: 0, count: 0 };
 }
 
 export const AQUEUE_CODE = {
   linear: {
-    enqueue: { title: 'enqueue(x)  — linear array (notes)', ref: 'Lec 12 p.5', lines: ['if (R == MAX) { printf("queue full"); return; }', 'queue[R] = x;', 'R = R + 1;'] },
-    dequeue: { title: 'dequeue()  — linear array (notes)', ref: 'Lec 12 p.5', lines: ['if (F == R) { printf("queue empty"); return; }', 'x = queue[F];', 'F = F + 1;'] },
+    enqueue: { title: 'enqueue(x)  — linear array', lines: ['if (rear == MAX) { printf("queue full"); return; }', 'queue[rear] = x;', 'rear = rear + 1;'] },
+    dequeue: { title: 'dequeue()  — linear array', lines: ['if (front == rear) { printf("queue empty"); return; }', 'x = queue[front];', 'front = front + 1;'] },
   },
   circular: {
-    enqueue: { title: 'enqueue(x)  — circular array', ref: 'Supplementary', lines: ['if (count == MAX) { printf("queue full"); return; }', 'queue[R] = x;', 'R = (R + 1) % MAX;', 'count++;'] },
-    dequeue: { title: 'dequeue()  — circular array', ref: 'Supplementary', lines: ['if (count == 0) { printf("queue empty"); return; }', 'x = queue[F];', 'F = (F + 1) % MAX;', 'count--;'] },
+    enqueue: { title: 'enqueue(x)  — circular array', extension: true, lines: ['if (count == MAX) { printf("queue full"); return; }', 'queue[rear] = x;', 'rear = (rear + 1) % MAX;', 'count++;'] },
+    dequeue: { title: 'dequeue()  — circular array', extension: true, lines: ['if (count == 0) { printf("queue empty"); return; }', 'x = queue[front];', 'front = (front + 1) % MAX;', 'count--;'] },
   },
 };
 keyCodes(AQUEUE_CODE, 'sq.aqueue');
@@ -124,9 +128,9 @@ export function aqueueEnqueue(q, x) {
   const t = new Tracer(q, AQUEUE_CODE[q.mode].enqueue);
   const s = t.state;
   const full = s.mode === 'linear' ? s.R === s.MAX : s.count === s.MAX;
-  if (cond(t, 0, full, s.mode === 'linear' ? `R == MAX? ${s.R} == ${s.MAX}` : `count == MAX? ${s.count} == ${s.MAX}`)) {
+  if (cond(t, 0, full, s.mode === 'linear' ? `rear == MAX? ${s.R} == ${s.MAX}` : `count == MAX? ${s.count} == ${s.MAX}`)) {
     t.output.push('queue full');
-    const wasted = s.mode === 'linear' && s.F > 0 ? ` Note: ${s.F} slot(s) before F are empty but unusable in a linear queue.` : '';
+    const wasted = s.mode === 'linear' && s.F > 0 ? ` ${s.F} slot(s) before front are empty but cannot be reused in a linear queue.` : '';
     t.fail(0, `Overflow: cannot enqueue ${x}.${wasted}`);
     return t.finish('enqueue rejected (full).', { ok: false, event: 'overflow' });
   }
@@ -137,10 +141,10 @@ export function aqueueEnqueue(q, x) {
   if (s.mode === 'linear') {
     s.R++;
     s.count++;
-    t.step(2, 'var', `R = R + 1 → ${s.R}. R is the index of the next free slot (one past the last item).`, { R: true });
+    t.step(2, 'var', `rear = rear + 1 → ${s.R}. rear is the index of the next free slot (one past the last item).`, { R: true });
   } else {
     s.R = (s.R + 1) % s.MAX;
-    t.step(2, 'var', `R = (R + 1) % MAX → ${s.R}.`, { R: true });
+    t.step(2, 'var', `rear = (rear + 1) % MAX → ${s.R}.`, { R: true });
     s.count++;
     t.step(3, 'var', `count → ${s.count}.`);
   }
@@ -151,7 +155,7 @@ export function aqueueDequeue(q) {
   const t = new Tracer(q, AQUEUE_CODE[q.mode].dequeue);
   const s = t.state;
   const empty = s.mode === 'linear' ? s.F === s.R : s.count === 0;
-  if (cond(t, 0, empty, s.mode === 'linear' ? `F == R? ${s.F} == ${s.R}` : `count == 0? (${s.count})`)) {
+  if (cond(t, 0, empty, s.mode === 'linear' ? `front == rear? ${s.F} == ${s.R}` : `count == 0? (${s.count})`)) {
     t.output.push('queue empty');
     t.fail(0, 'Underflow: the queue is empty.');
     return t.finish('dequeue rejected (empty).', { ok: false, event: 'underflow' });
@@ -164,10 +168,10 @@ export function aqueueDequeue(q) {
   if (s.mode === 'linear') {
     s.F++;
     s.count--;
-    t.step(2, 'var', `F = F + 1 → ${s.F}.${s.F === s.R ? ' Now F == R: the queue is empty.' : ''}`, { F: true });
+    t.step(2, 'var', `front = front + 1 → ${s.F}.${s.F === s.R ? ' Now front == rear: the queue is empty.' : ''}`, { F: true });
   } else {
     s.F = (s.F + 1) % s.MAX;
-    t.step(2, 'var', `F = (F + 1) % MAX → ${s.F}.`, { F: true });
+    t.step(2, 'var', `front = (front + 1) % MAX → ${s.F}.`, { F: true });
     s.count--;
     t.step(3, 'var', `count → ${s.count}.`);
   }
@@ -185,9 +189,9 @@ export function linkedStackHead() {
   return w;
 }
 export function linkedStackTail() {
-  const w = createWorld('sll', ['start', 'top'], { globals: ['start', 'top'] });
+  const w = createWorld('sll', ['head', 'top'], { globals: ['head', 'top'] });
   w.role = 'lstack-tail';
-  w.globals = ['start', 'top'];
+  w.globals = ['head', 'top'];
   return w;
 }
 export function linkedQueue() {
@@ -198,16 +202,15 @@ export function linkedQueue() {
 }
 
 export const LINKED_CODE = {
-  pushHead: { title: 'push(x)  — linked, top = first node', ref: 'Supplementary (standard; compare Lec 12 p.4)', lines: ['newnode = getnode();', 'newnode->next = top;', 'top = newnode;'] },
-  popHead: { title: 'pop()  — linked, top = first node', ref: 'Supplementary', lines: ['if (top == NULL) { printf("underflow"); return; }', 'temp = top;', 'top = top->next;', 'x = temp->data;  free(temp);'] },
-  pushTail: { title: 'push(x)  — linked, at the END (notes)', ref: 'Lec 12 p.4', lines: ['newnode = getnode();', 'if (start == NULL)', '    start = top = newnode;', 'else {', '    top->next = newnode;', '    top = newnode;', '}'] },
+  pushHead: { title: 'push(x)  — linked, top = first node', lines: ['new_node = create_node();', 'new_node->next = top;', 'top = new_node;'] },
+  popHead: { title: 'pop()  — linked, top = first node', extension: true, lines: ['if (top == NULL) { printf("underflow"); return; }', 'temp = top;', 'top = top->next;', 'x = temp->data;  free(temp);'] },
+  pushTail: { title: 'push(x)  — linked, top = last node', lines: ['new_node = create_node();', 'if (head == NULL)', '    head = top = new_node;', 'else {', '    top->next = new_node;', '    top = new_node;', '}'] },
   popTail: {
-    title: 'pop()  — linked, at the END (notes)',
-    ref: 'Lec 12 p.4',
-    lines: ['if (top == NULL) { printf("underflow"); return; }', 'if (start == top) {            // last item', '    x = top->data;  free(top);', '    start = top = NULL;  return;', '}', 'temp = start;', 'while (temp->next != top)     // must find the node BELOW top', '    temp = temp->next;', 'x = top->data;  free(top);', 'top = temp;', 'top->next = NULL;'],
+    title: 'pop()  — linked, top = last node',
+    lines: ['if (top == NULL) { printf("underflow"); return; }', 'if (head == top) {            // last item', '    x = top->data;  free(top);', '    head = top = NULL;  return;', '}', 'temp = head;', 'while (temp->next != top)     // must find the node BELOW top', '    temp = temp->next;', 'x = top->data;  free(top);', 'top = temp;', 'top->next = NULL;'],
   },
-  enqueue: { title: 'enqueue(x)  — linked queue', ref: 'Lec 12 p.6', lines: ['newnode = getnode();', 'if (rear == NULL)              // empty queue', '    front = rear = newnode;', 'else {', '    rear->next = newnode;', '    rear = newnode;', '}'] },
-  dequeue: { title: 'dequeue()  — linked queue', ref: 'Lec 12 p.6', lines: ['if (front == NULL) { printf("underflow"); return; }', 'temp = front;', 'front = front->next;', 'if (front == NULL)             // removed the final item', '    rear = NULL;', 'x = temp->data;  free(temp);'] },
+  enqueue: { title: 'enqueue(x)  — linked queue', lines: ['new_node = create_node();', 'if (rear == NULL)              // empty queue', '    front = rear = new_node;', 'else {', '    rear->next = new_node;', '    rear = new_node;', '}'] },
+  dequeue: { title: 'dequeue()  — linked queue', lines: ['if (front == NULL) { printf("underflow"); return; }', 'temp = front;', 'front = front->next;', 'if (front == NULL)             // removed the final item', '    rear = NULL;', 'x = temp->data;  free(temp);'] },
 };
 keyCodes(LINKED_CODE, 'sq.linked');
 
@@ -216,9 +219,9 @@ export function lstackPushHead(w0, x, opts) {
   const t = new Tracer(w0, LINKED_CODE.pushHead);
   const w = t.state;
   const a = getnodeSteps(t, 0, x, opts);
-  setLink(t, 1, a, 'next', w.vars.top, `newnode->next = top (${fmtPtr(w.vars.top)}): the new node sits on top of the old top.`);
-  setVar(t, 2, 'top', a, `top = newnode (${a}). The new node is the top now — nothing had to be walked.`);
-  return endScope(t, ['newnode']);
+  setLink(t, 1, a, 'next', w.vars.top, `new_node->next = top (${fmtPtr(w.vars.top)}): the new node sits on top of the old top.`);
+  setVar(t, 2, 'top', a, `top = new_node (${a}). The new node is now the top; no traversal was needed.`);
+  return endScope(t, ['new_node']);
 }
 
 export function lstackPopHead(w0) {
@@ -245,16 +248,16 @@ export function lstackPushTail(w0, x, opts) {
   const t = new Tracer(w0, LINKED_CODE.pushTail);
   const w = t.state;
   const a = getnodeSteps(t, 0, x, opts);
-  if (cond(t, 1, w.vars.start === null, 'start == NULL?')) {
-    w.vars.start = a;
+  if (cond(t, 1, w.vars.head === null, 'head == NULL?')) {
+    w.vars.head = a;
     w.vars.top = a;
     t.count('varWrites', 2);
-    t.step(2, 'var', `start = top = newnode (${a}).`, { vars: ['start', 'top'] });
+    t.step(2, 'var', `head = top = new_node (${a}).`, { vars: ['head', 'top'] });
   } else {
-    setLink(t, 4, w.vars.top, 'next', a, `top->next = newnode: append after the current top (${w.vars.top}).`);
-    setVar(t, 5, 'top', a, `top = newnode (${a}). Because top always points at the last node, push never has to walk.`);
+    setLink(t, 4, w.vars.top, 'next', a, `top->next = new_node: append after the current top (${w.vars.top}).`);
+    setVar(t, 5, 'top', a, `top = new_node (${a}). Because top always points at the last node, push never has to walk.`);
   }
-  return endScope(t, ['newnode']);
+  return endScope(t, ['new_node']);
 }
 
 export function lstackPopTail(w0) {
@@ -267,20 +270,20 @@ export function lstackPopTail(w0) {
     tr.result = { ok: false, event: 'underflow' };
     return tr;
   }
-  if (cond(t, 1, w.vars.start === w.vars.top, 'start == top? (last item)')) {
+  if (cond(t, 1, w.vars.head === w.vars.top, 'head == top? (last item)')) {
     const x = w.nodes[w.vars.top].data;
     t.output.push(x);
     addVar(w, 'temp', w.vars.top);
     freeStep(t, 2, 'temp', `x = ${x}; free(top).`);
-    w.vars.start = null;
+    w.vars.head = null;
     w.vars.top = null;
     t.count('varWrites', 2);
-    t.step(3, 'var', 'start = top = NULL: the stack is empty.', { vars: ['start', 'top'] });
+    t.step(3, 'var', 'head = top = NULL: the stack is empty.', { vars: ['head', 'top'] });
     const tr = endScope(t, ['temp']);
     tr.result = { ok: true, value: x };
     return tr;
   }
-  setVar(t, 5, 'temp', w.vars.start, 'temp = start. To pop at the tail we need the node below top, and links only go forward.');
+  setVar(t, 5, 'temp', w.vars.head, 'temp = head. Popping at the tail requires the node below top, and the links only point forward.');
   while (true) {
     const tn = w.nodes[w.vars.temp];
     t.count('visits');
@@ -307,12 +310,12 @@ export function lqueueEnqueue(w0, x, opts) {
     w.vars.front = a;
     w.vars.rear = a;
     t.count('varWrites', 2);
-    t.step(2, 'var', `front = rear = newnode (${a}). One item is both the front and the rear.`, { vars: ['front', 'rear'] });
+    t.step(2, 'var', `front = rear = new_node (${a}). One item is both the front and the rear.`, { vars: ['front', 'rear'] });
   } else {
-    setLink(t, 4, w.vars.rear, 'next', a, `rear->next = newnode: link after the current rear (${w.vars.rear}).`);
-    setVar(t, 5, 'rear', a, `rear = newnode (${a}). rear always points AT the last node.`);
+    setLink(t, 4, w.vars.rear, 'next', a, `rear->next = new_node: link after the current rear (${w.vars.rear}).`);
+    setVar(t, 5, 'rear', a, `rear = new_node (${a}). rear always points AT the last node.`);
   }
-  return endScope(t, ['newnode']);
+  return endScope(t, ['new_node']);
 }
 
 export function lqueueDequeue(w0) {
@@ -327,8 +330,8 @@ export function lqueueDequeue(w0) {
   }
   setVar(t, 1, 'temp', w.vars.front, `temp = front (${w.vars.front}).`);
   setVar(t, 2, 'front', w.nodes[w.vars.temp].next, `front = front->next → ${fmtPtr(w.nodes[w.vars.temp].next)}.`);
-  if (cond(t, 3, w.vars.front === null, 'front == NULL? (did we remove the final item?)')) {
-    setVar(t, 4, 'rear', null, 'rear = NULL. Without this, rear would still hold the address of the node we are about to free (dangling).');
+  if (cond(t, 3, w.vars.front === null, 'front == NULL? (was the final item removed?)')) {
+    setVar(t, 4, 'rear', null, 'rear = NULL. Otherwise rear would still hold the address of the node that is about to be freed (a dangling pointer).');
   }
   const x = w.nodes[w.vars.temp].data;
   t.output.push(x);
@@ -346,7 +349,7 @@ export function lqueueDequeue(w0) {
  */
 export function runOps(kind, ops, MAX = 6) {
   let s;
-  if (kind === 'astack') s = arrayStack(MAX, 'notes');
+  if (kind === 'astack') s = arrayStack(MAX, 'count');
   else if (kind === 'astack-index') s = arrayStack(MAX, 'index');
   else if (kind === 'aqueue') s = arrayQueue(MAX, 'linear');
   else if (kind === 'aqueue-circ') s = arrayQueue(MAX, 'circular');
@@ -389,7 +392,7 @@ export function contents(kind, s) {
     return out;
   }
   if (kind === 'lstack-head') return walk(s, s.vars.top).values;
-  if (kind === 'lstack-tail') return walk(s, s.vars.start).values.reverse();
+  if (kind === 'lstack-tail') return walk(s, s.vars.head).values.reverse();
   if (kind === 'lqueue') return walk(s, s.vars.front).values;
   return [];
 }

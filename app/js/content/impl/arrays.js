@@ -1,12 +1,11 @@
-// "Build it in code": arrays (Lecture 07). See ./format.js.
+// implementation: arrays. See ./format.js.
 
 export const ARRAY_EXAMPLES = [
   {
     id: 'array-shift',
-    lecture: 7,
+    module: 'memory',
     structure: 'arrays',
     title: 'An array with insertion and deletion by shifting',
-    ref: 'Lec 07 p.2–4',
     intro: 'An array is one block of MAX slots side by side. The block never grows, so a separate count `n` remembers how many slots are in use. Inserting makes room by moving the later elements one slot RIGHT (starting from the end); deleting closes the gap by moving them one slot LEFT.',
     params: { max: 6, v1: 10, v2: 30, v3: 20, v4: 5 },
     vary: ['v1', 'v2', 'v3', 'v4'],
@@ -134,12 +133,12 @@ int main() {
     notes: {
       s2: '**One contiguous block.** C++ `int a[MAX]` reserves MAX ints side by side. Python has no fixed-size array type in the core language, so a list of MAX slots stands in for one — the program never calls append or insert, so the slots behave like an array. The pseudocode `new Array(MAX)` is the Lab’s array.',
       s3: 'The array cannot tell how many slots hold real data, so the program keeps its own count n.',
-      i1: 'Full: there is no free slot, and a plain array cannot grow (Lec 07 p.2).',
+      i1: 'Full: there is no free slot, and a plain array cannot grow.',
       i4: 'Start at the first free slot…',
       i6: '…and move each element one slot right. Going from the END backwards means nothing is overwritten before it has been moved.',
       i8: 'The gap at pos is now free.',
       i9: 'One more slot is in use.',
-      x3: 'Each later element moves one slot left, covering the deleted value. Correction to Lec 07: deleting from an array IS possible — what cannot change is the size of the block.',
+      x3: 'Each later element moves one slot left, covering the deleted value. Deleting from an array is therefore possible; what cannot change is the size of the block.',
       x5: 'The last slot is now unused (its old value may still be there, but it is outside 0 … n − 1).',
       p1: 'Only slots 0 … n − 1 hold values.',
     },
