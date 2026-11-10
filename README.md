@@ -44,7 +44,7 @@ To publish a version, push a tag:
 git tag v1.0.3
 git push origin v1.0.3
 ```
-The workflow builds the app *as* that version and attaches every file to a new Release, including `latest.yml`, `latest-linux.yml` and the `.blockmap` files that the installed copies need to update themselves. Tags must keep increasing (`v1.0.3` → `v1.0.4` → `v1.1.0` …).
+The workflow builds the app *as* that version and attaches every file to a new Release, including `latest.yml`, `latest-linux.yml` and the `.blockmap` files that the installed copies need to update themselves. Tags must keep increasing (`v1.0.3` → `v1.0.4` → `v1.1.0` …). If `docs/releases/<tag>.md` exists (for example `docs/releases/v2.0.0.md`), it becomes the text of the Release; otherwise GitHub generates the text from the merged pull requests.
 
 To build the files yourself, run `npm install` and then `npm run dist:win` on Windows (or double-click `build-windows-exe.bat`), `npm run dist:mac` on a Mac, or `npm run dist:linux` on Linux. Each platform's files have to be built on that platform. They land in `dist/`.
 
